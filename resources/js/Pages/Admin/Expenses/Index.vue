@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
@@ -7,6 +8,15 @@ const props = defineProps({
     expenses: Array,
     categories: Array
 });
+
+const columns = [
+    { key: 'expense_date', label: 'Date', sortable: true },
+    { key: 'category', label: 'Category', sortable: true },
+    { key: 'reference_no', label: 'Reference', sortable: true },
+    { key: 'amount', label: 'Amount', sortable: true, cellClass: 'text-right' },
+    { key: 'description', label: 'Description', sortable: false },
+    { key: 'actions', label: 'Actions', sortable: false, width: '120px' }
+];
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -20,7 +30,7 @@ const form = useForm({
     reference_no: '',
 });
 
-const totalExpenses = computed(() => {
+const totalExpensesValue = computed(() => {
     return props.expenses.reduce((sum, item) => sum + parseFloat(item.amount), 0).toFixed(2);
 });
 
@@ -75,9 +85,18 @@ const deleteExpense = (id) => {
     <AdminLayout>
         <div class="content-header">
             <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark font-weight-bold"><i class="fas fa-money-bill-wave mr-2 text-danger"></i>Expenses</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="m-0 text-dark font-bold h3">Expenses</h1>
+                        <p class="text-muted text-sm mb-0">Track and manage your business expenditures</p>
+                    </div>
+                    <div class="d-flex">
+                        <Link :href="route('admin.expense-categories.index')" class="btn btn-light border mr-2 shadow-sm">
+                            <i class="fas fa-tags mr-2 text-danger"></i> Categories
+                        </Link>
+                        <button class="btn btn-danger shadow-sm" @click="openCreateModal">
+                            <i class="fas fa-plus mr-2"></i> Record Expense
+                        </button>
                     </div>
                 </div>
             </div>
@@ -85,76 +104,66 @@ const deleteExpense = (id) => {
 
         <section class="content">
             <div class="container-fluid">
-                <div class="row">
+                <div class="row mb-4">
                     <div class="col-md-3">
-                        <div class="info-box bg-danger shadow-sm">
-                            <span class="info-box-icon"><i class="fas fa-wallet"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Total Expense</span>
-                                <span class="info-box-number">৳{{ totalExpenses }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="info-box bg-light shadow-sm border">
-                            <span class="info-box-icon text-danger"><i class="fas fa-list"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text text-muted">Expense Records</span>
-                                <span class="info-box-number text-dark">{{ expenses.length }} Items</span>
+                        <div class="premium-stat-card bg-white p-3 rounded-lg shadow-sm border border-danger-soft">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-danger-soft mr-3">
+                                    <i class="fas fa-wallet text-danger"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Total Expense</div>
+                                    <div class="h4 font-bold mb-0 text-danger">৳{{ totalExpensesValue }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card card-danger card-outline shadow-sm">
-                    <div class="card-header border-0">
-                        <h3 class="card-title font-weight-bold">Recent Expenses</h3>
-                        <div class="card-tools">
-                            <Link :href="route('admin.expense-categories.index')" class="btn btn-outline-danger btn-sm rounded-pill px-3 mr-2">
-                                <i class="fas fa-tags mr-1"></i> Categories
-                            </Link>
-                            <button class="btn btn-danger btn-sm rounded-pill px-3" @click="openCreateModal">
-                                <i class="fas fa-plus mr-1"></i> Record Expense
+                <PremiumTable 
+                    :items="expenses" 
+                    :headers="columns"
+                    search-placeholder="Search expenses by reference or description..."
+                >
+                    <!-- Date Cell -->
+                    <template #cell-expense_date="{ item }">
+                        <div class="text-sm font-medium">{{ item.expense_date }}</div>
+                    </template>
+
+                    <!-- Category Cell -->
+                    <template #cell-category="{ item }">
+                        <span class="badge badge-secondary">{{ item.category?.name }}</span>
+                    </template>
+
+                    <!-- Reference Cell -->
+                    <template #cell-reference_no="{ item }">
+                        <code class="text-xs">{{ item.reference_no || 'N/A' }}</code>
+                    </template>
+
+                    <!-- Amount Cell -->
+                    <template #cell-amount="{ item }">
+                        <div class="font-weight-bold text-danger">৳{{ item.amount }}</div>
+                    </template>
+
+                    <!-- Description Cell -->
+                    <template #cell-description="{ item }">
+                        <div class="text-xs text-muted text-truncate" style="max-width: 250px;" :title="item.description">
+                            {{ item.description || '-' }}
+                        </div>
+                    </template>
+
+                    <!-- Actions Cell -->
+                    <template #cell-actions="{ item }">
+                        <div class="d-flex">
+                            <button @click="openEditModal(item)" class="btn btn-light btn-sm mr-2 border shadow-none">
+                                <i class="fas fa-edit text-primary text-xs"></i>
+                            </button>
+                            <button @click="deleteExpense(item.id)" class="btn btn-light btn-sm border shadow-none">
+                                <i class="fas fa-trash text-danger text-xs"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-hover table-striped table-valign-middle">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th style="width: 10px">#</th>
-                                    <th>Date</th>
-                                    <th>Category</th>
-                                    <th>Reference</th>
-                                    <th class="text-right">Amount</th>
-                                    <th>Description</th>
-                                    <th style="width: 120px">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(expense, index) in expenses" :key="expense.id">
-                                    <td>{{ index + 1 }}</td>
-                                    <td>{{ expense.expense_date }}</td>
-                                    <td><span class="badge badge-secondary">{{ expense.category?.name }}</span></td>
-                                    <td><code>{{ expense.reference_no || 'N/A' }}</code></td>
-                                    <td class="text-right font-weight-bold text-danger">৳{{ expense.amount }}</td>
-                                    <td><small class="text-muted text-truncate d-inline-block" style="max-width: 200px">{{ expense.description }}</small></td>
-                                    <td>
-                                        <button class="btn btn-outline-primary btn-xs mr-1 p-1 px-2" @click="openEditModal(expense)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-outline-danger btn-xs p-1 px-2" @click="deleteExpense(expense.id)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="expenses.length === 0">
-                                    <td colspan="7" class="text-center p-5 text-muted">No expense records found.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    </template>
+                </PremiumTable>
             </div>
         </section>
 

@@ -1,11 +1,21 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
-defineProps({
+const props = defineProps({
     categories: Array
 });
+
+const columns = [
+    { key: 'index', label: '#', sortable: true, width: '60px' },
+    { key: 'image', label: 'Image', sortable: false, width: '80px' },
+    { key: 'name', label: 'Category Name', sortable: true },
+    { key: 'slug', label: 'Slug', sortable: true },
+    { key: 'is_active', label: 'Status', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false, width: '120px' }
+];
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -17,7 +27,7 @@ const form = useForm({
     description: '',
     image: null,
     is_active: true,
-    _method: 'post', // required for Inertia file uploads on PUT
+    _method: 'post',
 });
 
 const handleFileChange = (e) => {
@@ -49,7 +59,7 @@ const openEditModal = (category) => {
     form.description = category.description;
     form.is_active = category.is_active;
     form.image = null;
-    form._method = 'put'; // Laravel PUT workaround for files
+    form._method = 'put';
     imagePreview.value = category.image ? category.image : null;
     const fileInput = document.getElementById('imageFile');
     if (fileInput) fileInput.value = '';
@@ -89,80 +99,82 @@ function deleteCategory(id) {
     <AdminLayout>
         <div class="content-header">
             <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark">Product Categories</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="m-0 text-dark font-bold h3">Product Categories</h1>
+                        <p class="text-muted text-sm mb-0">Organize your products into logical groups</p>
                     </div>
+                    <button class="btn btn-primary shadow-sm" @click="openCreateModal">
+                        <i class="fas fa-plus mr-2"></i> Add Category
+                    </button>
                 </div>
             </div>
         </div>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="row">
+                <div class="row mb-4">
                     <div class="col-12 col-sm-6 col-md-3">
-                        <div class="info-box mb-3 bg-olive">
-                            <span class="info-box-icon elevation-1"><i class="fas fa-sitemap"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Total Categories</span>
-                                <span class="info-box-number">{{ categories.length }}</span>
+                        <div class="premium-stat-card bg-white p-3 rounded-lg shadow-sm border">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-primary-soft mr-3">
+                                    <i class="fas fa-sitemap text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Total Categories</div>
+                                    <div class="h4 font-bold mb-0">{{ categories.length }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card card-olive card-outline shadow-sm">
-                    <div class="card-header border-0">
-                        <h3 class="card-title">Category List</h3>
-                        <div class="card-tools">
-                            <button class="btn btn-primary btn-sm" @click="openCreateModal">
-                                <i class="fas fa-plus mr-1"></i> Add Category
+                <PremiumTable 
+                    :items="categories" 
+                    :headers="columns"
+                    search-placeholder="Search categories..."
+                >
+                    <!-- Index Cell -->
+                    <template #cell-index="{ index }">
+                        <span class="text-muted">{{ index + 1 }}</span>
+                    </template>
+
+                    <!-- Image Cell -->
+                    <template #cell-image="{ item }">
+                        <img :src="item.image || 'https://ui-avatars.com/api/?background=f1f5f9&color=64748b&name=C'" 
+                             class="rounded-lg shadow-sm" 
+                             style="height: 40px; width: 40px; object-fit: cover;">
+                    </template>
+
+                    <!-- Name Cell -->
+                    <template #cell-name="{ item }">
+                        <span class="font-weight-bold text-dark">{{ item.name }}</span>
+                    </template>
+
+                    <!-- Slug Cell -->
+                    <template #cell-slug="{ item }">
+                        <code class="text-xs px-2 py-1 bg-light rounded text-indigo">{{ item.slug }}</code>
+                    </template>
+
+                    <!-- Status Cell -->
+                    <template #cell-is_active="{ item }">
+                        <span class="badge" :class="item.is_active ? 'badge-success' : 'badge-danger'">
+                            {{ item.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </template>
+
+                    <!-- Actions Cell -->
+                    <template #cell-actions="{ item }">
+                        <div class="d-flex">
+                            <button @click="openEditModal(item)" class="btn btn-light btn-sm mr-2 border shadow-none">
+                                <i class="fas fa-edit text-primary text-xs"></i>
+                            </button>
+                            <button @click="deleteCategory(item.id)" class="btn btn-light btn-sm border shadow-none">
+                                <i class="fas fa-trash text-danger text-xs"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-hover table-striped table-valign-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width: 10px">#</th>
-                                    <th>Image</th>
-                                    <th>Name</th>
-                                    <th>Slug</th>
-                                    <th>Status</th>
-                                    <th style="width: 150px">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(category, index) in categories" :key="category.id">
-                                    <td>{{ index + 1 }}</td>
-                                    <td>
-                                        <div class="text-center" style="width: 50px;">
-                                            <img :src="category.image || 'https://via.placeholder.com/50?text=Cat'" class="img-circle" :alt="category.name" style="height: 40px; width: 40px; object-fit: cover;">
-                                        </div>
-                                    </td>
-                                    <td class="font-weight-bold">{{ category.name }}</td>
-                                    <td><code>{{ category.slug }}</code></td>
-                                    <td>
-                                        <span class="badge" :class="category.is_active ? 'badge-success' : 'badge-danger'">
-                                            {{ category.is_active ? 'Active' : 'Inactive' }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-info btn-xs mr-1" @click="openEditModal(category)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-danger btn-xs" @click="deleteCategory(category.id)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="categories.length === 0">
-                                    <td colspan="6" class="text-center p-4 text-muted">No categories found. Click "Add Category" to create one.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    </template>
+                </PremiumTable>
             </div>
         </section>
 

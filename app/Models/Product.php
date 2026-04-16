@@ -26,6 +26,8 @@ class Product extends Model
         'is_new',
     ];
 
+    protected $appends = ['image'];
+
     protected function casts(): array
     {
         return [
@@ -66,5 +68,10 @@ class Product extends Model
     public function purchaseItems(): HasMany
     {
         return $this->hasMany(PurchaseItem::class);
+    }
+
+    public function getImageAttribute()
+    {
+        return $this->images->first()?->image_path;
     }
 }

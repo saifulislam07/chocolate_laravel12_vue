@@ -12,7 +12,11 @@ const props = defineProps({
 const quantity = ref(1);
 const selectedImage = ref(props.product.images?.[0] || "/images/godiva/product_default.png");
 
-const moneyFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const moneyFormatter = new Intl.NumberFormat("en-BD", { 
+    style: "currency", 
+    currency: "BDT",
+    minimumFractionDigits: 0,
+});
 const price = computed(() => Number(props.product.price || 0));
 const comparePrice = computed(() => Number(props.product.compare_at_price || 0));
 

@@ -1,11 +1,21 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
-defineProps({
+const props = defineProps({
     suppliers: Array
 });
+
+const columns = [
+    { key: 'name', label: 'Supplier Name', sortable: true },
+    { key: 'company_name', label: 'Company', sortable: true },
+    { key: 'phone', label: 'Phone', sortable: true },
+    { key: 'email', label: 'Email', sortable: true },
+    { key: 'address', label: 'Address', sortable: false },
+    { key: 'actions', label: 'Actions', sortable: false, width: '120px' }
+];
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -70,77 +80,88 @@ function deleteSupplier(id) {
     <AdminLayout>
         <div class="content-header">
             <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark">Suppliers</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="m-0 text-dark font-bold h3">Suppliers</h1>
+                        <p class="text-muted text-sm mb-0">Manage your business partners and item providers</p>
                     </div>
+                    <button class="btn btn-primary shadow-sm" @click="openCreateModal">
+                        <i class="fas fa-plus mr-2"></i> Add Supplier
+                    </button>
                 </div>
             </div>
         </div>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="row">
+                <div class="row mb-4">
                     <div class="col-12 col-sm-6 col-md-3">
-                        <div class="info-box mb-3 bg-indigo shadow-sm">
-                            <span class="info-box-icon elevation-1"><i class="fas fa-truck"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Total Suppliers</span>
-                                <span class="info-box-number">{{ suppliers.length }}</span>
+                        <div class="premium-stat-card bg-white p-3 rounded-lg shadow-sm border border-indigo-soft">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-indigo-soft mr-3">
+                                    <i class="fas fa-truck text-indigo"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Total Suppliers</div>
+                                    <div class="h4 font-bold mb-0 text-indigo">{{ suppliers.length }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card card-indigo card-outline shadow-sm">
-                    <div class="card-header border-0">
-                        <h3 class="card-title font-weight-bold">Supplier List</h3>
-                        <div class="card-tools">
-                            <button class="btn btn-primary btn-sm rounded-pill px-3" @click="openCreateModal">
-                                <i class="fas fa-plus mr-1"></i> Add Supplier
+                <PremiumTable 
+                    :items="suppliers" 
+                    :headers="columns"
+                    search-placeholder="Search suppliers by name or company..."
+                >
+                    <!-- Supplier Name Cell -->
+                    <template #cell-name="{ item }">
+                        <div class="font-weight-bold text-dark">{{ item.name }}</div>
+                        <div class="text-xs text-muted" v-if="item.company_name">{{ item.company_name }}</div>
+                    </template>
+
+                    <!-- Company Cell -->
+                    <template #cell-company_name="{ item }">
+                        <span class="text-muted text-sm">{{ item.company_name || 'Individual' }}</span>
+                    </template>
+
+                    <!-- Phone Cell -->
+                    <template #cell-phone="{ item }">
+                        <div class="d-flex align-items-center text-sm">
+                            <i class="fas fa-phone-alt mr-2 text-muted text-xs"></i>
+                            {{ item.phone }}
+                        </div>
+                    </template>
+
+                    <!-- Email Cell -->
+                    <template #cell-email="{ item }">
+                        <div class="d-flex align-items-center text-sm" v-if="item.email">
+                            <i class="fas fa-envelope mr-2 text-muted text-xs"></i>
+                            {{ item.email }}
+                        </div>
+                        <span v-else class="text-muted text-xs italic">No email</span>
+                    </template>
+
+                    <!-- Address Cell -->
+                    <template #cell-address="{ item }">
+                        <div class="text-xs text-muted text-truncate" style="max-width: 200px;" :title="item.address">
+                            {{ item.address || 'N/A' }}
+                        </div>
+                    </template>
+
+                    <!-- Actions Cell -->
+                    <template #cell-actions="{ item }">
+                        <div class="d-flex">
+                            <button @click="openEditModal(item)" class="btn btn-light btn-sm mr-2 border shadow-none" title="Edit">
+                                <i class="fas fa-edit text-primary text-xs"></i>
+                            </button>
+                            <button @click="deleteSupplier(item.id)" class="btn btn-light btn-sm border shadow-none" title="Delete">
+                                <i class="fas fa-trash text-danger text-xs"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-hover table-striped table-valign-middle">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th style="width: 10px">#</th>
-                                    <th>Supplier Name</th>
-                                    <th>Company</th>
-                                    <th>Phone</th>
-                                    <th>Email</th>
-                                    <th>Address</th>
-                                    <th style="width: 150px">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(supplier, index) in suppliers" :key="supplier.id">
-                                    <td>{{ index + 1 }}</td>
-                                    <td class="font-weight-bold text-indigo">{{ supplier.name }}</td>
-                                    <td>{{ supplier.company_name || 'N/A' }}</td>
-                                    <td><i class="fas fa-phone-alt text-muted mr-1"></i> {{ supplier.phone }}</td>
-                                    <td><i class="fas fa-envelope text-muted mr-1"></i> {{ supplier.email || 'N/A' }}</td>
-                                    <td><small>{{ supplier.address || 'N/A' }}</small></td>
-                                    <td>
-                                        <button class="btn btn-outline-info btn-xs mr-1 p-1 px-2" @click="openEditModal(supplier)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-outline-danger btn-xs p-1 px-2" @click="deleteSupplier(supplier.id)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="suppliers.length === 0">
-                                    <td colspan="7" class="text-center p-5 text-muted">
-                                        <i class="fas fa-users-slash fa-2x mb-2 d-block opacity-50"></i>
-                                        No suppliers found. Click "Add Supplier" to get started.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    </template>
+                </PremiumTable>
             </div>
         </section>
 

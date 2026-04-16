@@ -23,6 +23,10 @@ const filteredProducts = computed(() => {
 });
 
 const addToCart = (product) => {
+    if (product.stock <= 0) {
+        alert('Item out of stock!');
+        return;
+    }
     const existing = cart.value.find(item => item.id === product.id);
     if (existing) {
         existing.quantity++;
@@ -161,15 +165,50 @@ const printInvoice = () => {
                             </div>
                             <div class="card-body p-2" style="height: 75vh; overflow-y: auto;">
                                 <div class="row">
-                                    <div v-for="product in filteredProducts" :key="product.id" class="col-lg-3 col-md-4 col-sm-4 col-6 mb-3 px-2">
-                                        <div class="card h-100 product-card shadow-sm border-0 bg-white" @click="addToCart(product)" style="cursor: pointer; border-radius: 12px;">
-                                            <div class="position-relative text-center p-2">
-                                                <img :src="product.image || '/uploads/products/default.png'" class="img-fluid" style="height: 100px; object-fit: contain;">
-                                                <span class="badge badge-success position-absolute" style="top: 10px; right: 10px; font-size: 0.85rem; border-radius: 8px;">৳{{ product.price }}</span>
+                                    <div v-for="product in filteredProducts" :key="product.id" class="col-lg-3 col-md-4 col-sm-4 col-6 mb-4 px-2">
+                                        <div class="card h-100 product-card shadow-sm border-0 bg-white" @click="addToCart(product)" 
+                                             :style="{ cursor: product.stock > 0 ? 'pointer' : 'not-allowed', opacity: product.stock > 0 ? 1 : 0.6, borderRadius: '15px', overflow: 'hidden' }">
+                                            
+                                            <!-- Top Image Area -->
+                                            <div class="position-relative" style="height: 110px; background: #f9f9f9; width: 100%;">
+                                                <!-- Image -->
+                                                <div class="d-flex align-items-center justify-content-center h-100 w-100 p-2">
+                                                    <img v-if="product.image" :src="product.image" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+                                                    <div v-else class="text-center text-muted opacity-25">
+                                                        <i class="fas fa-image fa-2x d-block"></i>
+                                                        <span class="text-[8px] font-bold">NO IMAGE</span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Overlays -->
+                                                <div class="position-absolute w-100 px-2 d-flex justify-content-between" style="top: 8px;">
+                                                    <span class="badge shadow-sm border" 
+                                                          :class="product.stock > 10 ? 'bg-white text-info' : 'bg-danger text-white'"
+                                                          style="font-size: 9px; border-radius: 4px; padding: 2px 6px; border-color: rgba(0,0,0,0.05) !important;">
+                                                        STK: {{ product.stock }}
+                                                    </span>
+                                                    <div class="d-flex flex-column align-items-end">
+                                                        <span class="badge bg-white shadow-sm border text-success font-bold mb-1" style="font-size: 10px; border-radius: 4px; padding: 2px 6px; border-color: rgba(0,0,0,0.05) !important;">
+                                                            ৳{{ product.price }}
+                                                        </span>
+                                                        <span v-if="product.compare_at_price > product.price" class="badge badge-danger shadow-sm" style="font-size: 8px; border-radius: 4px; padding: 1px 4px;">
+                                                            -{{ Math.round((product.compare_at_price - product.price) / product.compare_at_price * 100) }}%
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="card-body p-2 text-center border-top">
-                                                <p class="card-title text-sm font-weight-bold mb-0 w-100 text-truncate text-dark" :title="product.name">{{ product.name }}</p>
-                                                <small class="text-muted d-block">{{ product.sku || 'N/A' }}</small>
+
+                                            <!-- Bottom Content Area -->
+                                            <div class="card-body p-3 d-flex flex-column justify-content-between" style="min-height: 95px; background: white;">
+                                                <div class="product-info mb-1">
+                                                    <div class="text-xs font-bold text-dark line-clamp-2 leading-tight mb-2" :title="product.name" style="height: 2.2rem; overflow: hidden; line-height: 1.1rem;">
+                                                        {{ product.name }}
+                                                    </div>
+                                                    <div class="d-flex align-items-center justify-content-between mt-1">
+                                                        <span class="text-[9px] text-muted font-mono tracking-tighter bg-light px-2 py-0.5 rounded border">{{ product.sku || 'N/A' }}</span>
+                                                        <del v-if="product.compare_at_price > product.price" class="text-[9px] text-muted">৳{{ product.compare_at_price }}</del>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -181,20 +220,20 @@ const printInvoice = () => {
                     <!-- Right: Cart & Checkout calculation -->
                     <div class="col-lg-5 col-md-6">
                         <div class="card card-outline card-success shadow-sm border-0" style="border-radius: 15px;">
-                            <div class="card-header p-2 border-0 bg-white">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-success text-white border-success" style="border-radius: 8px 0 0 8px;"><i class="fas fa-user-check"></i></span>
+                            <div class="card-header p-3 border-bottom bg-white" style="border-radius: 20px 20px 0 0;"> <!-- Subtle curve -->
+                                <div class="d-flex align-items-center gap-2 bg-light p-1 rounded-pill border shadow-inset transition-all" style="height: 48px;">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; flex-shrink: 0;">
+                                        <i class="fas fa-user text-sm"></i>
                                     </div>
-                                    <select v-model="selectedCustomerId" class="form-control" style="border-radius: 0;">
+                                    <select v-model="selectedCustomerId" class="form-control border-0 bg-transparent text-sm font-bold text-dark px-2" style="height: 38px; box-shadow: none;">
                                         <option value="">Walk-in Customer</option>
                                         <option v-for="customer in customers" :key="customer.id" :value="customer.id">
                                             {{ customer.name }} ({{ customer.phone }})
                                         </option>
                                     </select>
-                                    <div class="input-group-append">
-                                         <button type="button" @click="showCustomerModal = true" class="btn btn-primary" title="Add New Customer" style="border-radius: 0 8px 8px 0;"><i class="fas fa-plus"></i></button>
-                                    </div>
+                                    <button type="button" @click="showCustomerModal = true" class="btn btn-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; flex: 0 0 36px; padding: 0; outline: none !important; border: none;">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="card-body p-0" style="height: 35vh; overflow-y: auto;">
@@ -436,11 +475,24 @@ const printInvoice = () => {
 </template>
 
 <style scoped>
+.line_clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.shadow-inset {
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.product-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .product-card:hover {
-    border-color: #28a745 !important;
-    transform: translateY(-2px);
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
 }
 @media print {
     body * {

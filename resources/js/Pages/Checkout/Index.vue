@@ -17,7 +17,11 @@ const form = useForm({
     notes: "",
 });
 
-const moneyFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const moneyFormatter = new Intl.NumberFormat("en-BD", { 
+    style: "currency", 
+    currency: "BDT",
+    minimumFractionDigits: 0,
+});
 
 function formatMoney(value) {
     return moneyFormatter.format(Number(value || 0));

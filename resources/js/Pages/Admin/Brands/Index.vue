@@ -1,11 +1,21 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
-defineProps({
+const props = defineProps({
     brands: Array
 });
+
+const columns = [
+    { key: 'index', label: '#', sortable: true, width: '60px' },
+    { key: 'image', label: 'Logo', sortable: false, width: '80px' },
+    { key: 'name', label: 'Brand Name', sortable: true },
+    { key: 'slug', label: 'Slug', sortable: true },
+    { key: 'is_active', label: 'Status', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false, width: '120px' }
+];
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -16,7 +26,7 @@ const form = useForm({
     name: '',
     image: null,
     is_active: true,
-    _method: 'post', // required for Inertia file uploads on PUT
+    _method: 'post',
 });
 
 const handleFileChange = (e) => {
@@ -47,7 +57,7 @@ const openEditModal = (brand) => {
     form.name = brand.name;
     form.is_active = brand.is_active;
     form.image = null;
-    form._method = 'put'; // tell Laravel it's a PUT
+    form._method = 'put';
     imagePreview.value = brand.image ? brand.image : null;
     const fileInput = document.getElementById('imageFile');
     if (fileInput) fileInput.value = '';
@@ -87,80 +97,84 @@ function deleteBrand(id) {
     <AdminLayout>
         <div class="content-header">
             <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark">Brands</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="m-0 text-dark font-bold h3">Product Brands</h1>
+                        <p class="text-muted text-sm mb-0">Manage manufacturer and brand information</p>
                     </div>
+                    <button class="btn btn-primary shadow-sm" @click="openCreateModal">
+                        <i class="fas fa-plus mr-2"></i> Add Brand
+                    </button>
                 </div>
             </div>
         </div>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="row">
+                <div class="row mb-4">
                     <div class="col-12 col-sm-6 col-md-3">
-                        <div class="info-box mb-3">
-                            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-tags"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Total Brands</span>
-                                <span class="info-box-number">{{ brands.length }}</span>
+                        <div class="premium-stat-card bg-white p-3 rounded-lg shadow-sm border border-warning-soft">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-warning-soft mr-3">
+                                    <i class="fas fa-tags text-warning"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Total Brands</div>
+                                    <div class="h4 font-bold mb-0 text-warning">{{ brands.length }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card card-primary card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title">Brand List</h3>
-                        <div class="card-tools">
-                            <button class="btn btn-primary btn-sm" @click="openCreateModal">
-                                <i class="fas fa-plus mr-1"></i> Add Brand
+                <PremiumTable 
+                    :items="brands" 
+                    :headers="columns"
+                    search-placeholder="Search brands..."
+                >
+                    <!-- Index Cell -->
+                    <template #cell-index="{ index }">
+                        <span class="text-muted">{{ index + 1 }}</span>
+                    </template>
+
+                    <!-- Logo Cell -->
+                    <template #cell-image="{ item }">
+                        <div class="bg-light rounded p-1 d-inline-block border">
+                            <img :src="item.image || 'https://ui-avatars.com/api/?background=f1f5f9&color=64748b&name=B'" 
+                                 class="rounded" 
+                                 style="height: 32px; width: 60px; object-fit: contain;">
+                        </div>
+                    </template>
+
+                    <!-- Name Cell -->
+                    <template #cell-name="{ item }">
+                        <span class="font-weight-bold text-dark">{{ item.name }}</span>
+                    </template>
+
+                    <!-- Slug Cell -->
+                    <template #cell-slug="{ item }">
+                        <code class="text-xs px-2 py-1 bg-light rounded text-indigo">{{ item.slug }}</code>
+                    </template>
+
+                    <!-- Status Cell -->
+                    <template #cell-is_active="{ item }">
+                        <span class="badge" :class="item.is_active ? 'badge-success' : 'badge-danger'">
+                            {{ item.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </template>
+
+                    <!-- Actions Cell -->
+                    <template #cell-actions="{ item }">
+                        <div class="d-flex">
+                            <button @click="openEditModal(item)" class="btn btn-light btn-sm mr-2 border shadow-none">
+                                <i class="fas fa-edit text-primary text-xs"></i>
+                            </button>
+                            <button @click="deleteBrand(item.id)" class="btn btn-light btn-sm border shadow-none">
+                                <i class="fas fa-trash text-danger text-xs"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-hover table-striped table-valign-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width: 10px">#</th>
-                                    <th>Logo</th>
-                                    <th>Name</th>
-                                    <th>Slug</th>
-                                    <th>Status</th>
-                                    <th style="width: 150px">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(brand, index) in brands" :key="brand.id">
-                                    <td>{{ index + 1 }}</td>
-                                    <td>
-                                        <div class="text-center" style="width: 50px;">
-                                            <img :src="brand.image || 'https://via.placeholder.com/50'" class="img-thumbnail" :alt="brand.name" style="height: 40px; object-fit: contain;">
-                                        </div>
-                                    </td>
-                                    <td class="font-weight-bold">{{ brand.name }}</td>
-                                    <td><code>{{ brand.slug }}</code></td>
-                                    <td>
-                                        <span class="badge" :class="brand.is_active ? 'badge-success' : 'badge-danger'">
-                                            {{ brand.is_active ? 'Active' : 'Inactive' }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-info btn-xs mr-1" @click="openEditModal(brand)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-danger btn-xs" @click="deleteBrand(brand.id)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="brands.length === 0">
-                                    <td colspan="6" class="text-center p-4 text-muted">No brands found. Click "Add Brand" to create one.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    </template>
+                </PremiumTable>
             </div>
         </section>
 

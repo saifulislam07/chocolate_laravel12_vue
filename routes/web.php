@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/shop', [ProductController::class, 'index'])->name('products.index');
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.store');
 Route::patch('/cart/items/{cartItem}', [CartController::class, 'update'])->name('cart.update');
@@ -46,11 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Admin Routes
-    Route::get('/admin/sliders', function () {
-        return Inertia::render('Admin/Sliders/Index', [
-            'sliders' => \App\Models\Slider::orderBy('sort_order')->get()
-        ]);
-    })->name('admin.sliders.index');
+    Route::resource('/admin/sliders', \App\Http\Controllers\Admin\SliderController::class)->names('admin.sliders');
 
     Route::resource('/admin/suppliers', \App\Http\Controllers\Admin\SupplierController::class)->names('admin.suppliers');
     Route::resource('/admin/categories', \App\Http\Controllers\Admin\CategoryController::class)->names('admin.categories');

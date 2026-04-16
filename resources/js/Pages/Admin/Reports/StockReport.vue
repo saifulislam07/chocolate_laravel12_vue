@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
@@ -7,18 +8,24 @@ const props = defineProps({
     products: Array
 });
 
-const searchTerm = ref('');
+const columns = [
+    { key: 'index', label: '#', sortable: true, width: '50px' },
+    { key: 'product', label: 'Product', sortable: true },
+    { key: 'sku', label: 'SKU', sortable: true },
+    { key: 'category', label: 'Category', sortable: true },
+    { key: 'stock', label: 'Current Stock', sortable: true, cellClass: 'text-center' },
+    { key: 'cost_price', label: 'Unit Cost', sortable: true, cellClass: 'text-right' },
+    { key: 'stock_value', label: 'Stock Value', sortable: true, cellClass: 'text-right font-bold' },
+    { key: 'status', label: 'Status', sortable: true, cellClass: 'text-center d-print-none' }
+];
+
 const filterStatus = ref('all');
 
-const filteredProducts = computed(() => {
-    return props.products.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchTerm.value.toLowerCase()) || 
-                             (p.sku && p.sku.toLowerCase().includes(searchTerm.value.toLowerCase()));
-        
-        if (filterStatus.value === 'low') return matchesSearch && p.stock <= 5; // Alert level
-        if (filterStatus.value === 'out') return matchesSearch && p.stock <= 0;
-        return matchesSearch;
-    });
+const processedProducts = computed(() => {
+    let items = [...props.products];
+    if (filterStatus.value === 'low') items = items.filter(p => p.stock <= 5 && p.stock > 0);
+    if (filterStatus.value === 'out') items = items.filter(p => p.stock <= 0);
+    return items;
 });
 
 const totalStockValue = computed(() => {
@@ -33,13 +40,17 @@ const printReport = () => {
 <template>
     <Head title="Inventory Stock Report" />
 
-    <AdminLayout border="0">
+    <AdminLayout>
         <div class="content-header d-print-none">
             <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark font-weight-bold"><i class="fas fa-boxes mr-2 text-info"></i>Inventory Summary</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="m-0 text-dark font-bold h3">Inventory Summary</h1>
+                        <p class="text-muted text-sm mb-0">Detailed stock levels and asset valuation</p>
                     </div>
+                    <button @click="printReport" class="btn btn-primary shadow-sm rounded-pill px-4">
+                        <i class="fas fa-print mr-2"></i> Print Report
+                    </button>
                 </div>
             </div>
         </div>
@@ -47,127 +58,151 @@ const printReport = () => {
         <section class="content">
             <div class="container-fluid">
                 <!-- Summary Stats -->
-                <div class="row d-print-none">
+                <div class="row mb-4 d-print-none">
                     <div class="col-md-4">
-                        <div class="info-box shadow-sm border-0" style="border-radius: 12px">
-                            <span class="info-box-icon bg-info elevation-0"><i class="fas fa-warehouse"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text text-muted">Stock Capital Value</span>
-                                <span class="info-box-number h4 mb-0">৳{{ totalStockValue }}</span>
+                        <div class="premium-stat-card bg-white p-3 rounded-lg shadow-sm border border-info-soft">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-info-soft mr-3">
+                                    <i class="fas fa-warehouse text-info"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Stock Capital Value</div>
+                                    <div class="h4 font-bold mb-0 text-info">৳{{ totalStockValue }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="info-box shadow-sm border-0" style="border-radius: 12px">
-                            <span class="info-box-icon bg-warning elevation-0 text-white"><i class="fas fa-exclamation-triangle"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text text-muted">Low Stock Alert</span>
-                                <span class="info-box-number h4 mb-0">{{ products.filter(p => p.stock <= 5 && p.stock > 0).length }} Items</span>
+                        <div class="premium-stat-card bg-white p-3 rounded-lg shadow-sm border border-warning-soft">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-warning-soft mr-3">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Low Stock Alert</div>
+                                    <div class="h4 font-bold mb-0 text-warning">{{ products.filter(p => p.stock <= 5 && p.stock > 0).length }} Items</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="info-box shadow-sm border-0" style="border-radius: 12px">
-                            <span class="info-box-icon bg-danger elevation-0"><i class="fas fa-times-circle"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text text-muted">Out of Stock</span>
-                                <span class="info-box-number h4 mb-0">{{ products.filter(p => p.stock <= 0).length }} Items</span>
+                        <div class="premium-stat-card bg-white p-3 rounded-lg shadow-sm border border-danger-soft">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-danger-soft mr-3">
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Out of Stock</div>
+                                    <div class="h4 font-bold mb-0 text-danger">{{ products.filter(p => p.stock <= 0).length }} Items</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card card-outline card-info shadow-none border-0" style="border-radius: 15px;">
-                    <div class="card-header border-0 d-print-none">
-                        <div class="row align-items-center">
-                            <div class="col-md-4">
-                                <div class="input-group">
-                                    <input type="text" v-model="searchTerm" class="form-control" placeholder="Search by name or SKU...">
-                                    <div class="input-group-append"><span class="input-group-text bg-white"><i class="fas fa-search"></i></span></div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <select v-model="filterStatus" class="form-control">
-                                    <option value="all">All Inventory</option>
-                                    <option value="low">Low Stock (≤ 5)</option>
-                                    <option value="out">Out of Stock</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 text-right">
-                                <button @click="printReport" class="btn btn-primary px-4 shadow-sm rounded-pill font-weight-bold">
-                                    <i class="fas fa-print mr-1"></i> Print Report
-                                </button>
-                            </div>
-                        </div>
+                <div class="premium-card bg-white rounded-lg shadow-sm">
+                    <div class="text-center d-none d-print-block mb-4 pt-4">
+                        <h2 class="font-weight-bold mb-0 text-dark">SWEET CHOCOLATE</h2>
+                        <p class="text-muted">Inventory Stock Report - {{ new Date().toLocaleDateString() }}</p>
                     </div>
 
-                    <div class="card-body p-0">
-                        <div class="text-center d-none d-print-block mb-4">
-                            <h2 class="font-weight-bold mb-0">SWEET CHOCOLATE</h2>
-                            <p class="text-muted">Inventory Stock Report - {{ new Date().toLocaleDateString() }}</p>
-                        </div>
+                    <PremiumTable 
+                        :items="processedProducts" 
+                        :headers="columns"
+                        search-placeholder="Search by product name or SKU..."
+                    >
+                        <!-- Custom Filters Slot -->
+                        <template #filters>
+                            <select v-model="filterStatus" class="form-control-sm border-0 bg-light rounded-pill px-3 text-xs font-bold" style="height: 38px; min-width: 150px;">
+                                <option value="all">All Inventory</option>
+                                <option value="low">Low Stock (≤ 5)</option>
+                                <option value="out">Out of Stock</option>
+                            </select>
+                        </template>
 
-                        <table class="table table-hover table-striped mb-0">
-                            <thead class="bg-light border-top">
-                                <tr>
-                                    <th style="width: 50px">#</th>
-                                    <th>Product</th>
-                                    <th>SKU</th>
-                                    <th>Category</th>
-                                    <th class="text-center">Current Stock</th>
-                                    <th class="text-right">Unit cost</th>
-                                    <th class="text-right">Stock Value</th>
-                                    <th class="text-center d-print-none">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(product, index) in filteredProducts" :key="product.id">
-                                    <td>{{ index + 1 }}</td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="product-img mr-2 d-print-none">
-                                                <img :src="product.image || '/uploads/products/default.png'" alt="Product" class="img-circle border" style="width: 35px; height:35px; object-fit: cover;">
-                                            </div>
-                                            <div>
-                                                <span class="font-weight-bold">{{ product.name }}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td><code>{{ product.sku || 'N/A' }}</code></td>
-                                    <td>{{ product.category?.name || 'N/A' }}</td>
-                                    <td class="text-center">
-                                        <span class="h6 font-weight-bold" :class="product.stock <= 5 ? 'text-danger' : 'text-success'">
-                                            {{ product.stock }} {{ product.unit?.short_name || 'pcs' }}
-                                        </span>
-                                    </td>
-                                    <td class="text-right">৳{{ product.cost_price }}</td>
-                                    <td class="text-right font-weight-bold">৳{{ (product.stock * product.cost_price).toFixed(2) }}</td>
-                                    <td class="text-center d-print-none">
-                                        <span v-if="product.stock <= 0" class="badge badge-danger">Out of Stock</span>
-                                        <span v-else-if="product.stock <= 5" class="badge badge-warning">Low Stock</span>
-                                        <span v-else class="badge badge-success">Available</span>
-                                    </td>
-                                </tr>
-                                <tr v-if="filteredProducts.length === 0">
-                                    <td colspan="8" class="text-center p-5 text-muted h5">No inventory records found.</td>
-                                </tr>
-                            </tbody>
-                            <tfoot v-if="filteredProducts.length > 0">
-                                <tr class="bg-light">
-                                    <th colspan="4" class="text-right font-weight-bold">Total Inventory Value:</th>
-                                    <th class="text-center h5 font-weight-bold">{{ filteredProducts.reduce((sum, p) => sum + p.stock, 0) }} Total Qty</th>
-                                    <th></th>
-                                    <th class="text-right h5 font-weight-bold text-primary">৳{{ filteredProducts.reduce((sum, p) => sum + (p.stock * p.cost_price), 0).toFixed(2) }}</th>
-                                    <th class="d-print-none"></th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                        <!-- Index Cell -->
+                        <template #cell-index="{ index }">
+                            <span class="text-muted">{{ index + 1 }}</span>
+                        </template>
+
+                        <!-- Product Cell -->
+                        <template #cell-product="{ item }">
+                            <div class="d-flex align-items-center">
+                                <img :src="item.image || '/uploads/products/default.png'" 
+                                     class="rounded-circle border mr-3 d-print-none" 
+                                     style="width: 32px; height: 32px; object-fit: cover;">
+                                <div class="font-weight-bold text-dark text-sm">{{ item.name }}</div>
+                            </div>
+                        </template>
+
+                        <!-- SKU Cell -->
+                        <template #cell-sku="{ item }">
+                            <code class="text-xs px-2 py-1 bg-light rounded">{{ item.sku || 'N/A' }}</code>
+                        </template>
+
+                        <!-- Category Cell -->
+                        <template #cell-category="{ item }">
+                            <span class="text-muted text-xs">{{ item.category?.name || 'N/A' }}</span>
+                        </template>
+
+                        <!-- Stock Cell -->
+                        <template #cell-stock="{ item }">
+                            <span class="font-weight-bold" :class="item.stock <= 5 ? 'text-danger' : 'text-success'">
+                                {{ item.stock }} <small class="text-muted">{{ item.unit?.short_name || 'pcs' }}</small>
+                            </span>
+                        </template>
+
+                        <!-- Unit Cost Cell -->
+                        <template #cell-cost_price="{ item }">
+                            <span class="text-muted">৳{{ item.cost_price }}</span>
+                        </template>
+
+                        <!-- Stock Value Cell -->
+                        <template #cell-stock_value="{ item }">
+                            <span class="text-dark font-weight-bold">৳{{ (item.stock * item.cost_price).toFixed(2) }}</span>
+                        </template>
+
+                        <!-- Status Cell -->
+                        <template #cell-status="{ item }">
+                            <span v-if="item.stock <= 0" class="badge badge-danger">Out of Stock</span>
+                            <span v-else-if="item.stock <= 5" class="badge badge-warning text-white">Low Stock</span>
+                            <span v-else class="badge badge-success">Available</span>
+                        </template>
+
+                        <!-- Footer Slot -->
+                        <template #footer="{ filteredItems }">
+                            <tr class="bg-light d-print-table-row">
+                                <td colspan="4" class="text-right font-weight-bold py-3">Total Inventory Valuation:</td>
+                                <td class="text-center font-weight-bold">
+                                    {{ filteredItems.reduce((sum, p) => sum + p.stock, 0) }} Items
+                                </td>
+                                <td></td>
+                                <td class="text-right font-weight-bold text-indigo h6 mb-0 py-3">
+                                    ৳{{ filteredItems.reduce((sum, p) => sum + (p.stock * p.cost_price), 0).toFixed(2) }}
+                                </td>
+                                <td class="d-print-none"></td>
+                            </tr>
+                        </template>
+                    </PremiumTable>
                 </div>
             </div>
         </section>
     </AdminLayout>
 </template>
+
+<style scoped>
+@media print {
+    .main-sidebar, .main-header, .content-header, .table-actions-bar, .table-footer, .main-footer {
+        display: none !important;
+    }
+    .content-wrapper { margin-left: 0 !important; padding: 0 !important; background: white !important; }
+    .premium-card { border: 0 !important; box-shadow: none !important; }
+    .container-fluid { width: 100% !important; max-width: 100% !important; padding: 0 !important; }
+    .table thead th { background-color: #f1f5f9 !important; color: #000 !important; border-bottom: 2px solid #000 !important; }
+    .premium-table-container { padding: 0 !important; }
+}
+</style>
+template>
 
 <style scoped>
 @media print {

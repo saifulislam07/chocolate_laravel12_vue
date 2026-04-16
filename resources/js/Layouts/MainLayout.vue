@@ -34,6 +34,10 @@ watch(() => flash.value.success, (message) => {
 
 <template>
     <div class="min-h-screen bg-white font-sans text-godiva-charcoal antialiased">
+        <Head :title="($page.props.webSettings?.site_name || 'SweetChocholate') + ' | Premium Belgian Chocolate'">
+            <link v-if="$page.props.webSettings?.favicon" rel="icon" :href="$page.props.webSettings.favicon">
+        </Head>
+
         <!-- Toast Notification -->
         <Transition
             enter-active-class="transform ease-out duration-300 transition"
@@ -130,7 +134,7 @@ watch(() => flash.value.success, (message) => {
             >
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <Link href="/" @click="isMobileMenuOpen = false" class="flex items-center gap-2">
-                        <img src="/images/godiva/logo.png" alt="SweetChocholate" class="h-8 w-8" />
+                        <img :src="$page.props.webSettings?.logo || '/images/godiva/logo.png'" :alt="$page.props.webSettings?.site_name || 'SweetChocholate'" class="h-8 w-8 object-contain" />
                         <span class="font-serif text-xl font-bold">SweetChocholate</span>
                     </Link>
                     <button @click="isMobileMenuOpen = false" class="text-godiva-charcoal">
@@ -138,9 +142,8 @@ watch(() => flash.value.success, (message) => {
                     </button>
                 </div>
                 <nav class="flex flex-col items-center gap-8 py-12 text-sm font-bold uppercase tracking-[0.2em]">
-                    <a href="#" @click="isMobileMenuOpen = false">Easter</a>
-                    <a href="#" @click="isMobileMenuOpen = false">Best Sellers</a>
-                    <a href="#" @click="isMobileMenuOpen = false">Chocolate</a>
+                    <Link :href="route('products.index')" @click="isMobileMenuOpen = false">Shop All</Link>
+                    <a href="#" @click="isMobileMenuOpen = false">Easter Collection</a>
                     <a href="#" @click="isMobileMenuOpen = false">Gifts</a>
                     <Link :href="route('page.public', 'about-us')" @click="isMobileMenuOpen = false">About us</Link>
                 </nav>
@@ -156,9 +159,9 @@ watch(() => flash.value.success, (message) => {
             <div class="bg-godiva-prefooter py-10 border-b border-white/5">
                 <div class="mx-auto max-w-7xl px-6 flex flex-col md:flex-row justify-between items-center gap-6">
                     <h3 class="font-serif text-3xl italic tracking-wide">Give the gift of SweetChocholate</h3>
-                    <button class="bg-white text-godiva-charcoal px-10 py-3 text-[11px] font-bold uppercase tracking-widest transition hover:bg-gray-100">
+                    <Link :href="route('products.index')" class="bg-white text-godiva-charcoal px-10 py-3 text-[11px] font-bold uppercase tracking-widest transition hover:bg-gray-100">
                         Shop Now
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -166,8 +169,13 @@ watch(() => flash.value.success, (message) => {
                 <div class="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
                     <div class="text-center sm:text-left">
                         <Link href="/" class="flex flex-col items-center sm:items-start gap-4">
-                            <img src="/images/godiva/logo.png" alt="SweetChocholate" class="h-16 w-16 brightness-0 invert" />
-                            <span class="font-serif text-2xl font-bold tracking-tight">SweetChocholate</span>
+                            <img 
+                                :src="$page.props.webSettings?.footer_logo || $page.props.webSettings?.logo || '/images/godiva/logo.png'" 
+                                :alt="$page.props.webSettings?.site_name" 
+                                class="h-16 w-16 object-contain"
+                                :class="{ 'brightness-0 invert': !$page.props.webSettings?.footer_logo }"
+                            />
+                            <span class="font-serif text-2xl font-bold tracking-tight">{{ $page.props.webSettings?.site_name || 'SweetChocholate' }}</span>
                         </Link>
                         <p class="mt-6 text-[11px] leading-relaxed text-gray-400 tracking-wider">
                             Established in 1926 in Brussels, Belgium. The world's finest premium Belgian chocolate.

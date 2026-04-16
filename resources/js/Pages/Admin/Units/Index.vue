@@ -1,11 +1,19 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
-defineProps({
+const props = defineProps({
     units: Array
 });
+
+const columns = [
+    { key: 'index', label: '#', sortable: true, width: '60px' },
+    { key: 'name', label: 'Unit Name', sortable: true },
+    { key: 'short_name', label: 'Short Name', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false, width: '120px' }
+];
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -62,56 +70,52 @@ function deleteUnit(id) {
     <AdminLayout>
         <div class="content-header">
             <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark">Units</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="m-0 text-dark font-bold h3">Measurement Units</h1>
+                        <p class="text-muted text-sm mb-0">Define units for product weight, volume, or count</p>
                     </div>
+                    <button class="btn btn-primary shadow-sm" @click="openCreateModal">
+                        <i class="fas fa-plus mr-2"></i> Add Unit
+                    </button>
                 </div>
             </div>
         </div>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="card card-primary card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title">Unit List</h3>
-                        <div class="card-tools">
-                            <button class="btn btn-primary btn-sm" @click="openCreateModal">
-                                <i class="fas fa-plus mr-1"></i> Add Unit
+                <PremiumTable 
+                    :items="units" 
+                    :headers="columns"
+                    search-placeholder="Search units..."
+                >
+                    <!-- Index Cell -->
+                    <template #cell-index="{ index }">
+                        <span class="text-muted">{{ index + 1 }}</span>
+                    </template>
+
+                    <!-- Name Cell -->
+                    <template #cell-name="{ item }">
+                        <span class="font-weight-bold text-dark">{{ item.name }}</span>
+                    </template>
+
+                    <!-- Short Name Cell -->
+                    <template #cell-short_name="{ item }">
+                        <code class="text-xs px-2 py-1 bg-light rounded text-indigo">{{ item.short_name }}</code>
+                    </template>
+
+                    <!-- Actions Cell -->
+                    <template #cell-actions="{ item }">
+                        <div class="d-flex">
+                            <button @click="openEditModal(item)" class="btn btn-light btn-sm mr-2 border shadow-none">
+                                <i class="fas fa-edit text-primary text-xs"></i>
+                            </button>
+                            <button @click="deleteUnit(item.id)" class="btn btn-light btn-sm border shadow-none">
+                                <i class="fas fa-trash text-danger text-xs"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-hover table-striped">
-                            <thead>
-                                <tr>
-                                    <th style="width: 10px">#</th>
-                                    <th>Unit Name</th>
-                                    <th>Short Name</th>
-                                    <th style="width: 150px">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(unit, index) in units" :key="unit.id">
-                                    <td>{{ index + 1 }}</td>
-                                    <td class="font-weight-bold">{{ unit.name }}</td>
-                                    <td><code>{{ unit.short_name }}</code></td>
-                                    <td>
-                                        <button class="btn btn-info btn-xs mr-1" @click="openEditModal(unit)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-danger btn-xs" @click="deleteUnit(unit.id)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="units.length === 0">
-                                    <td colspan="4" class="text-center p-4 text-muted">No units found. Click "Add Unit" to create one.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    </template>
+                </PremiumTable>
             </div>
         </section>
 

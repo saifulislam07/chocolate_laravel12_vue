@@ -14,9 +14,10 @@ const props = defineProps({
     },
 });
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
+const moneyFormatter = new Intl.NumberFormat("en-BD", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT",
+    minimumFractionDigits: 0,
 });
 
 function formatMoney(amount) {

@@ -1,20 +1,25 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps({
     products: Array
 });
 
-const searchTerm = ref('');
+const columns = [
+    { key: 'index', label: '#', sortable: true, width: '50px' },
+    { key: 'details', label: 'Product Details', sortable: true },
+    { key: 'total_purchased', label: 'Total Purchased', sortable: true, cellClass: 'text-center' },
+    { key: 'stock', label: 'Stock Remaining', sortable: true, cellClass: 'text-center' },
+    { key: 'cost_price', label: 'Cost Price', sortable: true, cellClass: 'text-right font-bold' },
+    { key: 'price', label: 'Sale Price', sortable: true, cellClass: 'text-right font-bold text-indigo' }
+];
 
-const filteredProducts = computed(() => {
-    return props.products.filter(p => 
-        p.name.toLowerCase().includes(searchTerm.value.toLowerCase()) || 
-        (p.sku && p.sku.toLowerCase().includes(searchTerm.value.toLowerCase()))
-    );
-});
+const printReport = () => {
+    window.print();
+};
 </script>
 
 <template>
@@ -23,65 +28,73 @@ const filteredProducts = computed(() => {
     <AdminLayout>
         <div class="content-header d-print-none">
             <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark font-weight-bold"><i class="fas fa-barcode mr-2 text-info"></i>Product Performance</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="m-0 text-dark font-bold h3">Product Performance</h1>
+                        <p class="text-muted text-sm mb-0">Monitor product stock movements and pricing analysis</p>
                     </div>
+                    <button @click="printReport" class="btn btn-primary shadow-sm rounded-pill px-4">
+                        <i class="fas fa-print mr-2"></i> Print Report
+                    </button>
                 </div>
             </div>
         </div>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="card card-outline card-info shadow-sm" style="border-radius: 12px;">
-                    <div class="card-header border-0 d-print-none">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <input type="text" v-model="searchTerm" class="form-control" placeholder="Search by name or SKU...">
-                            </div>
-                            <div class="col-md-8 text-right">
-                                <button onclick="window.print()" class="btn btn-info px-4 shadow-sm text-white font-weight-bold">
-                                    <i class="fas fa-print mr-1"></i> Print Report
-                                </button>
-                            </div>
-                        </div>
+                <div class="premium-card bg-white rounded-lg shadow-sm">
+                    <div class="text-center d-none d-print-block mb-4 pt-4">
+                        <h2 class="font-weight-bold mb-0">SWEET CHOCOLATE</h2>
+                        <p class="text-muted">Product Movement & Performance Report</p>
                     </div>
-                    <div class="card-body p-0">
-                        <table class="table table-hover table-striped mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Product Details</th>
-                                    <th class="text-center">Total Purchased</th>
-                                    <th class="text-center">Stock Remaining</th>
-                                    <th class="text-right">Cost Price</th>
-                                    <th class="text-right">Sale Price</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(p, index) in filteredProducts" :key="p.id">
-                                    <td>{{ index + 1 }}</td>
-                                    <td>
-                                        <span class="font-weight-bold">{{ p.name }}</span><br>
-                                        <small class="text-muted">SKU: {{ p.sku || 'N/A' }} | Category: {{ p.category?.name || 'N/A' }}</small>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge badge-info shadow-sm px-2">{{ p.total_purchased || 0 }} {{ p.unit?.short_name || 'pcs' }}</span>
-                                    </td>
-                                    <td class="text-center font-weight-bold" :class="p.stock <= 5 ? 'text-danger' : 'text-success'">
-                                        {{ p.stock }} {{ p.unit?.short_name || 'pcs' }}
-                                    </td>
-                                    <td class="text-right font-weight-bold">৳{{ parseFloat(p.cost_price).toFixed(2) }}</td>
-                                    <td class="text-right font-weight-bold text-primary">৳{{ parseFloat(p.price).toFixed(2) }}</td>
-                                </tr>
-                                <tr v-if="filteredProducts.length === 0">
-                                    <td colspan="6" class="text-center p-5 text-muted h5">No product records found.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+                    <PremiumTable 
+                        :items="products" 
+                        :headers="columns"
+                        search-placeholder="Search by product name or SKU..."
+                    >
+                        <!-- Index Cell -->
+                        <template #cell-index="{ index }">
+                            <span class="text-muted">{{ index + 1 }}</span>
+                        </template>
+
+                        <!-- Details Cell -->
+                        <template #cell-details="{ item }">
+                            <div class="font-weight-bold text-dark">{{ item.name }}</div>
+                            <div class="text-xs text-muted">SKU: {{ item.sku || 'N/A' }} | Category: {{ item.category?.name || 'N/A' }}</div>
+                        </template>
+
+                        <!-- Total Purchased Cell -->
+                        <template #cell-total_purchased="{ item }">
+                            <span class="badge badge-info-soft text-info border px-2">{{ item.total_purchased || 0 }} {{ item.unit?.short_name || 'pcs' }}</span>
+                        </template>
+
+                        <!-- Stock Cell -->
+                        <template #cell-stock="{ item }">
+                            <span class="font-weight-bold" :class="item.stock <= 5 ? 'text-danger' : 'text-success'">
+                                {{ item.stock }} {{ item.unit?.short_name || 'pcs' }}
+                            </span>
+                        </template>
+
+                        <!-- Prices -->
+                        <template #cell-cost_price="{ item }">৳{{ parseFloat(item.cost_price).toFixed(2) }}</template>
+                        <template #cell-price="{ item }">৳{{ parseFloat(item.price).toFixed(2) }}</template>
+                    </PremiumTable>
                 </div>
             </div>
         </section>
     </AdminLayout>
 </template>
+
+<style scoped>
+@media print {
+    .main-sidebar, .main-header, .content-header, .table-actions-bar, .table-footer, .main-footer {
+        display: none !important;
+    }
+    .content-wrapper { margin-left: 0 !important; padding: 0 !important; background: white !important; }
+    .premium-card { border: 0 !important; box-shadow: none !important; }
+    .container-fluid { width: 100% !important; max-width: 100% !important; padding: 0 !important; }
+    .table thead th { background-color: #f1f5f9 !important; color: #000 !important; border-bottom: 2px solid #000 !important; }
+    .premium-table-container { padding: 0 !important; }
+}
+</style>

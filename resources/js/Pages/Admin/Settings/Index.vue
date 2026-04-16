@@ -19,6 +19,7 @@ const form = useForm({
     smtp_password: props.settings?.smtp_password || '',
     smtp_encryption: props.settings?.smtp_encryption || 'tls',
     logo: null,
+    footer_logo: null,
     favicon: null,
 });
 
@@ -124,11 +125,18 @@ function submit() {
                                 </div>
                                 <div class="card-body text-center">
                                     <div class="mb-4">
-                                        <label class="d-block text-xs font-weight-bold text-muted mb-2">SYSTEM LOGO</label>
-                                        <div class="bg-light p-3 border rounded mb-2">
+                                        <label class="d-block text-xs font-weight-bold text-muted mb-2">SYSTEM LOGO (HEADER)</label>
+                                        <div class="bg-light p-3 border rounded mb-2 text-center">
                                             <img :src="settings?.logo || 'https://via.placeholder.com/150x50?text=No+Logo'" class="img-fluid" style="max-height: 50px;">
                                         </div>
                                         <input type="file" @input="form.logo = $event.target.files[0]" class="form-control-file">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="d-block text-xs font-weight-bold text-muted mb-2">FOOTER LOGO</label>
+                                        <div class="bg-dark p-3 border rounded mb-2 text-center">
+                                            <img :src="settings?.footer_logo || 'https://via.placeholder.com/150x50?text=No+Logo'" class="img-fluid" style="max-height: 50px;">
+                                        </div>
+                                        <input type="file" @input="form.footer_logo = $event.target.files[0]" class="form-control-file">
                                     </div>
                                     <div class="mb-0">
                                         <label class="d-block text-xs font-weight-bold text-muted mb-2">FAVICON</label>

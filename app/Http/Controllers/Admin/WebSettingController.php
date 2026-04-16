@@ -35,11 +35,30 @@ class WebSettingController extends Controller
         ]);
 
         if ($request->hasFile('logo')) {
-            $validated['logo'] = '/' . $request->file('logo')->store('uploads/settings', 'public');
+            if ($settings->logo) {
+                $oldPath = str_replace('/uploads/', '', $settings->logo);
+                \Illuminate\Support\Facades\Storage::disk('uploads')->delete($oldPath);
+            }
+            $path = $request->file('logo')->store('settings', 'uploads');
+            $validated['logo'] = '/uploads/' . $path;
+        }
+
+        if ($request->hasFile('footer_logo')) {
+            if ($settings->footer_logo) {
+                $oldPath = str_replace('/uploads/', '', $settings->footer_logo);
+                \Illuminate\Support\Facades\Storage::disk('uploads')->delete($oldPath);
+            }
+            $path = $request->file('footer_logo')->store('settings', 'uploads');
+            $validated['footer_logo'] = '/uploads/' . $path;
         }
         
         if ($request->hasFile('favicon')) {
-            $validated['favicon'] = '/' . $request->file('favicon')->store('uploads/settings', 'public');
+            if ($settings->favicon) {
+                $oldPath = str_replace('/uploads/', '', $settings->favicon);
+                \Illuminate\Support\Facades\Storage::disk('uploads')->delete($oldPath);
+            }
+            $path = $request->file('favicon')->store('settings', 'uploads');
+            $validated['favicon'] = '/uploads/' . $path;
         }
 
         if ($settings->id) {

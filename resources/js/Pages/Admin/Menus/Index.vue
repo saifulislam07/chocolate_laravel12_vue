@@ -69,75 +69,90 @@ const deleteMenu = (id) => {
     <AdminLayout>
         <div class="content-header">
             <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark font-weight-bold"><i class="fas fa-list mr-2 text-info"></i>Dynamic Navigation</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="m-0 text-dark font-bold h3">Dynamic Navigation</h1>
+                        <p class="text-muted text-sm mb-0">Build and organize your multi-level site navigation</p>
                     </div>
+                    <button class="btn btn-primary shadow-sm rounded-pill px-4 font-bold" @click="openCreateModal">
+                        <i class="fas fa-plus mr-2"></i> Add Menu Item
+                    </button>
                 </div>
             </div>
         </div>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="card card-info card-outline shadow-sm" style="border-radius: 12px;">
-                    <div class="card-header border-0">
-                        <h3 class="card-title font-weight-bold">Site Menu Builder</h3>
-                        <div class="card-tools">
-                            <button class="btn btn-info btn-sm rounded-pill px-3 shadow-sm text-white font-weight-bold" @click="openCreateModal">
-                                <i class="fas fa-plus mr-1"></i> Add Menu Item
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-striped mb-0">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th>Order</th>
-                                        <th>Name</th>
-                                        <th>Target URL / Slug</th>
-                                        <th class="text-center">Status</th>
-                                        <th style="width: 150px" class="text-right pr-4">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template v-for="menu in menus" :key="menu.id">
-                                        <tr class="bg-light-blue">
-                                            <td style="width: 80px"><code>#{{ menu.order }}</code></td>
-                                            <td class="font-weight-bold text-primary">{{ menu.name }}</td>
-                                            <td><span class="text-muted">{{ menu.url || '---' }}</span></td>
-                                            <td class="text-center">
-                                                <span class="badge" :class="menu.is_active ? 'badge-success' : 'badge-danger'">{{ menu.is_active ? 'Active' : 'Inactive' }}</span>
-                                            </td>
-                                            <td class="text-right pr-4">
-                                                <button class="btn btn-outline-info btn-xs mr-1 p-1 px-2" @click="openEditModal(menu)">
-                                                    <i class="fas fa-edit"></i>
+                <div class="premium-card bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-slate-50 border-bottom">
+                                <tr>
+                                    <th class="py-3 px-4 text-xs font-bold text-slate-500 text-uppercase tracking-wider" style="width: 100px">Order</th>
+                                    <th class="py-3 px-4 text-xs font-bold text-slate-500 text-uppercase tracking-wider">Name</th>
+                                    <th class="py-3 px-4 text-xs font-bold text-slate-500 text-uppercase tracking-wider">Target URL / Slug</th>
+                                    <th class="py-3 px-4 text-xs font-bold text-slate-500 text-uppercase tracking-wider text-center">Status</th>
+                                    <th class="py-3 px-4 text-xs font-bold text-slate-500 text-uppercase tracking-wider text-right pr-4" style="width: 150px">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size: 0.85rem;">
+                                <template v-for="menu in menus" :key="menu.id">
+                                    <tr class="bg-indigo-50 border-bottom">
+                                        <td class="px-4"><span class="badge badge-light border px-2 py-1">#{{ menu.order }}</span></td>
+                                        <td class="px-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="icon-circle bg-indigo-soft mr-3" style="width: 32px; height: 32px;">
+                                                    <i class="fas fa-bars text-indigo text-xs"></i>
+                                                </div>
+                                                <span class="font-bold text-indigo">{{ menu.name }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4"><code class="text-xs">{{ menu.url || '---' }}</code></td>
+                                        <td class="text-center px-4">
+                                            <span class="badge" :class="menu.is_active ? 'badge-success' : 'badge-danger'">{{ menu.is_active ? 'Active' : 'Inactive' }}</span>
+                                        </td>
+                                        <td class="text-right px-4 pr-4">
+                                            <div class="d-flex justify-content-end">
+                                                <button class="btn btn-light btn-sm mr-2 border shadow-none" @click="openEditModal(menu)">
+                                                    <i class="fas fa-edit text-primary text-xs"></i>
                                                 </button>
-                                                <button class="btn btn-outline-danger btn-xs p-1 px-2" @click="deleteMenu(menu.id)">
-                                                    <i class="fas fa-trash"></i>
+                                                <button class="btn btn-light btn-sm border shadow-none" @click="deleteMenu(menu.id)">
+                                                    <i class="fas fa-trash text-danger text-xs"></i>
                                                 </button>
-                                            </td>
-                                        </tr>
-                                        <!-- Children -->
-                                        <tr v-for="child in menu.children" :key="child.id">
-                                            <td class="pl-4"><code>- {{ child.order }}</code></td>
-                                            <td class="pl-4"><i class="fas fa-level-up-alt fa-rotate-90 text-muted mr-2"></i> {{ child.name }}</td>
-                                            <td><span class="text-muted small">{{ child.url }}</span></td>
-                                            <td class="text-center">
-                                                <span class="badge badge-pill border" :class="child.is_active ? 'text-success border-success' : 'text-danger border-danger'">{{ child.is_active ? 'Active' : 'Inactive' }}</span>
-                                            </td>
-                                            <td class="text-right pr-4">
-                                                <button class="btn btn-link btn-xs mr-1 text-info" @click="openEditModal(child)"><i class="fas fa-edit"></i></button>
-                                                <button class="btn btn-link btn-xs text-danger" @click="deleteMenu(child.id)"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                    <tr v-if="menus.length === 0">
-                                        <td colspan="5" class="text-center p-5 text-muted h5">No menu items defined yet.</td>
+                                            </div>
+                                        </td>
                                     </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                    <!-- Children -->
+                                    <tr v-for="child in menu.children" :key="child.id" class="border-bottom hover-bg-slate-50">
+                                        <td class="pl-5"><span class="text-muted text-xs">{{ child.order }}</span></td>
+                                        <td class="pl-5">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-level-up-alt fa-rotate-90 text-slate-300 mr-3"></i>
+                                                <span class="text-slate-700 font-medium">{{ child.name }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4"><span class="text-slate-400 text-xs">{{ child.url }}</span></td>
+                                        <td class="text-center px-4">
+                                            <span class="badge badge-pill border text-xs" :class="child.is_active ? 'text-success border-success bg-success-soft' : 'text-danger border-danger bg-danger-soft'">{{ child.is_active ? 'Active' : 'Inactive' }}</span>
+                                        </td>
+                                        <td class="text-right px-4 pr-4">
+                                            <div class="d-flex justify-content-end">
+                                                <button class="btn btn-link py-0 px-2 text-primary" @click="openEditModal(child)"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-link py-0 px-2 text-danger" @click="deleteMenu(child.id)"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr v-if="menus.length === 0">
+                                    <td colspan="5" class="text-center p-5 text-slate-400">
+                                        <div class="py-4">
+                                            <i class="fas fa-sitemap mb-3" style="font-size: 2rem; opacity: 0.2;"></i>
+                                            <p class="mb-0">No menu items defined yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -7,11 +8,23 @@ const props = defineProps({
     purchases: Array
 });
 
-const totalPurchases = computed(() => {
+const columns = [
+    { key: 'reference_no', label: 'Ref No', sortable: true },
+    { key: 'supplier', label: 'Supplier', sortable: true },
+    { key: 'purchase_date', label: 'Date', sortable: true },
+    { key: 'total_amount', label: 'Total', sortable: true, cellClass: 'text-right' },
+    { key: 'paid_amount', label: 'Paid', sortable: true, cellClass: 'text-right' },
+    { key: 'due_amount', label: 'Due', sortable: true, cellClass: 'text-right' },
+    { key: 'status', label: 'Status', sortable: true },
+    { key: 'payment_status', label: 'Payment', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false, width: '150px' }
+];
+
+const totalPurchasesValue = computed(() => {
     return props.purchases.reduce((sum, item) => sum + parseFloat(item.total_amount), 0).toFixed(2);
 });
 
-const totalDue = computed(() => {
+const totalDueValue = computed(() => {
     return props.purchases.reduce((sum, item) => sum + parseFloat(item.due_amount), 0).toFixed(2);
 });
 
@@ -42,96 +55,110 @@ function deletePurchase(id) {
     <AdminLayout>
         <div class="content-header">
             <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark">Purchases</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="m-0 text-dark font-bold h3">Purchases</h1>
+                        <p class="text-muted text-sm mb-0">Track inventory acquisitions and supplier payments</p>
                     </div>
+                    <Link :href="route('admin.purchases.create')" class="btn btn-primary shadow-sm">
+                        <i class="fas fa-plus mr-2"></i> New Purchase
+                    </Link>
                 </div>
             </div>
         </div>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="row">
+                <div class="row mb-4">
                     <div class="col-md-3">
-                        <div class="info-box bg-info shadow-sm">
-                            <span class="info-box-icon"><i class="fas fa-file-invoice-dollar"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Total Purchase</span>
-                                <span class="info-box-number">৳{{ totalPurchases }}</span>
+                        <div class="premium-stat-card bg-white p-3 rounded-lg shadow-sm border border-info-soft">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-info-soft mr-3">
+                                    <i class="fas fa-file-invoice-dollar text-info"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Total Purchase</div>
+                                    <div class="h4 font-bold mb-0 text-info">৳{{ totalPurchasesValue }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="info-box bg-danger shadow-sm">
-                            <span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Total Due</span>
-                                <span class="info-box-number">৳{{ totalDue }}</span>
+                        <div class="premium-stat-card bg-white p-3 rounded-lg shadow-sm border border-danger-soft">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-danger-soft mr-3">
+                                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Total Due</div>
+                                    <div class="h4 font-bold mb-0 text-danger">৳{{ totalDueValue }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card card-primary card-outline shadow-sm">
-                    <div class="card-header border-0">
-                        <h3 class="card-title">Purchase Records</h3>
-                        <div class="card-tools">
-                            <Link :href="route('admin.purchases.create')" class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus mr-1"></i> New Purchase
+                <PremiumTable 
+                    :items="purchases" 
+                    :headers="columns"
+                    search-placeholder="Search by ref no or supplier..."
+                >
+                    <!-- Ref No Cell -->
+                    <template #cell-reference_no="{ item }">
+                        <code class="text-xs px-2 py-1 bg-light rounded text-dark">{{ item.reference_no }}</code>
+                    </template>
+
+                    <!-- Supplier Cell -->
+                    <template #cell-supplier="{ item }">
+                        <div class="font-weight-bold text-dark">{{ item.supplier?.name }}</div>
+                        <div class="text-xs text-muted" v-if="item.supplier?.company_name">{{ item.supplier.company_name }}</div>
+                    </template>
+
+                    <!-- Date Cell -->
+                    <template #cell-purchase_date="{ item }">
+                        <span class="text-sm">{{ item.purchase_date }}</span>
+                    </template>
+
+                    <!-- Total Amount Cell -->
+                    <template #cell-total_amount="{ item }">
+                        <div class="font-weight-bold text-dark text-right">৳{{ item.total_amount }}</div>
+                    </template>
+
+                    <!-- Paid Amount Cell -->
+                    <template #cell-paid_amount="{ item }">
+                        <div class="text-success text-right font-medium">৳{{ item.paid_amount }}</div>
+                    </template>
+
+                    <!-- Due Amount Cell -->
+                    <template #cell-due_amount="{ item }">
+                        <div class="text-danger text-right font-medium">৳{{ item.due_amount }}</div>
+                    </template>
+
+                    <!-- Status Cell -->
+                    <template #cell-status="{ item }">
+                        <span class="badge" :class="getStatusBadge(item.status)">{{ item.status }}</span>
+                    </template>
+
+                    <!-- Payment Status Cell -->
+                    <template #cell-payment_status="{ item }">
+                        <span class="badge" :class="getPaymentBadge(item.payment_status)">{{ item.payment_status }}</span>
+                    </template>
+
+                    <!-- Actions Cell -->
+                    <template #cell-actions="{ item }">
+                        <div class="d-flex">
+                            <Link :href="route('admin.purchases.show', item.id)" class="btn btn-light btn-sm mr-2 border shadow-none" title="View">
+                                <i class="fas fa-eye text-info text-xs"></i>
                             </Link>
+                            <Link :href="route('admin.purchases.edit', item.id)" class="btn btn-light btn-sm mr-2 border shadow-none" title="Edit">
+                                <i class="fas fa-edit text-primary text-xs"></i>
+                            </Link>
+                            <button @click="deletePurchase(item.id)" class="btn btn-light btn-sm border shadow-none" title="Delete">
+                                <i class="fas fa-trash text-danger text-xs"></i>
+                            </button>
                         </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-hover table-striped table-valign-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width: 10px">#</th>
-                                    <th>Ref No</th>
-                                    <th>Supplier</th>
-                                    <th>Date</th>
-                                    <th>Total</th>
-                                    <th>Paid</th>
-                                    <th>Due</th>
-                                    <th>Status</th>
-                                    <th>Payment</th>
-                                    <th style="width: 150px">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(purchase, index) in purchases" :key="purchase.id">
-                                    <td>{{ index + 1 }}</td>
-                                    <td><code>{{ purchase.reference_no }}</code></td>
-                                    <td class="text-bold">{{ purchase.supplier?.name }}</td>
-                                    <td>{{ purchase.purchase_date }}</td>
-                                    <td>৳{{ purchase.total_amount }}</td>
-                                    <td class="text-success">৳{{ purchase.paid_amount }}</td>
-                                    <td class="text-danger">৳{{ purchase.due_amount }}</td>
-                                    <td>
-                                        <span class="badge" :class="getStatusBadge(purchase.status)">{{ purchase.status }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge" :class="getPaymentBadge(purchase.payment_status)">{{ purchase.payment_status }}</span>
-                                    </td>
-                                    <td>
-                                        <Link :href="route('admin.purchases.show', purchase.id)" class="btn btn-info btn-xs mr-1" title="View Detail">
-                                            <i class="fas fa-eye"></i>
-                                        </Link>
-                                        <Link :href="route('admin.purchases.edit', purchase.id)" class="btn btn-warning btn-xs mr-1" title="Edit Record">
-                                            <i class="fas fa-edit"></i>
-                                        </Link>
-                                        <button class="btn btn-danger btn-xs" @click="deletePurchase(purchase.id)" title="Delete & Reverse Stock">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="purchases.length === 0">
-                                    <td colspan="10" class="text-center p-4 text-muted">No purchase records found. Click "New Purchase" to add.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    </template>
+                </PremiumTable>
             </div>
         </section>
     </AdminLayout>

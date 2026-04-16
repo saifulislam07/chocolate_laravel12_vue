@@ -13,6 +13,13 @@
         @routes
         @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
         @inertiaHead
+
+        @php
+            $webSettings = \App\Models\WebSetting::first();
+        @endphp
+        @if($webSettings && $webSettings->favicon)
+            <link rel="icon" type="image/png" href="{{ $webSettings->favicon }}">
+        @endif
     </head>
     <body class="font-sans antialiased">
         @inertia

@@ -2,12 +2,56 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProductController extends Controller
 {
+    public function index(Request $request): Response
+    {
+        $query = Product::query()
+            ->with(['images', 'category'])
+            ->where('is_active', true);
+
+        // Filter by Category
+        if ($request->filled('category')) {
+            $query->whereHas('category', function ($q) use ($request) {
+                $q->where('slug', $request->category);
+            });
+        }
+
+        // Filter by Price Range
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        // Sorting
+        switch ($request->sort) {
+            case 'price_asc':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('price', 'desc');
+                break;
+            default:
+                $query->latest();
+                break;
+        }
+
+        $products = $query->paginate(12)->withQueryString();
+
+        return Inertia::render('Products/Index', [
+            'products' => $products,
+            'categories' => Category::whereHas('products')->orderBy('name')->get(['id', 'name', 'slug']),
+            'filters' => $request->only(['category', 'min_price', 'max_price', 'sort']),
+        ]);
+    }
     public function show(Product $product): Response
     {
         abort_unless($product->is_active, 404);

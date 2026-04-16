@@ -50,9 +50,10 @@ const categories = [
 
 const fallbackImage = "/images/godiva/product_default.png";
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
+const moneyFormatter = new Intl.NumberFormat("en-BD", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT",
+    minimumFractionDigits: 0,
 });
 
 function formatMoney(amount) {
@@ -196,9 +197,9 @@ function addToCart(productId) {
         <section v-if="newArrivals.length" class="mx-auto max-w-7xl px-6 py-20">
             <div class="mb-12 flex items-center justify-between border-b border-gray-200 pb-6">
                 <h2 class="font-serif text-3xl italic">New Arrivals</h2>
-                <a href="#" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition">
+                <Link :href="route('products.index')" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition">
                     Discover New
-                </a>
+                </Link>
             </div>
             <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                 <article v-for="product in newArrivals" :key="product.id" class="group relative flex flex-col bg-white">
@@ -222,7 +223,7 @@ function addToCart(productId) {
             <div class="mx-auto max-w-7xl px-6">
                 <div class="mb-12 flex items-center justify-between border-b border-gray-200 pb-6">
                     <h2 class="font-serif text-3xl italic">Signature Featured</h2>
-                    <a href="#" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition text-left-sm">View Collections</a>
+                    <Link :href="route('products.index')" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition text-left-sm">View Collections</Link>
                 </div>
                 <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                     <article v-for="product in featuredItems" :key="product.id" class="group relative flex flex-col bg-white">
@@ -247,7 +248,7 @@ function addToCart(productId) {
         <section v-if="discountItems.length" class="mx-auto max-w-7xl px-6 py-20">
             <div class="mb-12 flex items-center justify-between border-b border-gray-200 pb-6">
                 <h2 class="font-serif text-3xl italic">Sweet Offers & Sale</h2>
-                <a href="#" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition">Shop All Sale</a>
+                <Link :href="route('products.index')" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition">Shop All Sale</Link>
             </div>
             <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                 <article v-for="product in discountItems" :key="product.id" class="group relative flex flex-col bg-white">

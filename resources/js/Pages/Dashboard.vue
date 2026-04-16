@@ -19,82 +19,96 @@ const formatCurrency = (amount) => {
 
     <AdminLayout>
         <!-- Header -->
-        <div class="mb-6">
-            <h1 class="text-2xl font-bold text-slate-800">Operational Overview</h1>
-            <p class="text-slate-500 text-sm">Real-time metrics and business performance analytics.</p>
+        <div class="mb-8 d-flex justify-content-between align-items-end">
+            <div>
+                <h1 class="text-3xl font-bold text-dark mb-1">Operational Overview</h1>
+                <p class="text-slate-500 text-sm font-medium">Real-time metrics and business performance analytics.</p>
+            </div>
+            <div class="d-none d-md-block">
+                <button class="btn btn-white border shadow-sm mr-2 bg-white"><i class="fas fa-file-export mr-2 text-primary"></i> Export Report</button>
+                <Link :href="route('admin.pos.index')" class="btn btn-primary"><i class="fas fa-bolt mr-2"></i> Quick POS</Link>
+            </div>
         </div>
 
         <section class="content">
-            <!-- Summary Stats -->
+            <!-- Summary Stats with Vibrant Styling -->
             <div class="row">
+                <!-- Revenue -->
                 <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card h-100 border-0 shadow-sm overflow-hidden">
-                        <div class="card-body p-4 border-left-primary">
-                            <div class="d-flex justify-content-between">
+                    <div class="card h-100 border-0 shadow-sm group">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
                                 <div>
-                                    <p class="text-slate-500 text-xs font-bold text-uppercase tracking-wider mb-2">Net Revenue</p>
-                                    <h3 class="text-2xl font-bold mb-0 text-slate-800">{{ formatCurrency(stats.total_sales) }}</h3>
+                                    <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-1">Net Revenue</p>
+                                    <h3 class="text-2xl font-black text-dark tracking-tight mb-0">{{ formatCurrency(stats.total_sales) }}</h3>
                                 </div>
-                                <div class="bg-indigo-50 p-3 rounded-lg flex-center" style="width: 50px; height: 50px;">
-                                    <i class="fas fa-dollar-sign text-indigo-600"></i>
+                                <div class="p-3 rounded-2xl bg-indigo-500 shadow-lg shadow-indigo-100 text-white flex-center" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-wallet"></i>
                                 </div>
                             </div>
-                            <div class="mt-3 text-xs text-green-600 font-semibold">
-                                <i class="fas fa-arrow-up mr-1"></i> 12.5% <span class="text-slate-400 font-normal ml-1">vs last month</span>
+                            <div class="d-flex align-items-center text-xs">
+                                <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold mr-2 text-[10px]">+12.5%</span>
+                                <span class="text-slate-400 font-medium tracking-tight">vs last month</span>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Orders -->
                 <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body p-4 border-left-info">
-                            <div class="d-flex justify-content-between">
+                    <div class="card h-100 border-0 shadow-sm group">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
                                 <div>
-                                    <p class="text-slate-500 text-xs font-bold text-uppercase tracking-wider mb-2">Total Orders</p>
-                                    <h3 class="text-2xl font-bold mb-0 text-slate-800">{{ stats.orders_count }}</h3>
+                                    <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-1">Total Orders</p>
+                                    <h3 class="text-2xl font-black text-dark tracking-tight mb-0">{{ stats.orders_count }}</h3>
                                 </div>
-                                <div class="bg-blue-50 p-3 rounded-lg flex-center" style="width: 50px; height: 50px;">
-                                    <i class="fas fa-shopping-cart text-blue-600"></i>
+                                <div class="p-3 rounded-2xl bg-blue-500 shadow-lg shadow-blue-100 text-white flex-center" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-shopping-bag"></i>
                                 </div>
                             </div>
-                            <div class="mt-3 text-xs text-slate-400 font-normal">
-                                Average order value: <span class="font-bold text-slate-700">{{ formatCurrency(stats.total_sales / (stats.orders_count || 1)) }}</span>
+                            <div class="text-xs text-slate-400 font-medium">
+                                Average: <span class="text-dark font-bold">{{ formatCurrency(stats.total_sales / (stats.orders_count || 1)) }}</span> / order
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Customers -->
                 <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body p-4 border-left-success">
-                            <div class="d-flex justify-content-between">
+                    <div class="card h-100 border-0 shadow-sm group">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
                                 <div>
-                                    <p class="text-slate-500 text-xs font-bold text-uppercase tracking-wider mb-2">Customers</p>
-                                    <h3 class="text-2xl font-bold mb-0 text-slate-800">{{ stats.customers_count }}</h3>
+                                    <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-1">Total Customers</p>
+                                    <h3 class="text-2xl font-black text-dark tracking-tight mb-0">{{ stats.customers_count }}</h3>
                                 </div>
-                                <div class="bg-emerald-50 p-3 rounded-lg flex-center" style="width: 50px; height: 50px;">
-                                    <i class="fas fa-user-friends text-emerald-600"></i>
+                                <div class="p-3 rounded-2xl bg-emerald-500 shadow-lg shadow-emerald-100 text-white flex-center" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-users-viewfinder"></i>
                                 </div>
                             </div>
-                            <div class="mt-3 text-xs text-green-600 font-semibold">
-                                <i class="fas fa-user-plus mr-1"></i> {{ Math.floor(stats.customers_count * 0.1) }} new <span class="text-slate-400 font-normal ml-1">this week</span>
+                            <div class="d-flex align-items-center text-xs text-emerald-600 font-bold">
+                                <i class="fas fa-chart-line mr-2"></i> Growing steadily
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Stock Alerts -->
                 <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body p-4 border-left-danger">
-                            <div class="d-flex justify-content-between">
+                    <div class="card h-100 border-0 shadow-sm group">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
                                 <div>
-                                    <p class="text-slate-500 text-xs font-bold text-uppercase tracking-wider mb-2">Stock Alerts</p>
-                                    <h3 class="text-2xl font-bold mb-0 text-slate-800">{{ stats.low_stock_count }}</h3>
+                                    <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-1">Stock Alerts</p>
+                                    <h3 class="text-2xl font-black text-dark tracking-tight mb-0">{{ stats.low_stock_count }}</h3>
                                 </div>
-                                <div class="bg-rose-50 p-3 rounded-lg flex-center" style="width: 50px; height: 50px;">
-                                    <i class="fas fa-exclamation-circle text-rose-600"></i>
+                                <div class="p-3 rounded-2xl bg-rose-500 shadow-lg shadow-rose-100 text-white flex-center" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-layer-group"></i>
                                 </div>
                             </div>
-                             <div class="mt-3">
-                                <Link :href="route('admin.reports.stock')" class="text-xs text-rose-600 font-bold hover:underline">Restock Required &rarr;</Link>
+                            <div class="d-flex align-items-center">
+                                <Link :href="route('admin.products.index')" class="text-[10px] uppercase tracking-widest font-black text-rose-600 hover:text-rose-800 transition-colors">Review Inventory &rarr;</Link>
                             </div>
                         </div>
                     </div>

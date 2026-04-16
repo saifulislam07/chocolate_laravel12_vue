@@ -13,7 +13,7 @@ class POSController extends Controller
     public function index()
     {
         return Inertia::render('Admin/POS/Index', [
-            'products' => Product::with(['category', 'brand', 'unit'])
+            'products' => Product::with(['category', 'brand', 'unit', 'images'])
                 ->where('is_active', true)
                 ->latest()
                 ->get(),
