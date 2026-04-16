@@ -19,6 +19,7 @@ import 'swiper/css/effect-fade';
 const modules = [Pagination, Autoplay, EffectFade];
 
 defineProps({
+    sliders: { type: Array, default: () => [] },
     featuredItems: { type: Array, default: () => [] },
     newArrivals: { type: Array, default: () => [] },
     discountItems: { type: Array, default: () => [] },
@@ -68,69 +69,102 @@ function addToCart(productId) {
         <Head title="SweetChocholate | Premium Belgian Chocolate" />
 
         <!-- Hero Slider Section -->
-        <section class="relative bg-godiva-pink overflow-hidden">
+        <section class="relative overflow-hidden">
             <Swiper
                 :modules="modules"
                 :slides-per-view="1"
                 :loop="true"
-                :autoplay="{ delay: 5000 }"
+                :autoplay="{ delay: 6000 }"
                 :pagination="{ clickable: true }"
                 effect="fade"
-                class="h-[65vh] md:h-[80vh]"
+                class="h-[80vh] md:h-[90vh]"
             >
-                <SwiperSlide>
-                    <div class="mx-auto flex h-full max-w-7xl flex-col md:flex-row items-center px-6">
-                        <div class="flex-1 text-left py-12 md:py-0">
-                            <p class="text-[11px] font-bold uppercase tracking-[0.4em] text-godiva-charcoal/60 mb-6">New Centennial Collection</p>
-                            <h1 class="font-serif text-5xl font-light leading-[0.9] text-godiva-charcoal md:text-[8rem] uppercase tracking-tighter">
-                                Legacy made in <br/> <span class="font-normal italic">chocolate</span>
-                            </h1>
-                            <p class="mt-10 max-w-md text-xs leading-loose tracking-widest text-godiva-charcoal/70">
-                                Since 1926, our passion for chocolate has been an endless pursuit of savours and sensations. Our Centennial Pralines are both sweetly nostalgic and at the cutting edge of chocolate design and innovation.
-                            </p>
-                            <div class="mt-12">
-                                <a
-                                    href="#"
-                                    class="inline-block bg-godiva-charcoal px-12 py-5 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black"
-                                >
-                                    Discover the Collection
-                                </a>
+                <SwiperSlide v-for="(slider, index) in sliders" :key="slider.id">
+                    <div 
+                        class="h-full w-full transition-colors duration-1000"
+                        :style="{ backgroundColor: slider.bg_color || '#FBE0E3', color: slider.text_color || '#1C1C1C' }"
+                    >
+                        <div class="mx-auto flex h-full max-w-7xl flex-col items-center px-6 relative">
+                            <!-- Background Text (Decorative) -->
+                            <div 
+                                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none opacity-[0.03] pointer-events-none"
+                                :style="{ color: slider.text_color || '#1C1C1C' }"
+                            >
+                                <span class="font-serif text-[20vw] whitespace-nowrap leading-none uppercase tracking-tighter">GODIVA</span>
                             </div>
-                        </div>
-                        <div class="flex-1 relative h-full w-full flex items-center justify-center translate-x-10 translate-y-10">
-                            <img
-                                src="/images/godiva/hero_stack.png"
-                                alt="Legacy Chocolate Collection"
-                                class="h-[120%] w-auto object-contain drop-shadow-[-20px_20px_40px_rgba(0,0,0,0.1)]"
-                            />
-                        </div>
-                    </div>
-                </SwiperSlide>
-                <SwiperSlide>
-                    <div class="mx-auto flex h-full max-w-7xl flex-col md:flex-row-reverse items-center px-6">
-                        <div class="flex-1 text-left py-12 md:py-0">
-                            <p class="text-[11px] font-bold uppercase tracking-[0.3em] text-godiva-charcoal mb-4">Exquisite Gifting</p>
-                            <h1 class="font-serif text-4xl font-light leading-tight text-godiva-charcoal sm:text-7xl uppercase">
-                                Art of <br/> Belgian Gifting
-                            </h1>
-                            <p class="mt-6 max-w-lg text-sm leading-relaxed text-godiva-charcoal/80">
-                                Delight your senses with our premium golden gift collections, crafted with the finest ingredients and century-old traditions.
-                            </p>
-                            <div class="mt-10">
-                                <a
-                                    href="#"
-                                    class="inline-block bg-godiva-charcoal px-10 py-4 text-[11px] font-bold uppercase tracking-widest text-white transition hover:bg-black"
+
+                            <div 
+                                class="z-10 flex h-full w-full flex-col items-center justify-center py-16 md:py-0 gap-12 md:gap-24 md:flex-row"
+                                :class="index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'"
+                            >
+                                <div class="flex-1 text-left flex flex-col justify-center max-w-2xl">
+                                    <div class="overflow-hidden mb-6">
+                                        <p class="slide-up text-[11px] font-bold uppercase tracking-[0.4em] opacity-80" 
+                                           :style="{ borderLeft: `2px solid ${slider.text_color === '#FFFFFF' ? '#B99D4B' : slider.text_color}`, animationDelay: '200ms' }">
+                                            <span class="ml-4">{{ slider.subtitle }}</span>
+                                        </p>
+                                    </div>
+                                    
+                                    <h1 
+                                        class="slide-up font-serif font-light leading-[0.85] uppercase tracking-tighter mb-8"
+                                        :class="index === 0 ? 'text-6xl md:text-[8rem]' : 'text-5xl md:text-[6rem]'"
+                                        :style="{ animationDelay: '400ms' }"
+                                        v-html="slider.title"
+                                    ></h1>
+
+                                    <div class="overflow-hidden mb-12">
+                                        <p class="slide-up mt-2 max-w-md text-sm leading-loose tracking-widest opacity-80 font-light"
+                                           :style="{ animationDelay: '600ms' }">
+                                            {{ slider.description }}
+                                        </p>
+                                    </div>
+
+                                    <div class="slide-up" :style="{ animationDelay: '800ms' }">
+                                        <Link
+                                            :href="slider.button_link || '#'"
+                                            class="group relative inline-flex items-center gap-4 overflow-hidden border px-12 py-5 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-500"
+                                            :style="{ 
+                                                borderColor: slider.text_color === '#FFFFFF' ? 'rgba(255,255,255,0.3)' : 'rgba(28,28,28,0.2)',
+                                                color: slider.text_color
+                                            }"
+                                        >
+                                            <span class="relative z-10">{{ slider.button_text }}</span>
+                                            <ArrowRightIcon class="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-2" />
+                                            <div 
+                                                class="absolute inset-0 -translate-x-full transition-transform duration-500 group-hover:translate-x-0"
+                                                :style="{ backgroundColor: slider.text_color === '#FFFFFF' ? '#FFFFFF' : '#1C1C1C' }"
+                                            ></div>
+                                            <span 
+                                                class="absolute inset-0 z-1 flex -translate-x-full items-center gap-4 px-12 py-5 text-[10px] font-bold uppercase tracking-[0.2em] transition-transform duration-500 group-hover:translate-x-0 group-hover:text-gold"
+                                                :style="{ color: slider.text_color === '#FFFFFF' ? '#1C1C1C' : '#FFFFFF' }"
+                                            >
+                                                {{ slider.button_text }} <ArrowRightIcon class="h-4 w-4" />
+                                            </span>
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                <div 
+                                    class="flex-1 relative h-full w-full flex items-center justify-center p-8 md:p-0 md:min-w-[40%]"
                                 >
-                                    Shop Gift Boxes
-                                </a>
+                                    <div class="relative w-full aspect-square flex items-center justify-center scale-x-[-1] md:scale-x-[1]">
+                                        <!-- Decorative Circle -->
+                                        <div 
+                                            class="absolute inset-0 rounded-full border opacity-10 animate-pulse-slow scale-75 md:scale-100"
+                                            :style="{ borderColor: slider.text_color }"
+                                        ></div>
+                                        
+                                        <img
+                                            :src="slider.image"
+                                            :alt="slider.subtitle"
+                                            class="hero-img h-[100%] md:h-[120%] w-auto object-contain z-20 transition-all duration-1000"
+                                            :style="{ 
+                                                filter: slider.bg_color === '#1C1C1C' ? 'drop-shadow(0 25px 50px rgba(255,255,255,0.1))' : 'drop-shadow(0 25px 50px rgba(0,0,0,0.15))'
+                                            }"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex-1 relative h-full w-full flex items-center justify-center">
-                            <img
-                                src="/images/godiva/hero2.png"
-                                alt="Golden Gift Box"
-                                class="max-h-[80%] w-auto object-contain drop-shadow-2xl"
-                            />
                         </div>
                     </div>
                 </SwiperSlide>
@@ -252,16 +286,64 @@ function addToCart(productId) {
 </template>
 
 <style>
-/* Custom Pagination Styles to match Godiva */
-.swiper-pagination-bullet {
-    background: #000 !important;
-    opacity: 0.3 !important;
-    width: 8px !important;
-    height: 8px !important;
+/* Custom Slider Animations */
+.swiper-slide-active .slide-up {
+    animation: slideUp 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
+
+.slide-up {
+    opacity: 0;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.swiper-slide-active .hero-img {
+    animation: float 6s ease-in-out infinite;
+    opacity: 1;
+}
+
+.hero-img {
+    opacity: 0;
+}
+
+@keyframes float {
+	0% { transform: translateY(0px) rotate(0deg); }
+	50% { transform: translateY(-20px) rotate(2deg); }
+	100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-pulse-slow {
+    animation: pulseSlow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseSlow {
+    0%, 100% { opacity: 0.1; transform: scale(1); }
+    50% { opacity: 0.2; transform: scale(1.05); }
+}
+
+/* Swiper Styling */
+.swiper-pagination-bullet {
+    background: transparent !important;
+    border: 1px solid currentColor !important;
+    opacity: 0.5 !important;
+    width: 10px !important;
+    height: 10px !important;
+    transition: all 0.3s ease !important;
+}
+
 .swiper-pagination-bullet-active {
     opacity: 1 !important;
-    background: #000 !important;
+    background: currentColor !important;
+    transform: scale(1.2) !important;
 }
 
 .aspect-h-4 {

@@ -47,9 +47,12 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
             ],
             'cartCount' => (int) $cartCount,
+            'mainMenu' => \App\Models\Menu::with('children')->whereNull('parent_id')->where('is_active', true)->orderBy('order')->get(),
+            'webSettings' => \App\Models\WebSetting::first(),
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
+                'invoice' => $request->session()->get('invoice'),
             ],
         ];
     }

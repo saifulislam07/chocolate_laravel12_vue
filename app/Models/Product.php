@@ -10,30 +10,47 @@ class Product extends Model
 {
     protected $fillable = [
         'category_id',
+        'brand_id',
+        'unit_id',
         'name',
         'slug',
         'description',
+        'cost_price',
         'price',
         'compare_at_price',
         'sku',
         'stock',
+        'alert_quantity',
         'is_active',
         'is_featured',
+        'is_new',
     ];
 
     protected function casts(): array
     {
         return [
+            'cost_price' => 'decimal:2',
             'price' => 'decimal:2',
             'compare_at_price' => 'decimal:2',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
+            'is_new' => 'boolean',
         ];
     }
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function images(): HasMany
@@ -44,5 +61,10 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function purchaseItems(): HasMany
+    {
+        return $this->hasMany(PurchaseItem::class);
     }
 }

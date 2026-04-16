@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Slider;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -10,6 +11,10 @@ class HomeController extends Controller
 {
     public function index(): Response
     {
+        $sliders = Slider::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->get();
+
         $productsQuery = Product::query()
             ->with('images')
             ->where('is_active', true)
@@ -35,6 +40,7 @@ class HomeController extends Controller
             ->map(fn($p) => $this->mapProduct($p));
 
         return Inertia::render('Home', [
+            'sliders' => $sliders,
             'featuredItems' => $featuredItems,
             'newArrivals' => $newArrivals,
             'discountItems' => $discountItems,

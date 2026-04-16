@@ -7,6 +7,8 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,14 +19,31 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::query()->firstOrCreate([
-            'email' => 'admin@godiva.test',
+        // Create Roles
+        $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin']);
+        $adminRole = Role::firstOrCreate(['name' => 'Administrator']);
+        Role::firstOrCreate(['name' => 'Staff']);
+        Role::firstOrCreate(['name' => 'Customer']);
+
+        $masterAdmin = User::query()->updateOrCreate([
+            'email' => 'master@admin.com',
         ], [
-            'name' => 'Admin User',
+            'name' => 'masteradmin',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
             'remember_token' => Str::random(10),
         ]);
+        $masterAdmin->assignRole($superAdminRole);
+
+        $administrator = User::query()->updateOrCreate([
+            'email' => 'admin@admin.com',
+        ], [
+            'name' => 'administrator',
+            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+            'remember_token' => Str::random(10),
+        ]);
+        $administrator->assignRole($adminRole);
 
         $categoryData = [
             'name' => 'Signature Truffles',
@@ -145,39 +164,92 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($products as $p) {
-            $productId = DB::table('products')->insertGetId([
-                'category_id' => $catId,
-                'name' => $p['name'],
-                'slug' => Str::slug($p['name']),
-                'description' => 'Experience the ultimate luxury with our ' . $p['name'] . '. Crafted with century-old Belgian traditions.',
-                'price' => $p['price'],
-                'compare_at_price' => $p['compare_at_price'],
-                'sku' => 'GODV-' . Str::upper(Str::random(6)),
-                'stock' => 100,
-                'is_active' => true,
-                'is_featured' => $p['is_featured'],
-                'is_new' => $p['is_new'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $slug = Str::slug($p['name']);
+            $existingProduct = DB::table('products')->where('slug', $slug)->first();
 
-            DB::table('product_images')->insert([
-                'product_id' => $productId,
-                'image_path' => $p['image'],
-                'sort_order' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if (!$existingProduct) {
+                $productId = DB::table('products')->insertGetId([
+                    'category_id' => $catId,
+                    'name' => $p['name'],
+                    'slug' => $slug,
+                    'description' => 'Experience the ultimate luxury with our ' . $p['name'] . '. Crafted with century-old Belgian traditions.',
+                    'price' => $p['price'],
+                    'compare_at_price' => $p['compare_at_price'],
+                    'sku' => 'GODV-' . Str::upper(Str::random(6)),
+                    'stock' => 100,
+                    'is_active' => true,
+                    'is_featured' => $p['is_featured'],
+                    'is_new' => $p['is_new'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
 
-            DB::table('product_variants')->insert([
-                'product_id' => $productId,
-                'name' => 'Size',
-                'value' => 'Regular',
-                'additional_price' => 0,
-                'stock' => 50,
-                'updated_at' => now(),
-                'created_at' => now()
-            ]);
+                DB::table('product_images')->insert([
+                    'product_id' => $productId,
+                    'image_path' => $p['image'],
+                    'sort_order' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('product_variants')->insert([
+                    'product_id' => $productId,
+                    'name' => 'Size',
+                    'value' => 'Regular',
+                    'additional_price' => 0,
+                    'stock' => 50,
+                    'updated_at' => now(),
+                    'created_at' => now()
+                ]);
+            }
+        }
+
+        $sliders = [
+            [
+                'title' => 'Legacy made in <br/> <span class="font-normal italic">chocolate</span>',
+                'subtitle' => 'New Centennial Collection',
+                'description' => 'Since 1926, our passion for chocolate has been an endless pursuit of savours and sensations. Our Centennial Pralines are both sweetly nostalgic and at the cutting edge of chocolate design and innovation.',
+                'image' => '/images/godiva/hero_stack.png',
+                'bg_color' => '#1C1C1C', // Charcoal
+                'text_color' => '#FFFFFF',
+                'button_text' => 'Discover the Collection',
+                'button_link' => '#',
+                'sort_order' => 1,
+            ],
+            [
+                'title' => 'Art of <br/> Belgian Gifting',
+                'subtitle' => 'Exquisite Gifting',
+                'description' => 'Delight your senses with our premium golden gift collections, crafted with the finest ingredients and century-old traditions.',
+                'image' => '/images/godiva/hero2.png',
+                'bg_color' => '#FBE0E3', // Godiva Pink
+                'text_color' => '#1C1C1C',
+                'button_text' => 'Shop Gift Boxes',
+                'button_link' => '#',
+                'sort_order' => 2,
+            ],
+            [
+                'title' => 'The <br/> <span class="font-normal italic">Seasonal</span> Collection',
+                'subtitle' => 'Limited Edition',
+                'description' => 'Explore our limited-time creations, where seasonal flavors meet artisanal craftsmanship.',
+                'image' => '/images/godiva/seasonal.png',
+                'bg_color' => '#F3EFE9', // Cream
+                'text_color' => '#1C1C1C',
+                'button_text' => 'View Seasonal Items',
+                'button_link' => '#',
+                'sort_order' => 3,
+            ],
+        ];
+
+        foreach ($sliders as $s) {
+            DB::table('sliders')->updateOrInsert(
+                ['title' => $s['title']],
+                [
+                    ...$s,
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
         }
     }
 }

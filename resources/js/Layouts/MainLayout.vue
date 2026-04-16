@@ -77,26 +77,35 @@ watch(() => flash.value.success, (message) => {
                         <Bars3Icon class="h-6 w-6" />
                     </button>
                     <Link href="/" class="flex items-center gap-2">
-                        <img src="/images/godiva/logo.png" alt="SweetChocholate" class="h-8 w-8 object-contain md:h-10 md:w-10" />
-                        <span class="hidden font-serif text-xl font-bold tracking-tight md:block">SweetChocholate</span>
+                        <img :src="$page.props.webSettings?.logo || '/images/godiva/logo.png'" :alt="$page.props.webSettings?.site_name" class="h-8 w-8 object-contain md:h-10 md:w-10" />
+                        <span class="hidden font-serif text-xl font-bold tracking-tight md:block">{{ $page.props.webSettings?.site_name || 'SweetChocholate' }}</span>
                     </Link>
                 </div>
 
                 <!-- Desktop Navigation (Center) -->
-                <nav class="hidden md:flex flex-[2] justify-center items-center gap-8 text-[11px] font-bold uppercase tracking-[0.15em]">
-                    <a href="#" class="flex items-center gap-1 transition hover:text-godiva-gold">
-                        Mother's Day <ChevronDownIcon class="h-3 w-3" />
-                    </a>
-                    <a href="#" class="transition hover:text-godiva-gold">Best Sellers</a>
-                    <a href="#" class="flex items-center gap-1 transition hover:text-godiva-gold">
-                        Chocolate <ChevronDownIcon class="h-3 w-3" />
-                    </a>
-                    <a href="#" class="flex items-center gap-1 transition hover:text-godiva-gold">
-                        Gifts <ChevronDownIcon class="h-3 w-3" />
-                    </a>
-                    <a href="#" class="flex items-center gap-1 transition hover:text-godiva-gold">
-                        About us <ChevronDownIcon class="h-3 w-3" />
-                    </a>
+                <nav class="hidden md:flex flex-[2] justify-center items-center gap-6 text-[10px] font-bold uppercase tracking-[0.12em]">
+                    <div v-for="menu in $page.props.mainMenu" :key="menu.id" class="group relative">
+                        <component 
+                            :is="menu.url && menu.url.startsWith('http') ? 'a' : (menu.url ? Link : 'span')" 
+                            :href="menu.url ? (menu.url.startsWith('http') ? menu.url : (menu.url.startsWith('/') ? menu.url : '/p/' + menu.url)) : '#'"
+                            class="flex items-center gap-1 transition hover:text-godiva-gold py-4 cursor-pointer"
+                        >
+                            {{ menu.name }} 
+                            <ChevronDownIcon v-if="menu.children.length > 0" class="h-3 w-3" />
+                        </component>
+                        
+                        <!-- Dropdown -->
+                        <div v-if="menu.children.length > 0" class="invisible group-hover:visible absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl border border-gray-100 min-w-[200px] py-4 transition-all opacity-0 group-hover:opacity-100">
+                            <Link 
+                                v-for="child in menu.children" 
+                                :key="child.id" 
+                                :href="child.url ? (child.url.startsWith('/') ? child.url : '/p/' + child.url) : '#'"
+                                class="block px-6 py-2 hover:bg-gray-50 hover:text-godiva-gold normal-case font-medium text-xs tracking-normal"
+                            >
+                                {{ child.name }}
+                            </Link>
+                        </div>
+                    </div>
                 </nav>
 
                 <!-- Icons (Right) -->
@@ -133,7 +142,7 @@ watch(() => flash.value.success, (message) => {
                     <a href="#" @click="isMobileMenuOpen = false">Best Sellers</a>
                     <a href="#" @click="isMobileMenuOpen = false">Chocolate</a>
                     <a href="#" @click="isMobileMenuOpen = false">Gifts</a>
-                    <a href="#" @click="isMobileMenuOpen = false">About us</a>
+                    <Link :href="route('page.public', 'about-us')" @click="isMobileMenuOpen = false">About us</Link>
                 </nav>
             </div>
         </header>
