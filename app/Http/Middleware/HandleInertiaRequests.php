@@ -33,12 +33,30 @@ class HandleInertiaRequests extends Middleware
         $sessionId = $request->session()->getId();
         $user = $request->user();
 
-        $cart = \App\Models\Cart::where('user_id', $user?->id)
-            ->orWhere('session_id', $sessionId)
-            ->first();
+        $cart = $user
+            ? \App\Models\Cart::where('user_id', $user->id)->first()
+            : \App\Models\Cart::where('session_id', $sessionId)->first();
 
         if ($cart) {
             $cartCount = \App\Models\CartItem::where('cart_id', $cart->id)->sum('quantity');
+        }
+
+        $wishlistCount = $user
+            ? \App\Models\Wishlist::where('user_id', $user->id)->count()
+            : 0;
+
+        $mainMenu = \App\Models\Menu::with('children')
+            ->whereNull('parent_id')
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+
+        if ($mainMenu->isEmpty()) {
+            $mainMenu = collect([
+                ['id' => 'home', 'name' => 'Home', 'url' => '/', 'children' => []],
+                ['id' => 'shop', 'name' => 'Shop', 'url' => '/shop', 'children' => []],
+                ['id' => 'wishlist', 'name' => 'Wishlist', 'url' => '/wishlist', 'children' => []],
+            ]);
         }
 
         return [
@@ -47,7 +65,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
             ],
             'cartCount' => (int) $cartCount,
-            'mainMenu' => \App\Models\Menu::with('children')->whereNull('parent_id')->where('is_active', true)->orderBy('order')->get(),
+            'wishlistCount' => (int) $wishlistCount,
+            'mainMenu' => $mainMenu,
             'webSettings' => \App\Models\WebSetting::first(),
             'flash' => [
                 'success' => $request->session()->get('success'),

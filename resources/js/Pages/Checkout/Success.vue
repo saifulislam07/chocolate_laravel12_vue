@@ -30,6 +30,9 @@ function formatMoney(value) {
                 <p class="mt-2 text-sm text-[#6f4d34]">
                     Payment method: <strong class="uppercase">{{ order.payment_method }}</strong>
                 </p>
+                <p class="mt-2 text-sm text-[#6f4d34]">
+                    Payment status: <strong class="uppercase">{{ order.payment_status }}</strong>
+                </p>
                 <p class="mt-2 text-lg font-semibold">Total: {{ formatMoney(order.total) }}</p>
                 <div class="mt-8 flex justify-center gap-3">
                     <Link :href="route('home')" class="rounded bg-[#2a1912] px-5 py-3 text-xs uppercase tracking-widest text-white">

@@ -4,7 +4,8 @@ import { ref } from "vue";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import { 
     ChevronDownIcon,
-    ArrowRightIcon
+    ArrowRightIcon,
+    HeartIcon
 } from "@heroicons/vue/24/outline";
 
 // Import Swiper components
@@ -20,6 +21,8 @@ const modules = [Pagination, Autoplay, EffectFade];
 
 defineProps({
     sliders: { type: Array, default: () => [] },
+    categories: { type: Array, default: () => [] },
+    categorySections: { type: Array, default: () => [] },
     featuredItems: { type: Array, default: () => [] },
     newArrivals: { type: Array, default: () => [] },
     discountItems: { type: Array, default: () => [] },
@@ -29,24 +32,6 @@ function getDiscountPercent(price, comparePrice) {
     if (!comparePrice || comparePrice <= price) return null;
     return Math.round(((comparePrice - price) / comparePrice) * 100);
 }
-
-const categories = [
-    {
-        name: "Artisan Truffles",
-        description: "Experience our signature velvety ganache in every bite.",
-        image: "/images/godiva/truffles.png",
-    },
-    {
-        name: "Gift Boxes",
-        description: "Elegant collections for every cherished moment.",
-        image: "/images/godiva/gift_boxes.png",
-    },
-    {
-        name: "Seasonal Joy",
-        description: "Celebrate the season with limited-edition creations.",
-        image: "/images/godiva/seasonal.png",
-    },
-];
 
 const fallbackImage = "/images/godiva/product_default.png";
 
@@ -62,6 +47,10 @@ function formatMoney(amount) {
 
 function addToCart(productId) {
     router.post(route("cart.store"), { product_id: productId, quantity: 1 }, { preserveScroll: true });
+}
+
+function toggleWishlist(productId) {
+    router.post(route("wishlist.toggle", productId), {}, { preserveScroll: true });
 }
 </script>
 
@@ -179,17 +168,72 @@ function addToCart(productId) {
                     <h2 class="font-serif text-[11px] font-bold uppercase tracking-[0.4em] text-godiva-gold">World of Godiva</h2>
                     <p class="mt-4 font-serif text-4xl italic tracking-wide">Shop by Collection</p>
                 </div>
-                <div class="grid gap-8 sm:grid-cols-3">
-                    <div v-for="cat in categories" :key="cat.name" class="group cursor-pointer overflow-hidden">
-                        <div class="relative aspect-h-4 aspect-w-3 overflow-hidden bg-gray-100">
-                            <img :src="cat.image" :alt="cat.name" class="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                    <Link
+                        v-for="cat in categories"
+                        :key="cat.id"
+                        :href="route('categories.show', cat.slug)"
+                        class="group cursor-pointer"
+                    >
+                        <div class="relative h-[360px] overflow-hidden bg-godiva-cream sm:h-[420px]">
+                            <img
+                                :src="cat.image || fallbackImage"
+                                :alt="cat.name"
+                                class="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                            />
+                            <div class="absolute inset-0 bg-gradient-to-t from-godiva-charcoal/55 via-transparent to-transparent opacity-80"></div>
+                            <div class="absolute left-4 top-4 bg-white/95 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-godiva-charcoal shadow-sm">
+                                {{ cat.products_count }} items
+                            </div>
+                            <div class="absolute inset-x-0 bottom-0 p-6 text-center text-white">
+                                <h3 class="text-xs font-bold uppercase tracking-[0.22em] transition group-hover:text-godiva-gold">{{ cat.name }}</h3>
+                                <p class="mt-3 text-[10px] uppercase leading-5 tracking-[0.18em] text-white/85">{{ cat.description || 'Explore this collection' }}</p>
+                            </div>
                         </div>
-                        <div class="mt-6 text-center">
-                            <h3 class="text-xs font-bold uppercase tracking-widest transition group-hover:text-godiva-gold">{{ cat.name }}</h3>
-                            <p class="mt-2 text-[10px] text-gray-500 uppercase tracking-widest">{{ cat.description }}</p>
+                    </Link>
+                </div>
+            </div>
+        </section>
+
+        <!-- Category-wise Products -->
+        <section v-for="section in categorySections" :key="section.id" class="mx-auto max-w-7xl px-6 py-16 border-b border-gray-100">
+            <div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-godiva-gold">Category</p>
+                    <h2 class="mt-3 font-serif text-3xl italic">{{ section.name }}</h2>
+                    <p v-if="section.description" class="mt-2 max-w-xl text-sm leading-7 text-gray-500">{{ section.description }}</p>
+                </div>
+                <Link :href="route('categories.show', section.slug)" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition">
+                    View All
+                </Link>
+            </div>
+
+            <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                <article v-for="product in section.products" :key="product.id" class="group relative flex flex-col bg-white">
+                    <div class="relative aspect-square overflow-hidden bg-white p-4">
+                        <button
+                            type="button"
+                            class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-godiva-charcoal shadow-sm transition hover:text-red-500"
+                            :class="{ 'text-red-500': product.is_wishlisted }"
+                            @click="toggleWishlist(product.id)"
+                        >
+                            <HeartIcon class="h-4 w-4" :class="{ 'fill-current': product.is_wishlisted }" />
+                        </button>
+                        <img :src="product.image || fallbackImage" :alt="product.name" class="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
+                        <div class="absolute inset-x-0 bottom-4 flex translate-y-4 justify-center opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100 px-4">
+                            <button type="button" class="w-full bg-godiva-charcoal py-3 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-godiva-gold" @click="addToCart(product.id)">Add to Bag</button>
                         </div>
                     </div>
-                </div>
+                    <div class="flex flex-1 flex-col p-6 text-center">
+                        <h3 class="font-serif text-lg tracking-tight uppercase leading-tight">
+                            <Link :href="route('products.show', product.slug)" class="hover:text-godiva-gold transition">{{ product.name }}</Link>
+                        </h3>
+                        <div class="mt-4 flex flex-col items-center justify-center gap-1">
+                            <span v-if="product.compare_at_price > product.price" class="text-xs text-gray-400 line-through tracking-widest">{{ formatMoney(product.compare_at_price) }}</span>
+                            <span class="font-serif text-xl" :class="product.compare_at_price > product.price ? 'text-red-600' : 'text-godiva-charcoal'">{{ formatMoney(product.price) }}</span>
+                        </div>
+                    </div>
+                </article>
             </div>
         </section>
 
@@ -205,6 +249,14 @@ function addToCart(productId) {
                 <article v-for="product in newArrivals" :key="product.id" class="group relative flex flex-col bg-white">
                     <div class="relative aspect-square overflow-hidden bg-white p-4">
                         <span class="absolute top-4 left-4 z-10 bg-godiva-pink px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-godiva-charcoal">New</span>
+                        <button
+                            type="button"
+                            class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-godiva-charcoal shadow-sm transition hover:text-red-500"
+                            :class="{ 'text-red-500': product.is_wishlisted }"
+                            @click="toggleWishlist(product.id)"
+                        >
+                            <HeartIcon class="h-4 w-4" :class="{ 'fill-current': product.is_wishlisted }" />
+                        </button>
                         <img :src="product.image || fallbackImage" :alt="product.name" class="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
                         <div class="absolute inset-x-0 bottom-4 flex translate-y-4 justify-center opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100 px-4 text-center">
                             <button type="button" class="w-full bg-godiva-charcoal py-3 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-godiva-gold" @click="addToCart(product.id)">Add to Bag</button>
@@ -228,6 +280,14 @@ function addToCart(productId) {
                 <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                     <article v-for="product in featuredItems" :key="product.id" class="group relative flex flex-col bg-white">
                         <div class="relative aspect-square overflow-hidden bg-white p-4">
+                            <button
+                                type="button"
+                                class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-godiva-charcoal shadow-sm transition hover:text-red-500"
+                                :class="{ 'text-red-500': product.is_wishlisted }"
+                                @click="toggleWishlist(product.id)"
+                            >
+                                <HeartIcon class="h-4 w-4" :class="{ 'fill-current': product.is_wishlisted }" />
+                            </button>
                             <img :src="product.image || fallbackImage" :alt="product.name" class="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
                             <div class="absolute inset-x-0 bottom-4 flex translate-y-4 justify-center opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100 px-4">
                                 <button type="button" class="w-full bg-godiva-charcoal py-3 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-godiva-gold" @click="addToCart(product.id)">Add to Bag</button>
@@ -254,6 +314,14 @@ function addToCart(productId) {
                 <article v-for="product in discountItems" :key="product.id" class="group relative flex flex-col bg-white">
                     <div class="relative aspect-square overflow-hidden bg-white p-4">
                         <span class="absolute top-4 left-4 z-10 bg-red-600 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white">Save {{ getDiscountPercent(product.price, product.compare_at_price) }}%</span>
+                        <button
+                            type="button"
+                            class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-godiva-charcoal shadow-sm transition hover:text-red-500"
+                            :class="{ 'text-red-500': product.is_wishlisted }"
+                            @click="toggleWishlist(product.id)"
+                        >
+                            <HeartIcon class="h-4 w-4" :class="{ 'fill-current': product.is_wishlisted }" />
+                        </button>
                         <img :src="product.image || fallbackImage" :alt="product.name" class="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
                         <div class="absolute inset-x-0 bottom-4 flex translate-y-4 justify-center opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100 px-4">
                             <button type="button" class="w-full bg-godiva-charcoal py-3 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-godiva-gold" @click="addToCart(product.id)">Add to Bag</button>
@@ -347,19 +415,4 @@ function addToCart(productId) {
     transform: scale(1.2) !important;
 }
 
-.aspect-h-4 {
-    padding-bottom: 133.333333%;
-}
-.aspect-w-3 {
-    position: relative;
-}
-.aspect-h-4 > * {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-}
 </style>

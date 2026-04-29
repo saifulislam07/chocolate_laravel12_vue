@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            \App\Http\Middleware\EnsureSiteIsNotInMaintenance::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
@@ -19,5 +20,15 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response) {
+            $request = request();
+
+            if (! in_array($response->getStatusCode(), [404, 500, 503], true) || ! $request->isMethod('GET')) {
+                return $response;
+            }
+
+            return \Inertia\Inertia::render('Errors/Show', [
+                'status' => $response->getStatusCode(),
+            ])->toResponse($request)->setStatusCode($response->getStatusCode());
+        });
     })->create();

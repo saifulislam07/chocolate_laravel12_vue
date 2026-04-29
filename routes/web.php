@@ -5,11 +5,13 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/shop', [ProductController::class, 'index'])->name('products.index');
+Route::get('/categories/{category:slug}', [ProductController::class, 'category'])->name('categories.show');
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.store');
 Route::patch('/cart/items/{cartItem}', [CartController::class, 'update'])->name('cart.update');
@@ -19,8 +21,46 @@ Route::get('/p/{slug}', [\App\Http\Controllers\PublicPageController::class, 'sho
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/payment/bkash/callback', [CheckoutController::class, 'bkashCallback'])->name('payment.bkash.callback');
 
-Route::get('/dashboard', function () {
+Route::middleware('auth')->group(function () {
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+});
+
+Route::get('/dashboard', fn () => redirect()->route('customer.dashboard'))
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+Route::get('/customer/dashboard', function () {
+    $user = request()->user();
+
+    return Inertia::render('Customer/Dashboard', [
+        'stats' => [
+            'orders_count' => \App\Models\Order::where('user_id', $user->id)->count(),
+            'wishlist_count' => \App\Models\Wishlist::where('user_id', $user->id)->count(),
+            'cart_count' => \App\Models\Cart::where('user_id', $user->id)->withCount('items')->first()?->items_count ?? 0,
+            'total_spent' => (float) \App\Models\Order::where('user_id', $user->id)->sum('total'),
+        ],
+        'recentOrders' => \App\Models\Order::with('items')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get(),
+        'wishlistItems' => \App\Models\Wishlist::with('product.images')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->take(4)
+            ->get(),
+    ]);
+})->middleware(['auth', 'verified'])->name('customer.dashboard');
+
+Route::get('/admin/dashboar', fn () => redirect()->route('admin.dashboard'))
+    ->middleware(['auth', 'verified']);
+
+Route::get('/admin/dashboard', function () {
+    abort_unless(request()->user()->hasAnyRole(['Super Admin', 'Administrator', 'Staff']), 403);
+
     return Inertia::render('Dashboard', [
         'stats' => [
             'total_sales' => \App\Models\Order::sum('total'),
@@ -39,7 +79,7 @@ Route::get('/dashboard', function () {
             ->get(),
         'recent_expenses' => \App\Models\Expense::with('category')->latest()->take(5)->get(),
     ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified'])->name('admin.dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

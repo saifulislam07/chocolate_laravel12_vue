@@ -3,10 +3,21 @@ import { ref } from 'vue';
 import { Link, Head, usePage } from '@inertiajs/vue3';
 
 const isSidebarOpen = ref(true);
+const openGroups = ref({
+    catalog: true,
+    orders: true,
+    website: true,
+    finance: false,
+    system: true,
+});
 const page = usePage();
 
 function toggleSidebar() {
     isSidebarOpen.value = !isSidebarOpen.value;
+}
+
+function toggleGroup(group) {
+    openGroups.value[group] = !openGroups.value[group];
 }
 </script>
 
@@ -51,8 +62,8 @@ function toggleSidebar() {
 
             <!-- Sidebar -->
             <aside class="main-sidebar sidebar-light-indigo elevation-0 border-right">
-                <Link :href="route('dashboard')" class="brand-link border-bottom py-3 px-4">
-                    <img :src="$page.props.webSettings?.logo || '/images/godiva/logo.png'" alt="Logo" class="brand-image" style="float: none; max-height: 30px;">
+                <Link :href="route('admin.dashboard')" class="brand-link border-bottom py-3 px-4">
+                    <img :src="$page.props.webSettings?.logo || '/images/godiva/logo-cute.png'" alt="Logo" class="brand-image" style="float: none; max-height: 30px;">
                     <span class="brand-text font-bold ml-2 text-dark">{{ $page.props.webSettings?.site_name || 'ERP Admin' }}</span>
                 </Link>
 
@@ -60,7 +71,7 @@ function toggleSidebar() {
                     <nav class="mt-4 px-2">
                         <ul class="nav nav-pills nav-sidebar flex-column nav-flat" data-widget="treeview" role="menu">
                             <li class="nav-item">
-                                <Link :href="route('dashboard')" class="nav-link" :class="{ active: $page.component === 'Dashboard' }">
+                                <Link :href="route('admin.dashboard')" class="nav-link" :class="{ active: $page.component === 'Dashboard' }">
                                     <i class="nav-icon fas fa-th-large"></i>
                                     <p>Dashboard</p>
                                 </Link>
@@ -73,98 +84,136 @@ function toggleSidebar() {
                                 </Link>
                             </li>
 
-                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">Inventory</li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.products.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Products') }">
-                                    <i class="nav-icon fas fa-box text-emerald-500 shadow-icon"></i>
-                                    <p>Products</p>
-                                </Link>
-                            </li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.categories.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Categories') }">
-                                    <i class="nav-icon fas fa-tags text-emerald-400"></i>
-                                    <p>Categories</p>
-                                </Link>
-                            </li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.brands.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Brands') }">
-                                    <i class="nav-icon fas fa-copyright text-emerald-300"></i>
-                                    <p>Brands</p>
-                                </Link>
-                            </li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.units.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Units') }">
-                                    <i class="nav-icon fas fa-balance-scale text-emerald-200"></i>
-                                    <p>Units</p>
-                                </Link>
+                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">Management</li>
+
+                            <li class="nav-item has-tree">
+                                <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('catalog')">
+                                    <i class="nav-icon fas fa-boxes-stacked text-emerald-400"></i>
+                                    <p>Catalog <i class="right fas" :class="openGroups.catalog ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
+                                </button>
+                                <ul v-show="openGroups.catalog" class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.products.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Products') }">
+                                            <i class="nav-icon fas fa-box text-emerald-500 shadow-icon"></i>
+                                            <p>Products</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.categories.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Categories') }">
+                                            <i class="nav-icon fas fa-tags text-emerald-400"></i>
+                                            <p>Categories</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.brands.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Brands') }">
+                                            <i class="nav-icon fas fa-copyright text-emerald-300"></i>
+                                            <p>Brands</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.units.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Units') }">
+                                            <i class="nav-icon fas fa-balance-scale text-emerald-200"></i>
+                                            <p>Units</p>
+                                        </Link>
+                                    </li>
+                                </ul>
                             </li>
 
-                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">Operations</li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.sales.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Sales') }">
-                                    <i class="nav-icon fas fa-shopping-cart text-blue-400"></i>
-                                    <p>Sales Records</p>
-                                </Link>
-                            </li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.purchases.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Purchases') }">
-                                    <i class="nav-icon fas fa-truck-loading text-blue-500"></i>
-                                    <p>Purchases</p>
-                                </Link>
-                            </li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.suppliers.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Suppliers') }">
-                                    <i class="nav-icon fas fa-id-badge text-blue-300"></i>
-                                    <p>Suppliers</p>
-                                </Link>
+                            <li class="nav-item has-tree">
+                                <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('orders')">
+                                    <i class="nav-icon fas fa-receipt text-blue-400"></i>
+                                    <p>Orders & Stock <i class="right fas" :class="openGroups.orders ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
+                                </button>
+                                <ul v-show="openGroups.orders" class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.sales.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Sales') }">
+                                            <i class="nav-icon fas fa-shopping-cart text-blue-400"></i>
+                                            <p>Sales Records</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.purchases.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Purchases') }">
+                                            <i class="nav-icon fas fa-truck-loading text-blue-500"></i>
+                                            <p>Purchases</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.suppliers.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Suppliers') }">
+                                            <i class="nav-icon fas fa-id-badge text-blue-300"></i>
+                                            <p>Suppliers</p>
+                                        </Link>
+                                    </li>
+                                </ul>
                             </li>
 
-                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">Reports</li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.reports.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Reports') }">
+                            <li class="nav-item has-tree">
+                                <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('website')">
+                                    <i class="nav-icon fas fa-store text-indigo-400"></i>
+                                    <p>Website <i class="right fas" :class="openGroups.website ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
+                                </button>
+                                <ul v-show="openGroups.website" class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.menus.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Menus') }">
+                                            <i class="nav-icon fas fa-stream text-indigo-400"></i>
+                                            <p>Navigation</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.pages.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Pages') }">
+                                            <i class="nav-icon fas fa-file-invoice text-indigo-500"></i>
+                                            <p>Static Pages</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.sliders.index')" class="nav-link" :class="{ active: $page.component === 'Admin/Sliders/Index' }">
+                                            <i class="nav-icon fas fa-image text-cyan-400"></i>
+                                            <p>Sliders</p>
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item has-tree">
+                                <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('finance')">
                                     <i class="nav-icon fas fa-chart-line text-amber-400"></i>
-                                    <p>Analytics Dashboard</p>
-                                </Link>
-                            </li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.expenses.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Expenses') }">
-                                    <i class="nav-icon fas fa-receipt text-rose-400"></i>
-                                    <p>Expenses</p>
-                                </Link>
-                            </li>
-
-                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">Site Manager</li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.menus.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Menus') }">
-                                    <i class="nav-icon fas fa-stream text-indigo-400"></i>
-                                    <p>Navigation</p>
-                                </Link>
-                            </li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.pages.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Pages') }">
-                                    <i class="nav-icon fas fa-file-invoice text-indigo-500"></i>
-                                    <p>Static Pages</p>
-                                </Link>
-                            </li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.sliders.index')" class="nav-link" :class="{ active: $page.component === 'Admin/Sliders/Index' }">
-                                    <i class="nav-icon fas fa-image text-cyan-400"></i>
-                                    <p>Carousel Sliders</p>
-                                </Link>
+                                    <p>Finance & Reports <i class="right fas" :class="openGroups.finance ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
+                                </button>
+                                <ul v-show="openGroups.finance" class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.reports.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Reports') }">
+                                            <i class="nav-icon fas fa-chart-line text-amber-400"></i>
+                                            <p>Reports</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.expenses.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Expenses') }">
+                                            <i class="nav-icon fas fa-receipt text-rose-400"></i>
+                                            <p>Expenses</p>
+                                        </Link>
+                                    </li>
+                                </ul>
                             </li>
 
-                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">Settings</li>
-                            <li class="nav-item">
-                                <Link :href="route('admin.settings.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Settings') }">
+                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">System</li>
+                            <li class="nav-item has-tree mb-5">
+                                <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('system')">
                                     <i class="nav-icon fas fa-cog text-slate-400"></i>
-                                    <p>Global Settings</p>
-                                </Link>
-                            </li>
-                            <li class="nav-item mb-5">
-                                <Link :href="route('admin.roles.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Roles') }">
-                                    <i class="nav-icon fas fa-user-lock text-slate-500"></i>
-                                    <p>User Permissions</p>
-                                </Link>
+                                    <p>System <i class="right fas" :class="openGroups.system ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
+                                </button>
+                                <ul v-show="openGroups.system" class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.settings.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Settings') }">
+                                            <i class="nav-icon fas fa-cog text-slate-400"></i>
+                                            <p>Settings</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="route('admin.roles.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Roles') }">
+                                            <i class="nav-icon fas fa-user-lock text-slate-500"></i>
+                                            <p>Permissions</p>
+                                        </Link>
+                                    </li>
+                                </ul>
                             </li>
                         </ul>
                     </nav>
@@ -237,6 +286,24 @@ body {
     font-weight: 500;
     color: #94a3b8 !important;
     transition: all 0.2s ease;
+}
+
+.nav-sidebar .nav-group-toggle {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: left;
+}
+
+.nav-sidebar .nav-treeview {
+    margin: 0 0 0.6rem 0.65rem;
+    padding-left: 0.6rem;
+    border-left: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.nav-sidebar .nav-treeview .nav-link {
+    padding: 0.55rem 0.75rem;
+    font-size: 0.8rem;
 }
 
 .nav-sidebar .nav-link:hover {
@@ -343,5 +410,3 @@ body {
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 </style>
-
-

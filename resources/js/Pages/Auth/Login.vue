@@ -34,6 +34,7 @@ const submit = () => {
         <Head title="Log in" />
 
         <div class="mb-12">
+            <p class="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-godiva-gold">Customer Login</p>
             <h1 class="font-serif text-4xl text-godiva-charcoal mb-4">Welcome Back</h1>
             <p class="text-sm text-godiva-charcoal/60 leading-relaxed font-sans">
                 Enter your credentials to access your SweetChocholate account and continue your journey of taste.
@@ -109,6 +110,11 @@ const submit = () => {
             <p class="mt-8 text-center text-[10px] uppercase tracking-[0.2em] text-godiva-charcoal/40">
                 Don't have an account? 
                 <Link :href="route('register')" class="text-godiva-gold hover:text-godiva-gold-dark font-bold ml-1 transition-colors">Join the family</Link>
+            </p>
+
+            <p class="mt-5 text-center text-[10px] uppercase tracking-[0.2em] text-godiva-charcoal/35">
+                Admin?
+                <Link :href="route('admin.login')" class="text-godiva-charcoal hover:text-godiva-gold font-bold ml-1 transition-colors">Use admin login</Link>
             </p>
         </form>
     </GuestLayout>

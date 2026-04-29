@@ -4,6 +4,7 @@ import { Head, Link, router, useForm } from "@inertiajs/vue3";
 const props = defineProps({
     items: { type: Array, default: () => [] },
     summary: { type: Object, required: true },
+    paymentGateways: { type: Object, default: () => ({}) },
 });
 
 const form = useForm({
@@ -54,7 +55,15 @@ function placeOrder() {
                     <select v-model="form.payment_method" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none">
                         <option value="cod">Cash on Delivery</option>
                         <option value="card">Card (Demo)</option>
+                        <option v-if="paymentGateways.bkash?.enabled" value="bkash">bKash Merchant</option>
+                        <option v-if="paymentGateways.nagad?.enabled" value="nagad">Nagad Merchant</option>
                     </select>
+                    <div v-if="form.payment_method === 'bkash'" class="sm:col-span-2 rounded-lg border border-pink-100 bg-pink-50 px-4 py-3 text-sm text-pink-900">
+                        After placing the order, you will be redirected to bKash merchant checkout to complete payment.
+                    </div>
+                    <div v-if="form.payment_method === 'nagad'" class="sm:col-span-2 rounded-lg border border-orange-100 bg-orange-50 px-4 py-3 text-sm text-orange-900">
+                        Nagad merchant details are configured. Complete redirect needs the final signed Nagad production API details from your merchant account.
+                    </div>
                     <textarea v-model="form.address" rows="3" placeholder="Street Address" class="sm:col-span-2 rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none"></textarea>
                     <textarea v-model="form.notes" rows="3" placeholder="Order notes (optional)" class="sm:col-span-2 rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none"></textarea>
                     <button type="submit" :disabled="form.processing" class="sm:col-span-2 rounded bg-[#2a1912] py-3 text-sm uppercase tracking-widest text-white transition hover:bg-[#3b2419] disabled:opacity-60">

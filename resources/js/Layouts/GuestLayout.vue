@@ -33,7 +33,8 @@ import { Link } from '@inertiajs/vue3';
                 </div>
 
                 <div class="mb-16">
-                    <Link href="/" class="inline-block mt-8">
+                    <Link href="/" class="mt-8 inline-flex items-center gap-3">
+                        <img src="/images/godiva/logo-cute.png" alt="SweetChocholate" class="h-12 w-12 object-contain" />
                         <span class="font-serif text-3xl font-bold tracking-tight text-godiva-charcoal">SweetChocholate</span>
                     </Link>
                 </div>

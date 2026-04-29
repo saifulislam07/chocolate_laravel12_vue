@@ -70,6 +70,11 @@ class Product extends Model
         return $this->hasMany(PurchaseItem::class);
     }
 
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
     public function getImageAttribute()
     {
         return $this->images->first()?->image_path;

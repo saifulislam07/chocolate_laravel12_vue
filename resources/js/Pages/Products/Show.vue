@@ -3,6 +3,7 @@ import { Head, Link, router } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import { ChevronRightIcon, PlusIcon, MinusIcon } from "@heroicons/vue/20/solid";
+import { HeartIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps({
     product: { type: Object, required: true },
@@ -29,6 +30,10 @@ function addToCart() {
         product_id: props.product.id, 
         quantity: quantity.value 
     }, { preserveScroll: true });
+}
+
+function toggleWishlist(productId = props.product.id) {
+    router.post(route("wishlist.toggle", productId), {}, { preserveScroll: true });
 }
 
 function increment() {
@@ -115,6 +120,15 @@ function decrement() {
                             >
                                 Add to Bag
                             </button>
+                            <button
+                                type="button"
+                                class="flex h-12 w-full items-center justify-center gap-2 border border-gray-200 px-6 text-[11px] font-bold uppercase tracking-[0.2em] transition hover:border-red-200 hover:text-red-500 sm:w-auto"
+                                :class="{ 'border-red-200 text-red-500': product.is_wishlisted }"
+                                @click="toggleWishlist()"
+                            >
+                                <HeartIcon class="h-4 w-4" :class="{ 'fill-current': product.is_wishlisted }" />
+                                Wishlist
+                            </button>
                         </div>
 
                         <!-- Brand Promises -->
@@ -152,4 +166,3 @@ function decrement() {
         </div>
     </MainLayout>
 </template>
-
