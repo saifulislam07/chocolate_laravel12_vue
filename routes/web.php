@@ -92,6 +92,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('/admin/suppliers', \App\Http\Controllers\Admin\SupplierController::class)->names('admin.suppliers');
     Route::resource('/admin/categories', \App\Http\Controllers\Admin\CategoryController::class)->names('admin.categories');
     Route::resource('/admin/products', \App\Http\Controllers\Admin\ProductController::class)->names('admin.products');
+    Route::resource('/admin/bundles', \App\Http\Controllers\Admin\BundleController::class)->except(['show'])->names('admin.bundles');
     Route::resource('/admin/brands', \App\Http\Controllers\Admin\BrandController::class)->names('admin.brands');
     Route::resource('/admin/units', \App\Http\Controllers\Admin\UnitController::class)->names('admin.units');
     Route::resource('/admin/purchases', \App\Http\Controllers\Admin\PurchaseController::class)->names('admin.purchases');
@@ -117,6 +118,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/profit-loss', [\App\Http\Controllers\Admin\ReportController::class, 'profitLoss'])->name('profit-loss');
         Route::get('/purchases', [\App\Http\Controllers\Admin\ReportController::class, 'purchases'])->name('purchases');
         Route::get('/expenses', [\App\Http\Controllers\Admin\ReportController::class, 'expenses'])->name('expenses');
+        Route::get('/meta-campaigns', [\App\Http\Controllers\Admin\ReportController::class, 'metaCampaigns'])->name('meta-campaigns');
     });
 
     // Sales Routes

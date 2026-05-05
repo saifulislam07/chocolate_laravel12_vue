@@ -24,6 +24,10 @@ class Product extends Model
         'is_active',
         'is_featured',
         'is_new',
+        'is_bundle',
+        'bundle_note',
+        'bundle_discount_type',
+        'bundle_discount_value',
     ];
 
     protected $appends = ['image'];
@@ -37,6 +41,8 @@ class Product extends Model
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'is_new' => 'boolean',
+            'is_bundle' => 'boolean',
+            'bundle_discount_value' => 'decimal:2',
         ];
     }
 
@@ -73,6 +79,13 @@ class Product extends Model
     public function wishlists(): HasMany
     {
         return $this->hasMany(Wishlist::class);
+    }
+
+    public function bundleItems()
+    {
+        return $this->belongsToMany(Product::class, 'bundle_product', 'bundle_id', 'product_id')
+            ->withPivot('quantity')
+            ->withTimestamps();
     }
 
     public function getImageAttribute()

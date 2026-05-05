@@ -10,6 +10,8 @@ class WebSetting extends Model
         'site_name', 'logo', 'footer_logo', 'favicon', 'email', 'phone', 'address',
         'maintenance_mode', 'maintenance_title', 'maintenance_message',
         'facebook_url', 'instagram_url',
+        'meta_pixel_enabled', 'meta_pixel_id',
+        'meta_ads_enabled', 'meta_ads_api_version', 'meta_ads_account_id', 'meta_ads_access_token',
         'messenger_enabled', 'messenger_page_id', 'messenger_theme_color',
         'messenger_logged_in_greeting', 'messenger_logged_out_greeting',
         'bkash_enabled', 'bkash_mode', 'bkash_base_url', 'bkash_app_key',
@@ -24,6 +26,8 @@ class WebSetting extends Model
     {
         return [
             'maintenance_mode' => 'boolean',
+            'meta_pixel_enabled' => 'boolean',
+            'meta_ads_enabled' => 'boolean',
             'messenger_enabled' => 'boolean',
             'bkash_enabled' => 'boolean',
             'nagad_enabled' => 'boolean',

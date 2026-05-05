@@ -92,6 +92,26 @@ function decrement() {
 
                         <div class="mt-8 space-y-6">
                             <p class="text-sm leading-8 text-gray-600 tracking-wide">{{ product.description }}</p>
+                            <div v-if="product.is_bundle && product.bundle_note" class="border-l-2 border-godiva-gold bg-godiva-cream/30 px-5 py-4 text-sm leading-7 text-godiva-charcoal">
+                                {{ product.bundle_note }}
+                            </div>
+                            <div v-if="product.is_bundle && product.bundle_items?.length" class="border border-gray-100 p-5">
+                                <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-godiva-gold">Included in this bundle</p>
+                                <div class="space-y-3">
+                                    <Link
+                                        v-for="item in product.bundle_items"
+                                        :key="item.id"
+                                        :href="route('products.show', item.slug)"
+                                        class="flex items-center gap-4 transition hover:text-godiva-gold"
+                                    >
+                                        <img :src="item.image || '/images/godiva/product_default.png'" :alt="item.name" class="h-12 w-12 object-contain bg-white">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-sm font-semibold">{{ item.name }}</p>
+                                            <p class="text-xs text-gray-500">{{ item.quantity }} x {{ formatMoney(item.price) }}</p>
+                                        </div>
+                                    </Link>
+                                </div>
+                            </div>
                             
                             <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
                                 <span class="text-gray-400">Availability:</span>

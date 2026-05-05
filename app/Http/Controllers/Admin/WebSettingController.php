@@ -31,6 +31,12 @@ class WebSettingController extends Controller
             'maintenance_message' => 'nullable|string',
             'facebook_url' => 'nullable|url',
             'instagram_url' => 'nullable|url',
+            'meta_pixel_enabled' => 'boolean',
+            'meta_pixel_id' => [Rule::requiredIf($request->boolean('meta_pixel_enabled')), 'nullable', 'regex:/^[0-9]{5,30}$/'],
+            'meta_ads_enabled' => 'boolean',
+            'meta_ads_api_version' => ['nullable', 'regex:/^v[0-9]{2,3}\.[0-9]$/'],
+            'meta_ads_account_id' => [Rule::requiredIf($request->boolean('meta_ads_enabled')), 'nullable', 'regex:/^(act_)?[0-9]{5,30}$/'],
+            'meta_ads_access_token' => [Rule::requiredIf($request->boolean('meta_ads_enabled')), 'nullable', 'string'],
             'messenger_enabled' => 'boolean',
             'messenger_page_id' => [Rule::requiredIf($request->boolean('messenger_enabled')), 'nullable', 'string', 'max:80'],
             'messenger_theme_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
@@ -57,6 +63,9 @@ class WebSettingController extends Controller
             'smtp_encryption' => 'nullable|string',
         ]);
         $validated['maintenance_mode'] = $request->boolean('maintenance_mode');
+        $validated['meta_pixel_enabled'] = $request->boolean('meta_pixel_enabled');
+        $validated['meta_ads_enabled'] = $request->boolean('meta_ads_enabled');
+        $validated['meta_ads_api_version'] = $validated['meta_ads_api_version'] ?: 'v24.0';
         $validated['messenger_enabled'] = $request->boolean('messenger_enabled');
         $validated['messenger_theme_color'] = $validated['messenger_theme_color'] ?: '#B99D4B';
         $validated['bkash_enabled'] = $request->boolean('bkash_enabled');

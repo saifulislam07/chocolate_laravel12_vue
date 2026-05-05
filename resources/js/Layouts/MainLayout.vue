@@ -28,6 +28,20 @@ const shouldShowMessenger = computed(() => Boolean(
 ));
 const messengerLink = computed(() => `https://m.me/${messengerSettings.value.messenger_page_id}`);
 
+const menuHref = (url) => {
+    if (!url) {
+        return '#';
+    }
+
+    if (url.startsWith('http') || url.startsWith('/')) {
+        return url;
+    }
+
+    return `/p/${url}`;
+};
+
+const menuComponent = (url) => url?.startsWith('http') ? 'a' : (url ? Link : 'span');
+
 // Watch for flash messages to show toast
 watch(() => flash.value.success, (message) => {
     if (message) {
@@ -104,8 +118,8 @@ watch(shouldShowMessenger, (visible) => {
                 <nav class="hidden md:flex flex-[2] justify-center items-center gap-8 text-[13px] font-medium uppercase tracking-[0.18em]">
                     <div v-for="menu in $page.props.mainMenu" :key="menu.id" class="group relative">
                         <component 
-                            :is="menu.url && menu.url.startsWith('http') ? 'a' : (menu.url ? Link : 'span')" 
-                            :href="menu.url ? (menu.url.startsWith('http') ? menu.url : (menu.url.startsWith('/') ? menu.url : '/p/' + menu.url)) : '#'"
+                            :is="menuComponent(menu.url)" 
+                            :href="menuHref(menu.url)"
                             class="flex items-center gap-1.5 transition hover:text-godiva-gold py-4 cursor-pointer whitespace-nowrap"
                         >
                             {{ menu.name }} 
@@ -114,14 +128,15 @@ watch(shouldShowMessenger, (visible) => {
                         
                         <!-- Dropdown -->
                         <div v-if="menu.children.length > 0" class="invisible group-hover:visible absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl border border-gray-100 min-w-[240px] py-4 transition-all opacity-0 group-hover:opacity-100">
-                            <Link 
+                            <component 
                                 v-for="child in menu.children" 
                                 :key="child.id" 
-                                :href="child.url ? (child.url.startsWith('/') ? child.url : '/p/' + child.url) : '#'"
+                                :is="menuComponent(child.url)"
+                                :href="menuHref(child.url)"
                                 class="block px-6 py-2.5 hover:bg-gray-50 hover:text-godiva-gold font-medium text-[11px] uppercase tracking-[0.14em]"
                             >
                                 {{ child.name }}
-                            </Link>
+                            </component>
                         </div>
                     </div>
                 </nav>
@@ -162,22 +177,23 @@ watch(shouldShowMessenger, (visible) => {
                 <nav class="flex flex-col gap-6 px-8 py-10 text-sm font-bold uppercase tracking-[0.18em]">
                     <div v-for="menu in $page.props.mainMenu" :key="menu.id" class="border-b border-gray-100 pb-5">
                         <component
-                            :is="menu.url && menu.url.startsWith('http') ? 'a' : (menu.url ? Link : 'span')"
-                            :href="menu.url ? (menu.url.startsWith('http') ? menu.url : (menu.url.startsWith('/') ? menu.url : '/p/' + menu.url)) : '#'"
+                            :is="menuComponent(menu.url)"
+                            :href="menuHref(menu.url)"
                             class="block"
                             @click="isMobileMenuOpen = false"
                         >
                             {{ menu.name }}
                         </component>
                         <div v-if="menu.children.length > 0" class="mt-4 flex flex-col gap-3 pl-4 text-[11px] font-medium tracking-[0.14em] text-gray-500">
-                            <Link
+                            <component
                                 v-for="child in menu.children"
                                 :key="child.id"
-                                :href="child.url ? (child.url.startsWith('/') ? child.url : '/p/' + child.url) : '#'"
+                                :is="menuComponent(child.url)"
+                                :href="menuHref(child.url)"
                                 @click="isMobileMenuOpen = false"
                             >
                                 {{ child.name }}
-                            </Link>
+                            </component>
                         </div>
                     </div>
                 </nav>

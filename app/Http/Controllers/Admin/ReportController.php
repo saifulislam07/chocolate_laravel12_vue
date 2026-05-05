@@ -8,6 +8,8 @@ use App\Models\Purchase;
 use App\Models\Order;
 use App\Models\Expense;
 use App\Models\Supplier;
+use App\Models\WebSetting;
+use App\Services\MetaAdsReportService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -95,6 +97,16 @@ class ReportController extends Controller
         }
         return Inertia::render('Admin/Reports/ExpenseReport', [
             'expenses' => $query->latest()->get()
+        ]);
+    }
+
+    public function metaCampaigns(Request $request, MetaAdsReportService $metaAdsReportService)
+    {
+        $datePreset = $request->query('date_preset', 'last_7d');
+
+        return Inertia::render('Admin/Reports/MetaCampaigns', [
+            'datePreset' => $datePreset,
+            'report' => $metaAdsReportService->report(WebSetting::first(), $datePreset),
         ]);
     }
 }

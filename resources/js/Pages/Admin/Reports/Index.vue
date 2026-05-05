@@ -131,6 +131,24 @@ defineProps({
                 </div>
 
                 <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card card-outline card-info shadow-sm h-100">
+                            <div class="card-header border-0">
+                                <h3 class="card-title font-weight-bold">Marketing Reports</h3>
+                            </div>
+                            <div class="card-body px-0 py-2">
+                                <div class="list-group list-group-flush">
+                                    <Link :href="route('admin.reports.meta-campaigns')" class="list-group-item list-group-item-action border-0 px-4 py-3">
+                                        <i class="fab fa-facebook mr-3 text-primary"></i> Meta Campaigns & Boosting
+                                        <span class="float-right text-muted"><i class="fas fa-chevron-right text-xs"></i></span>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
                     <div class="col-md-12">
                         <div class="card shadow-none border-0 bg-light">
                             <div class="card-body text-center p-5">

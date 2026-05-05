@@ -27,20 +27,32 @@ class HomeController extends Controller
             ->latest();
 
         $featuredItems = (clone $productsQuery)
+            ->where('is_bundle', false)
             ->where('is_featured', true)
             ->take(8)
             ->get()
             ->map(fn($p) => $this->mapProduct($p, $wishlistProductIds));
 
         $newArrivals = (clone $productsQuery)
+            ->where('is_bundle', false)
             ->where('is_new', true)
             ->take(8)
             ->get()
             ->map(fn($p) => $this->mapProduct($p, $wishlistProductIds));
 
         $discountItems = (clone $productsQuery)
+            ->where('is_bundle', false)
             ->whereNotNull('compare_at_price')
             ->whereColumn('compare_at_price', '>', 'price')
+            ->take(8)
+            ->get()
+            ->map(fn($p) => $this->mapProduct($p, $wishlistProductIds));
+
+        $bundleItems = Product::query()
+            ->with(['images', 'bundleItems'])
+            ->where('is_active', true)
+            ->where('is_bundle', true)
+            ->latest()
             ->take(8)
             ->get()
             ->map(fn($p) => $this->mapProduct($p, $wishlistProductIds));
@@ -83,6 +95,7 @@ class HomeController extends Controller
             'featuredItems' => $featuredItems,
             'newArrivals' => $newArrivals,
             'discountItems' => $discountItems,
+            'bundleItems' => $bundleItems,
         ]);
     }
 
@@ -97,6 +110,9 @@ class HomeController extends Controller
             'badge' => $product->is_new ? 'New' : ($product->is_featured ? 'Featured' : null),
             'image' => $product->images->first()?->image_path,
             'is_wishlisted' => in_array($product->id, $wishlistProductIds, true),
+            'is_bundle' => (bool) $product->is_bundle,
+            'bundle_note' => $product->bundle_note,
+            'bundle_items_count' => $product->relationLoaded('bundleItems') ? $product->bundleItems->count() : 0,
         ];
     }
 }

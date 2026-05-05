@@ -19,12 +19,14 @@ class ProductController extends Controller
 
         $priceBounds = Product::query()
             ->where('is_active', true)
+            ->where('is_bundle', false)
             ->selectRaw('MIN(price) as min_price, MAX(price) as max_price')
             ->first();
 
         $query = Product::query()
             ->with(['images', 'category'])
-            ->where('is_active', true);
+            ->where('is_active', true)
+            ->where('is_bundle', false);
 
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
@@ -120,12 +122,14 @@ class ProductController extends Controller
             : [];
 
         $product->load(['images', 'variants', 'category']);
+        $product->load(['bundleItems.images']);
 
         $relatedProducts = Product::query()
             ->with('images')
             ->where('is_active', true)
+            ->where('is_bundle', $product->is_bundle)
             ->where('id', '!=', $product->id)
-            ->where('category_id', $product->category_id)
+            ->when(!$product->is_bundle, fn ($query) => $query->where('category_id', $product->category_id))
             ->latest()
             ->take(4)
             ->get()
@@ -148,6 +152,16 @@ class ProductController extends Controller
                 'compare_at_price' => $product->compare_at_price ? (float) $product->compare_at_price : null,
                 'stock' => $product->stock,
                 'category' => $product->category?->name,
+                'is_bundle' => (bool) $product->is_bundle,
+                'bundle_note' => $product->bundle_note,
+                'bundle_items' => $product->bundleItems->map(fn (Product $item): array => [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'slug' => $item->slug,
+                    'quantity' => (int) $item->pivot->quantity,
+                    'price' => (float) $item->price,
+                    'image' => $item->images->first()?->image_path,
+                ]),
                 'images' => $product->images->pluck('image_path')->values(),
                 'is_wishlisted' => in_array($product->id, $wishlistProductIds, true),
                 'variants' => $product->variants->map(fn ($variant): array => [

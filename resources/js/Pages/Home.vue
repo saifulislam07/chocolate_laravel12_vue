@@ -26,6 +26,7 @@ defineProps({
     featuredItems: { type: Array, default: () => [] },
     newArrivals: { type: Array, default: () => [] },
     discountItems: { type: Array, default: () => [] },
+    bundleItems: { type: Array, default: () => [] },
 });
 
 function getDiscountPercent(price, comparePrice) {
@@ -191,6 +192,52 @@ function toggleWishlist(productId) {
                             </div>
                         </div>
                     </Link>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bundle Items Section -->
+        <section v-if="bundleItems.length" class="bg-white py-20">
+            <div class="mx-auto max-w-7xl px-6">
+                <div class="mb-12 flex items-center justify-between border-b border-gray-200 pb-6">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-godiva-gold">Curated Sets</p>
+                        <h2 class="mt-3 font-serif text-3xl italic">Bundle Offers</h2>
+                    </div>
+                    <Link :href="route('products.index')" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition">
+                        Shop More
+                    </Link>
+                </div>
+                <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                    <article v-for="product in bundleItems" :key="product.id" class="group relative flex flex-col bg-white">
+                        <div class="relative aspect-square overflow-hidden bg-godiva-cream/40 p-4">
+                            <span class="absolute left-4 top-4 z-10 bg-godiva-charcoal px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white">
+                                {{ product.bundle_items_count }} items
+                            </span>
+                            <button
+                                type="button"
+                                class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-godiva-charcoal shadow-sm transition hover:text-red-500"
+                                :class="{ 'text-red-500': product.is_wishlisted }"
+                                @click="toggleWishlist(product.id)"
+                            >
+                                <HeartIcon class="h-4 w-4" :class="{ 'fill-current': product.is_wishlisted }" />
+                            </button>
+                            <img :src="product.image || fallbackImage" :alt="product.name" class="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
+                            <div class="absolute inset-x-0 bottom-4 flex translate-y-4 justify-center opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100 px-4">
+                                <button type="button" class="w-full bg-godiva-charcoal py-3 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-godiva-gold" @click="addToCart(product.id)">Add to Bag</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-1 flex-col p-6 text-center">
+                            <h3 class="font-serif text-lg uppercase leading-tight tracking-tight">
+                                <Link :href="route('products.show', product.slug)" class="hover:text-godiva-gold transition">{{ product.name }}</Link>
+                            </h3>
+                            <p v-if="product.bundle_note" class="mt-3 line-clamp-2 text-xs leading-5 tracking-wide text-gray-500">{{ product.bundle_note }}</p>
+                            <div class="mt-4 flex flex-col items-center justify-center gap-1">
+                                <span v-if="product.compare_at_price > product.price" class="text-xs text-gray-400 line-through tracking-widest">{{ formatMoney(product.compare_at_price) }}</span>
+                                <span class="font-serif text-xl" :class="product.compare_at_price > product.price ? 'text-red-600' : 'text-godiva-charcoal'">{{ formatMoney(product.price) }}</span>
+                            </div>
+                        </div>
+                    </article>
                 </div>
             </div>
         </section>

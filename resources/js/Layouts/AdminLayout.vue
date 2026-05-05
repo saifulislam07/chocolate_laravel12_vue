@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { Link, Head, usePage } from '@inertiajs/vue3';
 
 const isSidebarOpen = ref(true);
@@ -11,9 +11,20 @@ const openGroups = ref({
     system: true,
 });
 const page = usePage();
+const bodyClasses = ['hold-transition', 'sidebar-mini', 'layout-fixed'];
+const r = (name, params = undefined) => route(name, params, false);
+
+onMounted(() => {
+    document.body.classList.add(...bodyClasses);
+});
+
+onBeforeUnmount(() => {
+    document.body.classList.remove(...bodyClasses, 'sidebar-collapse');
+});
 
 function toggleSidebar() {
     isSidebarOpen.value = !isSidebarOpen.value;
+    document.body.classList.toggle('sidebar-collapse', !isSidebarOpen.value);
 }
 
 function toggleGroup(group) {
@@ -38,7 +49,7 @@ function toggleGroup(group) {
                         <a class="nav-link" href="#" @click.prevent="toggleSidebar"><i class="fas fa-bars text-muted"></i></a>
                     </li>
                     <li class="nav-item d-none d-sm-inline-block">
-                        <Link :href="route('home')" class="nav-link text-sm font-medium"><i class="fas fa-external-link-alt mr-1"></i> Storefront</Link>
+                        <Link :href="r('home')" class="nav-link text-sm font-medium"><i class="fas fa-external-link-alt mr-1"></i> Storefront</Link>
                     </li>
                 </ul>
 
@@ -53,7 +64,7 @@ function toggleGroup(group) {
                         </div>
                     </li>
                     <li class="nav-item border-left ml-2">
-                        <Link :href="route('logout')" method="post" as="button" class="nav-link text-danger border-0 bg-transparent">
+                        <Link :href="r('logout')" method="post" as="button" class="nav-link text-danger border-0 bg-transparent">
                             <i class="fas fa-sign-out-alt"></i>
                         </Link>
                     </li>
@@ -62,7 +73,7 @@ function toggleGroup(group) {
 
             <!-- Sidebar -->
             <aside class="main-sidebar sidebar-light-indigo elevation-0 border-right">
-                <Link :href="route('admin.dashboard')" class="brand-link border-bottom py-3 px-4">
+                <Link :href="r('admin.dashboard')" class="brand-link border-bottom py-3 px-4">
                     <img :src="$page.props.webSettings?.logo || '/images/godiva/logo-cute.png'" alt="Logo" class="brand-image" style="float: none; max-height: 30px;">
                     <span class="brand-text font-bold ml-2 text-dark">{{ $page.props.webSettings?.site_name || 'ERP Admin' }}</span>
                 </Link>
@@ -71,14 +82,14 @@ function toggleGroup(group) {
                     <nav class="mt-4 px-2">
                         <ul class="nav nav-pills nav-sidebar flex-column nav-flat" data-widget="treeview" role="menu">
                             <li class="nav-item">
-                                <Link :href="route('admin.dashboard')" class="nav-link" :class="{ active: $page.component === 'Dashboard' }">
+                                <Link :href="r('admin.dashboard')" class="nav-link" :class="{ active: $page.component === 'Dashboard' }">
                                     <i class="nav-icon fas fa-th-large"></i>
                                     <p>Dashboard</p>
                                 </Link>
                             </li>
                             
                             <li class="nav-item mt-3">
-                                <Link :href="route('admin.pos.index')" class="nav-link bg-primary-soft" :class="{ active: $page.component === 'Admin/POS/Index' }">
+                                <Link :href="r('admin.pos.index')" class="nav-link bg-primary-soft" :class="{ active: $page.component === 'Admin/POS/Index' }">
                                     <i class="nav-icon fas fa-bolt"></i>
                                     <p class="font-semibold">Quick POS</p>
                                 </Link>
@@ -86,32 +97,38 @@ function toggleGroup(group) {
 
                             <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">Management</li>
 
-                            <li class="nav-item has-tree">
+                            <li class="nav-item has-treeview" :class="{ 'menu-open': openGroups.catalog }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('catalog')">
                                     <i class="nav-icon fas fa-boxes-stacked text-emerald-400"></i>
                                     <p>Catalog <i class="right fas" :class="openGroups.catalog ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
                                 </button>
-                                <ul v-show="openGroups.catalog" class="nav nav-treeview">
+                                <ul class="nav nav-treeview" :style="{ display: openGroups.catalog ? 'block' : 'none' }">
                                     <li class="nav-item">
-                                        <Link :href="route('admin.products.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Products') }">
+                                        <Link :href="r('admin.products.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Products') }">
                                             <i class="nav-icon fas fa-box text-emerald-500 shadow-icon"></i>
                                             <p>Products</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item">
-                                        <Link :href="route('admin.categories.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Categories') }">
+                                        <Link :href="r('admin.bundles.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Bundles') }">
+                                            <i class="nav-icon fas fa-box-open text-emerald-400"></i>
+                                            <p>Bundles</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="r('admin.categories.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Categories') }">
                                             <i class="nav-icon fas fa-tags text-emerald-400"></i>
                                             <p>Categories</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item">
-                                        <Link :href="route('admin.brands.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Brands') }">
+                                        <Link :href="r('admin.brands.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Brands') }">
                                             <i class="nav-icon fas fa-copyright text-emerald-300"></i>
                                             <p>Brands</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item">
-                                        <Link :href="route('admin.units.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Units') }">
+                                        <Link :href="r('admin.units.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Units') }">
                                             <i class="nav-icon fas fa-balance-scale text-emerald-200"></i>
                                             <p>Units</p>
                                         </Link>
@@ -119,26 +136,26 @@ function toggleGroup(group) {
                                 </ul>
                             </li>
 
-                            <li class="nav-item has-tree">
+                            <li class="nav-item has-treeview" :class="{ 'menu-open': openGroups.orders }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('orders')">
                                     <i class="nav-icon fas fa-receipt text-blue-400"></i>
                                     <p>Orders & Stock <i class="right fas" :class="openGroups.orders ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
                                 </button>
-                                <ul v-show="openGroups.orders" class="nav nav-treeview">
+                                <ul class="nav nav-treeview" :style="{ display: openGroups.orders ? 'block' : 'none' }">
                                     <li class="nav-item">
-                                        <Link :href="route('admin.sales.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Sales') }">
+                                        <Link :href="r('admin.sales.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Sales') }">
                                             <i class="nav-icon fas fa-shopping-cart text-blue-400"></i>
                                             <p>Sales Records</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item">
-                                        <Link :href="route('admin.purchases.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Purchases') }">
+                                        <Link :href="r('admin.purchases.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Purchases') }">
                                             <i class="nav-icon fas fa-truck-loading text-blue-500"></i>
                                             <p>Purchases</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item">
-                                        <Link :href="route('admin.suppliers.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Suppliers') }">
+                                        <Link :href="r('admin.suppliers.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Suppliers') }">
                                             <i class="nav-icon fas fa-id-badge text-blue-300"></i>
                                             <p>Suppliers</p>
                                         </Link>
@@ -146,26 +163,26 @@ function toggleGroup(group) {
                                 </ul>
                             </li>
 
-                            <li class="nav-item has-tree">
+                            <li class="nav-item has-treeview" :class="{ 'menu-open': openGroups.website }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('website')">
                                     <i class="nav-icon fas fa-store text-indigo-400"></i>
                                     <p>Website <i class="right fas" :class="openGroups.website ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
                                 </button>
-                                <ul v-show="openGroups.website" class="nav nav-treeview">
+                                <ul class="nav nav-treeview" :style="{ display: openGroups.website ? 'block' : 'none' }">
                                     <li class="nav-item">
-                                        <Link :href="route('admin.menus.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Menus') }">
+                                        <Link :href="r('admin.menus.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Menus') }">
                                             <i class="nav-icon fas fa-stream text-indigo-400"></i>
                                             <p>Navigation</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item">
-                                        <Link :href="route('admin.pages.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Pages') }">
+                                        <Link :href="r('admin.pages.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Pages') }">
                                             <i class="nav-icon fas fa-file-invoice text-indigo-500"></i>
                                             <p>Static Pages</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item">
-                                        <Link :href="route('admin.sliders.index')" class="nav-link" :class="{ active: $page.component === 'Admin/Sliders/Index' }">
+                                        <Link :href="r('admin.sliders.index')" class="nav-link" :class="{ active: $page.component === 'Admin/Sliders/Index' }">
                                             <i class="nav-icon fas fa-image text-cyan-400"></i>
                                             <p>Sliders</p>
                                         </Link>
@@ -173,20 +190,26 @@ function toggleGroup(group) {
                                 </ul>
                             </li>
 
-                            <li class="nav-item has-tree">
+                            <li class="nav-item has-treeview" :class="{ 'menu-open': openGroups.finance }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('finance')">
                                     <i class="nav-icon fas fa-chart-line text-amber-400"></i>
                                     <p>Finance & Reports <i class="right fas" :class="openGroups.finance ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
                                 </button>
-                                <ul v-show="openGroups.finance" class="nav nav-treeview">
+                                <ul class="nav nav-treeview" :style="{ display: openGroups.finance ? 'block' : 'none' }">
                                     <li class="nav-item">
-                                        <Link :href="route('admin.reports.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Reports') }">
+                                        <Link :href="r('admin.reports.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Reports') }">
                                             <i class="nav-icon fas fa-chart-line text-amber-400"></i>
                                             <p>Reports</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item">
-                                        <Link :href="route('admin.expenses.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Expenses') }">
+                                        <Link :href="r('admin.reports.meta-campaigns')" class="nav-link" :class="{ active: $page.component === 'Admin/Reports/MetaCampaigns' }">
+                                            <i class="nav-icon fab fa-facebook text-blue-400"></i>
+                                            <p>Meta Campaigns</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <Link :href="r('admin.expenses.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Expenses') }">
                                             <i class="nav-icon fas fa-receipt text-rose-400"></i>
                                             <p>Expenses</p>
                                         </Link>
@@ -195,20 +218,20 @@ function toggleGroup(group) {
                             </li>
 
                             <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">System</li>
-                            <li class="nav-item has-tree mb-5">
+                            <li class="nav-item has-treeview mb-5" :class="{ 'menu-open': openGroups.system }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('system')">
                                     <i class="nav-icon fas fa-cog text-slate-400"></i>
                                     <p>System <i class="right fas" :class="openGroups.system ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
                                 </button>
-                                <ul v-show="openGroups.system" class="nav nav-treeview">
+                                <ul class="nav nav-treeview" :style="{ display: openGroups.system ? 'block' : 'none' }">
                                     <li class="nav-item">
-                                        <Link :href="route('admin.settings.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Settings') }">
+                                        <Link :href="r('admin.settings.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Settings') }">
                                             <i class="nav-icon fas fa-cog text-slate-400"></i>
                                             <p>Settings</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item">
-                                        <Link :href="route('admin.roles.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Roles') }">
+                                        <Link :href="r('admin.roles.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Roles') }">
                                             <i class="nav-icon fas fa-user-lock text-slate-500"></i>
                                             <p>Permissions</p>
                                         </Link>
@@ -257,6 +280,63 @@ body {
 
 .h-min-screen { min-height: 100vh !important; }
 .bg-light-gray { background-color: var(--light-gray) !important; }
+
+.wrapper {
+    min-height: 100vh;
+}
+
+.main-sidebar {
+    bottom: 0;
+    left: 0;
+    overflow-y: auto;
+    position: fixed !important;
+    top: 0;
+    width: 250px;
+    z-index: 1038;
+}
+
+.main-header,
+.content-wrapper,
+.main-footer {
+    margin-left: 250px;
+    transition: margin-left 0.3s ease;
+}
+
+.sidebar-collapse .main-sidebar {
+    width: 4.6rem;
+}
+
+.sidebar-collapse .brand-text,
+.sidebar-collapse .nav-sidebar p,
+.sidebar-collapse .nav-header {
+    display: none !important;
+}
+
+.sidebar-collapse .main-header,
+.sidebar-collapse .content-wrapper,
+.sidebar-collapse .main-footer {
+    margin-left: 4.6rem;
+}
+
+@media (max-width: 767.98px) {
+    .main-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .main-header,
+    .content-wrapper,
+    .main-footer,
+    .sidebar-collapse .main-header,
+    .sidebar-collapse .content-wrapper,
+    .sidebar-collapse .main-footer {
+        margin-left: 0;
+    }
+
+    .wrapper:not(.sidebar-collapse) .main-sidebar {
+        transform: translateX(0);
+    }
+}
 
 /* Sidebar Premium Overhaul */
 .main-sidebar { 

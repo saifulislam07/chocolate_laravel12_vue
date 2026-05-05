@@ -45,7 +45,9 @@ class HandleInertiaRequests extends Middleware
             ? \App\Models\Wishlist::where('user_id', $user->id)->count()
             : 0;
 
-        $mainMenu = \App\Models\Menu::with('children')
+        $mainMenu = \App\Models\Menu::with(['children' => function ($query) {
+                $query->where('is_active', true)->orderBy('order');
+            }])
             ->whereNull('parent_id')
             ->where('is_active', true)
             ->orderBy('order')

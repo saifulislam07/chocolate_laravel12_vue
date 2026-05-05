@@ -12,10 +12,63 @@ const activeTab = ref('general');
 const tabs = [
     { id: 'general', label: 'General', icon: 'fas fa-building' },
     { id: 'branding', label: 'Branding', icon: 'fas fa-palette' },
+    { id: 'pixel', label: 'Pixel', icon: 'fas fa-bullseye' },
+    { id: 'meta_ads', label: 'Meta Ads', icon: 'fab fa-facebook' },
     { id: 'payments', label: 'Payments', icon: 'fas fa-credit-card' },
     { id: 'messenger', label: 'Messenger', icon: 'fab fa-facebook-messenger' },
     { id: 'email', label: 'Email SMTP', icon: 'fas fa-envelope' },
     { id: 'maintenance', label: 'Maintenance', icon: 'fas fa-screwdriver-wrench' },
+];
+
+const metaTrackingEvents = [
+    {
+        name: 'PageView',
+        trigger: 'Every public storefront page load',
+        use: 'Visitor traffic, retargeting audiences, landing page views',
+        status: 'Ready',
+    },
+    {
+        name: 'ViewContent',
+        trigger: 'Product or bundle details page',
+        use: 'People who viewed a specific product',
+        status: 'Can add',
+    },
+    {
+        name: 'Search',
+        trigger: 'Shop search/filter query',
+        use: 'Search intent and product discovery audiences',
+        status: 'Can add',
+    },
+    {
+        name: 'AddToCart',
+        trigger: 'Add to cart button',
+        use: 'Cart retargeting and conversion optimization',
+        status: 'Can add',
+    },
+    {
+        name: 'InitiateCheckout',
+        trigger: 'Checkout page open',
+        use: 'Checkout funnel and abandoned checkout audiences',
+        status: 'Can add',
+    },
+    {
+        name: 'Purchase',
+        trigger: 'Successful order / payment success page',
+        use: 'Sales reporting, ROAS, value optimization',
+        status: 'Can add',
+    },
+    {
+        name: 'AddToWishlist',
+        trigger: 'Wishlist button',
+        use: 'High-intent product audiences',
+        status: 'Can add',
+    },
+    {
+        name: 'Contact',
+        trigger: 'Messenger/contact click',
+        use: 'Lead and support engagement',
+        status: 'Can add',
+    },
 ];
 
 const form = useForm({
@@ -28,6 +81,12 @@ const form = useForm({
     maintenance_message: props.settings?.maintenance_message || 'SweetChocholate is temporarily unavailable while we make a few improvements.',
     facebook_url: props.settings?.facebook_url || '',
     instagram_url: props.settings?.instagram_url || '',
+    meta_pixel_enabled: props.settings?.meta_pixel_enabled || false,
+    meta_pixel_id: props.settings?.meta_pixel_id || '',
+    meta_ads_enabled: props.settings?.meta_ads_enabled || false,
+    meta_ads_api_version: props.settings?.meta_ads_api_version || 'v24.0',
+    meta_ads_account_id: props.settings?.meta_ads_account_id || '',
+    meta_ads_access_token: props.settings?.meta_ads_access_token || '',
     messenger_enabled: props.settings?.messenger_enabled || false,
     messenger_page_id: props.settings?.messenger_page_id || '',
     messenger_theme_color: props.settings?.messenger_theme_color || '#B99D4B',
@@ -166,6 +225,98 @@ function submit() {
                                                 </div>
                                                 <input type="file" @input="form.favicon = $event.target.files[0]" class="form-control-file mt-3">
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <div v-show="activeTab === 'pixel'">
+                                        <h3 class="settings-title">Meta Pixel</h3>
+                                        <div class="custom-control custom-switch mb-4">
+                                            <input type="checkbox" class="custom-control-input" id="metaPixelEnabled" v-model="form.meta_pixel_enabled">
+                                            <label class="custom-control-label font-weight-bold" for="metaPixelEnabled">Enable Meta Pixel on storefront</label>
+                                        </div>
+                                        <div class="form-group mb-0">
+                                            <label>Pixel ID</label>
+                                            <input
+                                                type="text"
+                                                v-model="form.meta_pixel_id"
+                                                class="form-control"
+                                                :class="{'is-invalid': form.errors.meta_pixel_id}"
+                                                placeholder="Example: 123456789012345"
+                                            >
+                                            <span class="text-danger text-sm" v-if="form.errors.meta_pixel_id">{{ form.errors.meta_pixel_id }}</span>
+                                            <small class="form-text text-muted">Only the numeric Meta Pixel ID is needed. The script is added automatically on public storefront pages.</small>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <h4 class="settings-subtitle">Possible Tracking Events</h4>
+                                            <div class="table-responsive pixel-events-table">
+                                                <table class="table table-sm mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Event</th>
+                                                            <th>Trigger</th>
+                                                            <th>Use</th>
+                                                            <th class="text-right">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr v-for="event in metaTrackingEvents" :key="event.name">
+                                                            <td class="font-weight-bold text-dark">{{ event.name }}</td>
+                                                            <td>{{ event.trigger }}</td>
+                                                            <td>{{ event.use }}</td>
+                                                            <td class="text-right">
+                                                                <span class="badge" :class="event.status === 'Ready' ? 'badge-success' : 'badge-secondary'">
+                                                                    {{ event.status }}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <p class="text-muted text-sm mt-3 mb-0">
+                                                Current setup fires PageView. Other events can be enabled next when you want product, cart, checkout, and purchase tracking.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div v-show="activeTab === 'meta_ads'">
+                                        <h3 class="settings-title">Meta Ads Reporting</h3>
+                                        <div class="custom-control custom-switch mb-4">
+                                            <input type="checkbox" class="custom-control-input" id="metaAdsEnabled" v-model="form.meta_ads_enabled">
+                                            <label class="custom-control-label font-weight-bold" for="metaAdsEnabled">Enable Meta campaign and boosting reports</label>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 form-group">
+                                                <label>API Version</label>
+                                                <input type="text" v-model="form.meta_ads_api_version" class="form-control" placeholder="v24.0">
+                                            </div>
+                                            <div class="col-md-8 form-group">
+                                                <label>Ad Account ID</label>
+                                                <input
+                                                    type="text"
+                                                    v-model="form.meta_ads_account_id"
+                                                    class="form-control"
+                                                    :class="{'is-invalid': form.errors.meta_ads_account_id}"
+                                                    placeholder="act_1234567890"
+                                                >
+                                                <span class="text-danger text-sm" v-if="form.errors.meta_ads_account_id">{{ form.errors.meta_ads_account_id }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Access Token</label>
+                                            <textarea
+                                                v-model="form.meta_ads_access_token"
+                                                class="form-control"
+                                                :class="{'is-invalid': form.errors.meta_ads_access_token}"
+                                                rows="4"
+                                                placeholder="Meta access token with ads_read permission"
+                                            ></textarea>
+                                            <span class="text-danger text-sm" v-if="form.errors.meta_ads_access_token">{{ form.errors.meta_ads_access_token }}</span>
+                                            <small class="form-text text-muted">Use a token that has access to the ad account and the ads_read permission.</small>
+                                        </div>
+                                        <div class="alert alert-info mb-0">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            After saving, open Reports > Meta Campaigns to check campaign and boosted post performance.
                                         </div>
                                     </div>
 
@@ -377,6 +528,33 @@ function submit() {
     font-weight: 800;
     color: #0f172a;
     margin-bottom: 1.25rem;
+}
+
+.settings-subtitle {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.9rem;
+}
+
+.pixel-events-table {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+}
+
+.pixel-events-table th {
+    background: #f8fafc;
+    border-top: 0;
+    color: #64748b;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.pixel-events-table td {
+    color: #475569;
+    font-size: 0.82rem;
+    vertical-align: middle;
 }
 
 .asset-preview {
