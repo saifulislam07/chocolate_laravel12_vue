@@ -26,7 +26,7 @@ function formatMoney(value) {
 
         <div class="bg-white">
             <section class="border-b border-[#eee4d8] bg-[#fcf8f3] py-14">
-                <div class="mx-auto max-w-7xl px-6">
+                <div class="mx-auto max-w-screen-2xl px-6">
                     <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-godiva-gold">My Account</p>
                     <div class="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                         <div>
@@ -40,7 +40,7 @@ function formatMoney(value) {
                 </div>
             </section>
 
-            <main class="mx-auto max-w-7xl px-6 py-12">
+            <main class="mx-auto max-w-screen-2xl px-6 py-12">
                 <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div class="border border-gray-100 p-6">
                         <ShoppingBagIcon class="h-7 w-7 text-godiva-gold" />

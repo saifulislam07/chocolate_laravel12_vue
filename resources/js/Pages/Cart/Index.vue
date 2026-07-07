@@ -52,7 +52,7 @@ function removeItem(itemId) {
         <Head title="Your Shopping Bag | Coco Craft" />
 
         <div class="bg-white py-12 sm:py-20 text-godiva-charcoal">
-            <main class="mx-auto max-w-7xl px-6">
+            <main class="mx-auto max-w-screen-2xl px-6">
                 <div class="flex items-baseline justify-between border-b border-gray-100 pb-10">
                     <h1 class="font-serif text-4xl italic tracking-tight">Your Shopping Bag</h1>
                     <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400">{{ items.length }} Items</p>

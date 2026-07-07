@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Customer;
 use App\Models\Division;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class POSController extends Controller
@@ -23,7 +26,7 @@ class POSController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, InventoryService $inventory)
     {
         $request->validate([
             'items' => 'required|array|min:1',
@@ -41,36 +44,48 @@ class POSController extends Controller
             'payment_method' => 'required|string',
         ]);
 
-        $order = \App\Models\Order::create([
-            'order_number' => 'POS-' . strtoupper(uniqid()),
-            'customer_id' => $request->customer_id,
-            'status' => 'completed',
-            'subtotal' => $request->subtotal,
-            'discount' => $request->discount ?? 0,
-            'tax' => $request->tax ?? 0,
-            'shipping_cost' => $request->shipping_cost ?? 0,
-            'total' => $request->total,
-            'paid_amount' => $request->paid_amount,
-            'due_amount' => $request->due_amount,
-            'payment_method' => $request->payment_method,
-            'payment_status' => $request->due_amount > 0 ? ($request->paid_amount > 0 ? 'partial' : 'unpaid') : 'paid',
-            'order_source' => 'pos',
-        ]);
-
+        // Validate stock availability up front so a partial sale never happens.
+        $products = Product::whereIn('id', collect($request->items)->pluck('id'))->get()->keyBy('id');
         foreach ($request->items as $item) {
-            $order->items()->create([
-                'product_id' => $item['id'],
-                'product_name' => $item['name'],
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-            ]);
-
-            // Deduct stock
-            $product = \App\Models\Product::find($item['id']);
-            if ($product) {
-                $product->decrement('stock', $item['quantity']);
+            $product = $products->get($item['id']);
+            if (! $product || ! $inventory->hasSufficientStock($product, $item['quantity'])) {
+                throw ValidationException::withMessages([
+                    'items' => "Insufficient stock for \"{$item['name']}\" (available: " . ($product->stock ?? 0) . ').',
+                ]);
             }
         }
+
+        $order = DB::transaction(function () use ($request, $products, $inventory) {
+            $order = \App\Models\Order::create([
+                'order_number' => 'POS-' . strtoupper(uniqid()),
+                'customer_id' => $request->customer_id,
+                'status' => 'completed',
+                'subtotal' => $request->subtotal,
+                'discount' => $request->discount ?? 0,
+                'tax' => $request->tax ?? 0,
+                'shipping_cost' => $request->shipping_cost ?? 0,
+                'total' => $request->total,
+                'paid_amount' => $request->paid_amount,
+                'due_amount' => $request->due_amount,
+                'payment_method' => $request->payment_method,
+                'payment_status' => $request->due_amount > 0 ? ($request->paid_amount > 0 ? 'partial' : 'unpaid') : 'paid',
+                'order_source' => 'pos',
+            ]);
+
+            foreach ($request->items as $item) {
+                $order->items()->create([
+                    'product_id' => $item['id'],
+                    'product_name' => $item['name'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                ]);
+
+                $product = $products->get($item['id']);
+                $inventory->adjust($product, -$item['quantity'], 'sale_out', $order, "POS sale {$order->order_number}");
+            }
+
+            return $order;
+        });
 
         // Return invoice data for printing
         $customer = $order->customer;

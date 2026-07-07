@@ -7,12 +7,17 @@ use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseController extends Controller
 {
+    public function __construct(private readonly InventoryService $inventory)
+    {
+    }
+
     public function index()
     {
         return Inertia::render('Admin/Purchases/Index', [
@@ -84,11 +89,12 @@ class PurchaseController extends Controller
                     'subtotal' => ($item['quantity'] * $item['unit_cost']) - ($item['discount_amount'] ?? 0),
                 ]);
 
-                // Increment Product Stock
-                Product::where('id', $item['product_id'])->increment('stock', $item['quantity']);
-                
+                // Increment Product Stock (audited via InventoryService)
+                $product = Product::findOrFail($item['product_id']);
+                $this->inventory->adjust($product, (int) $item['quantity'], 'purchase_in', $purchase, "Purchase {$purchase->reference_no}");
+
                 // Update Product Cost Price if needed (optional best practice)
-                Product::where('id', $item['product_id'])->update(['cost_price' => $item['unit_cost']]);
+                $product->update(['cost_price' => $item['unit_cost']]);
             }
 
             DB::commit();
@@ -134,7 +140,7 @@ class PurchaseController extends Controller
 
             // 1. Reverse old stock
             foreach ($purchase->items as $oldItem) {
-                Product::where('id', $oldItem->product_id)->decrement('stock', $oldItem->quantity);
+                $this->inventory->adjust($oldItem->product, -$oldItem->quantity, 'adjustment', $purchase, "Reversal for purchase update {$purchase->reference_no}");
             }
 
             // 2. Delete old items
@@ -176,7 +182,8 @@ class PurchaseController extends Controller
                     'subtotal' => ($item['quantity'] * $item['unit_cost']) - ($item['discount_amount'] ?? 0),
                 ]);
 
-                Product::where('id', $item['product_id'])->increment('stock', $item['quantity']);
+                $product = Product::findOrFail($item['product_id']);
+                $this->inventory->adjust($product, (int) $item['quantity'], 'purchase_in', $purchase, "Purchase update {$purchase->reference_no}");
             }
 
             DB::commit();
@@ -194,7 +201,7 @@ class PurchaseController extends Controller
             DB::beginTransaction();
             // Reverse stock
             foreach ($purchase->items as $item) {
-                Product::where('id', $item['product_id'])->decrement('stock', $item['quantity']);
+                $this->inventory->adjust($item->product, -$item->quantity, 'adjustment', $purchase, "Reversal for deleted purchase {$purchase->reference_no}");
             }
             $purchase->delete();
             DB::commit();

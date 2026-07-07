@@ -122,6 +122,31 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/courier/pathao/areas/{zoneId}', [\App\Http\Controllers\Admin\SaleController::class, 'pathaoAreas'])
         ->name('admin.courier.pathao.areas')
         ->middleware('permission:edit_sales');
+
+    // Inventory Routes
+    Route::get('/admin/inventory', [\App\Http\Controllers\Admin\StockAdjustmentController::class, 'index'])
+        ->name('admin.inventory.index')
+        ->middleware('permission:view_inventory');
+    Route::post('/admin/inventory', [\App\Http\Controllers\Admin\StockAdjustmentController::class, 'store'])
+        ->name('admin.inventory.store')
+        ->middleware('permission:create_inventory');
+
+    // Sales Returns & Refunds Routes
+    Route::get('/admin/returns', [\App\Http\Controllers\Admin\SalesReturnController::class, 'index'])
+        ->name('admin.returns.index')
+        ->middleware('permission:view_returns');
+    Route::get('/admin/returns/create', [\App\Http\Controllers\Admin\SalesReturnController::class, 'create'])
+        ->name('admin.returns.create')
+        ->middleware('permission:create_returns');
+    Route::post('/admin/returns', [\App\Http\Controllers\Admin\SalesReturnController::class, 'store'])
+        ->name('admin.returns.store')
+        ->middleware('permission:create_returns');
+    Route::delete('/admin/returns/{salesReturn}', [\App\Http\Controllers\Admin\SalesReturnController::class, 'destroy'])
+        ->name('admin.returns.destroy')
+        ->middleware('permission:delete_returns');
+    Route::get('/admin/refunds', [\App\Http\Controllers\Admin\ReturnRefundController::class, 'index'])
+        ->name('admin.refunds.index')
+        ->middleware('permission:view_returns');
 });
 
 require __DIR__.'/auth.php';

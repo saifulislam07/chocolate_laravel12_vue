@@ -1,0 +1,28 @@
+Shipping charges should be configurable from the admin/backend panel.
+
+
+
+When a customer changes their delivery location during checkout, the shipping charge should be recalculated automatically based on the selected location.
+
+
+
+Suggested approach for easy management:
+
+
+
+* Create Shipping Zones (e.g., Dhaka City, Dhaka Outside City, Chattogram, Other Districts, etc.).
+
+* Each zone will have its own configurable shipping charge in the admin panel.
+
+* Admins can add, update, or disable shipping zones without requiring code changes.
+
+* During checkout, customers select their district/area, and the system automatically applies the corresponding shipping charge.
+
+* The order summary should update instantly to reflect the new shipping cost and grand total.
+
+* Shipping charges applied to an order should be stored with the order to ensure historical accuracy, even if shipping rates change later.
+
+* The system should support free shipping rules, such as free delivery for orders above a configurable minimum amount.
+
+* A default shipping charge should be available as a fallback for locations that are not assigned to any shipping zone.
+

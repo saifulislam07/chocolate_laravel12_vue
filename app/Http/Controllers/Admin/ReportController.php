@@ -9,6 +9,8 @@ use App\Models\Order;
 use App\Models\Customer;
 use App\Models\District;
 use App\Models\Expense;
+use App\Models\ReturnRefund;
+use App\Models\SalesReturn;
 use App\Models\Supplier;
 use App\Models\WebSetting;
 use App\Services\MetaAdsReportService;
@@ -20,13 +22,20 @@ class ReportController extends Controller
 {
     public function index()
     {
+        $totalSales = (float) Order::sum('total');
+        $totalReturns = (float) SalesReturn::sum('subtotal_refund');
+        $totalRefunds = (float) ReturnRefund::sum('amount');
+
         return Inertia::render('Admin/Reports/Index', [
             'summary' => [
                 'total_products' => Product::count(),
                 'total_stock' => Product::sum('stock'),
                 'stock_value' => Product::sum(DB::raw('stock * cost_price')),
                 'total_purchases' => Purchase::sum('total_amount'),
-                'total_sales' => Order::sum('total'),
+                'total_sales' => $totalSales,
+                'total_returns' => $totalReturns,
+                'net_sales' => $totalSales - $totalReturns,
+                'total_refunds' => $totalRefunds,
                 'total_expenses' => Expense::sum('amount'),
             ]
         ]);
@@ -67,13 +76,15 @@ class ReportController extends Controller
         $sales = Order::whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])->sum('total');
         $purchases = Purchase::whereBetween('purchase_date', [$start_date, $end_date])->sum('total_amount');
         $expenses = Expense::whereBetween('expense_date', [$start_date, $end_date])->sum('amount');
+        $refunds = ReturnRefund::whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])->sum('amount');
 
         return Inertia::render('Admin/Reports/ProfitLoss', [
             'stats' => [
-                'sales' => (float)$sales,
-                'purchases' => (float)$purchases,
-                'expenses' => (float)$expenses,
-                'net_profit' => (float)($sales - ($purchases + $expenses)),
+                'sales' => (float) $sales,
+                'purchases' => (float) $purchases,
+                'expenses' => (float) $expenses,
+                'refunds' => (float) $refunds,
+                'net_profit' => (float) ($sales - $refunds - ($purchases + $expenses)),
                 'start_date' => $start_date,
                 'end_date' => $end_date,
             ]

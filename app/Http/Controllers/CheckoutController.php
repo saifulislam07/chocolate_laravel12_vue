@@ -7,6 +7,7 @@ use App\Models\Division;
 use App\Models\Order;
 use App\Models\PaymentTransaction;
 use App\Models\WebSetting;
+use App\Services\InventoryService;
 use App\Services\Payments\BkashPaymentService;
 use App\Services\Payments\NagadPaymentService;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -60,7 +62,7 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, InventoryService $inventory): RedirectResponse
     {
         $payload = $request->validate([
             'full_name' => ['nullable', 'string', 'max:120'],
@@ -84,6 +86,14 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Your bag is empty.');
         }
 
+        foreach ($cart->items as $item) {
+            if (! $inventory->hasSufficientStock($item->product, $item->quantity)) {
+                throw ValidationException::withMessages([
+                    'items' => "\"{$item->product->name}\" only has {$item->product->stock} left in stock.",
+                ]);
+            }
+        }
+
         $subtotal = $cart->items->sum(fn ($item) => (float) $item->product->price * (int) $item->quantity);
         $shipping = $subtotal >= 80 ? 0 : 8;
         $tax = round($subtotal * 0.05, 2);
@@ -91,10 +101,24 @@ class CheckoutController extends Controller
 
         $district = \App\Models\District::find($payload['district_id']);
 
-        $order = DB::transaction(function () use ($cart, $payload, $district, $subtotal, $shipping, $tax, $total): Order {
+        // Unify customer identity across web and POS: every order (guest or logged-in)
+        // links to a Customer record keyed by phone, so wallet balances work everywhere.
+        $customer = \App\Models\Customer::firstOrCreate(
+            ['phone' => $payload['phone']],
+            [
+                'name' => $payload['full_name'] ?? 'Guest',
+                'email' => $payload['email'] ?? null,
+                'address' => $payload['address'],
+                'division_id' => $payload['division_id'],
+                'district_id' => $payload['district_id'],
+            ]
+        );
+
+        $order = DB::transaction(function () use ($cart, $payload, $district, $customer, $subtotal, $shipping, $tax, $total, $inventory): Order {
             $order = Order::create([
                 'order_number' => 'CHOC-' . now()->format('Ymd') . '-' . strtoupper(substr(uniqid(), -6)),
                 'user_id' => Auth::id(),
+                'customer_id' => $customer->id,
                 'status' => 'pending',
                 'subtotal' => $subtotal,
                 'discount' => 0,
@@ -124,6 +148,8 @@ class CheckoutController extends Controller
                     'price' => $item->product->price,
                     'quantity' => $item->quantity,
                 ]);
+
+                $inventory->adjust($item->product, -$item->quantity, 'sale_out', $order, "Online order {$order->order_number}");
             }
 
             $cart->items()->delete();

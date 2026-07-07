@@ -138,7 +138,7 @@ watch(shouldShowMessenger, (visible) => {
 
         <!-- Sticky Header -->
         <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm dark:border-white/10 dark:bg-godiva-charcoal/95">
-            <div class="mx-auto grid max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-6 pt-3 pb-2 md:pb-0">
+            <div class="mx-auto grid max-w-screen-2xl grid-cols-[1fr_auto_1fr] items-center px-6 pt-3 pb-2 md:pb-0">
 
                 <!-- Mobile Menu Button (Left) -->
                 <div class="flex items-center">
@@ -178,7 +178,7 @@ watch(shouldShowMessenger, (visible) => {
             </div>
 
             <!-- Desktop Navigation (Centered below logo) -->
-            <nav class="mx-auto hidden max-w-7xl items-center justify-center gap-8 px-6 text-[13px] font-medium uppercase tracking-[0.18em] md:flex">
+            <nav class="mx-auto hidden max-w-screen-2xl items-center justify-center gap-8 px-6 text-[13px] font-medium uppercase tracking-[0.18em] md:flex">
                 <div v-for="menu in $page.props.mainMenu" :key="menu.id" class="group relative">
                     <component
                         :is="menuComponent(menu.url)"
@@ -349,7 +349,7 @@ watch(shouldShowMessenger, (visible) => {
 
         <!-- Footer -->
         <footer class="bg-godiva-charcoal text-white">
-            <div class="mx-auto max-w-7xl px-6 py-16 md:py-20">
+            <div class="mx-auto max-w-screen-2xl px-6 py-16 md:py-20">
                 <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.3fr_1.4fr_1.4fr_1fr] lg:gap-16">
                     <div>
                         <Link href="/" class="mb-8 inline-flex items-center">

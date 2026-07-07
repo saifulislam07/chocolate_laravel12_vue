@@ -8,11 +8,12 @@ let navTimer = null;
 let offNavStart = null;
 let offNavFinish = null;
 const openGroups = ref({
-    catalog: true,
     orders: true,
-    website: true,
+    catalog: true,
+    procurement: false,
+    website: false,
     finance: false,
-    system: true,
+    system: false,
 });
 const page = usePage();
 const bodyClasses = ['hold-transition', 'sidebar-mini', 'layout-fixed'];
@@ -108,21 +109,54 @@ function toggleGroup(group) {
                         <ul class="nav nav-pills nav-sidebar flex-column nav-flat" data-widget="treeview" role="menu">
                             <li class="nav-item">
                                 <Link :href="r('admin.dashboard')" class="nav-link" :class="{ active: $page.component === 'Dashboard' }">
-                                    <i class="nav-icon fas fa-th-large"></i>
+                                    <i class="nav-icon fas fa-gauge-high text-indigo-400"></i>
                                     <p>Dashboard</p>
                                 </Link>
                             </li>
-                            
+
                             <li class="nav-item mt-3" v-if="can('access_pos')">
                                 <Link :href="r('admin.pos.index')" class="nav-link bg-primary-soft" :class="{ active: $page.component === 'Admin/POS/Index' }">
-                                    <i class="nav-icon fas fa-bolt"></i>
+                                    <i class="nav-icon fas fa-bolt text-amber-400"></i>
                                     <p class="font-semibold">Quick POS</p>
                                 </Link>
                             </li>
 
                             <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">Management</li>
 
-                            <li class="nav-item has-treeview" v-if="can('view_products') || can('view_bundles') || can('view_categories') || can('view_brands') || can('view_units')" :class="{ 'menu-open': openGroups.catalog }">
+                            <li class="nav-item has-treeview" v-if="can('view_sales') || can('view_customers') || can('view_returns')" :class="{ 'menu-open': openGroups.orders }">
+                                <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('orders')">
+                                    <i class="nav-icon fas fa-cart-shopping text-blue-400"></i>
+                                    <p>Sales & Customers <i class="right fas" :class="openGroups.orders ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
+                                </button>
+                                <ul class="nav nav-treeview" :style="{ display: openGroups.orders ? 'block' : 'none' }">
+                                    <li class="nav-item" v-if="can('view_sales')">
+                                        <Link :href="r('admin.sales.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Sales') }">
+                                            <i class="nav-icon fas fa-receipt text-blue-500"></i>
+                                            <p>Sales Records</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item" v-if="can('view_customers')">
+                                        <Link :href="r('admin.customers.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Customers') }">
+                                            <i class="nav-icon fas fa-address-book text-sky-400"></i>
+                                            <p>Customers</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item" v-if="can('view_returns')">
+                                        <Link :href="r('admin.returns.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Returns') }">
+                                            <i class="nav-icon fas fa-rotate-left text-rose-500"></i>
+                                            <p>Sales Returns</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item" v-if="can('view_returns')">
+                                        <Link :href="r('admin.refunds.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Refunds') }">
+                                            <i class="nav-icon fas fa-money-bill-transfer text-amber-500"></i>
+                                            <p>Return Refunds</p>
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item has-treeview" v-if="can('view_products') || can('view_bundles') || can('view_categories') || can('view_brands') || can('view_units') || can('view_inventory')" :class="{ 'menu-open': openGroups.catalog }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('catalog')">
                                     <i class="nav-icon fas fa-boxes-stacked text-emerald-400"></i>
                                     <p>Catalog <i class="right fas" :class="openGroups.catalog ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
@@ -136,58 +170,52 @@ function toggleGroup(group) {
                                     </li>
                                     <li class="nav-item" v-if="can('view_bundles')">
                                         <Link :href="r('admin.bundles.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Bundles') }">
-                                            <i class="nav-icon fas fa-box-open text-emerald-400"></i>
+                                            <i class="nav-icon fas fa-box-open text-lime-500"></i>
                                             <p>Bundles</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item" v-if="can('view_categories')">
                                         <Link :href="r('admin.categories.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Categories') }">
-                                            <i class="nav-icon fas fa-tags text-emerald-400"></i>
+                                            <i class="nav-icon fas fa-tags text-teal-500"></i>
                                             <p>Categories</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item" v-if="can('view_brands')">
                                         <Link :href="r('admin.brands.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Brands') }">
-                                            <i class="nav-icon fas fa-copyright text-emerald-300"></i>
+                                            <i class="nav-icon fas fa-copyright text-cyan-500"></i>
                                             <p>Brands</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item" v-if="can('view_units')">
                                         <Link :href="r('admin.units.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Units') }">
-                                            <i class="nav-icon fas fa-balance-scale text-emerald-200"></i>
+                                            <i class="nav-icon fas fa-balance-scale text-green-400"></i>
                                             <p>Units</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item" v-if="can('view_inventory')">
+                                        <Link :href="r('admin.inventory.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Inventory') }">
+                                            <i class="nav-icon fas fa-warehouse text-lime-400"></i>
+                                            <p>Inventory</p>
                                         </Link>
                                     </li>
                                 </ul>
                             </li>
 
-                            <li class="nav-item has-treeview" v-if="can('view_sales') || can('view_purchases') || can('view_suppliers') || can('view_customers')" :class="{ 'menu-open': openGroups.orders }">
-                                <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('orders')">
-                                    <i class="nav-icon fas fa-receipt text-blue-400"></i>
-                                    <p>Orders & Stock <i class="right fas" :class="openGroups.orders ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
+                            <li class="nav-item has-treeview" v-if="can('view_purchases') || can('view_suppliers')" :class="{ 'menu-open': openGroups.procurement }">
+                                <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('procurement')">
+                                    <i class="nav-icon fas fa-truck-ramp-box text-purple-400"></i>
+                                    <p>Procurement <i class="right fas" :class="openGroups.procurement ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
                                 </button>
-                                <ul class="nav nav-treeview" :style="{ display: openGroups.orders ? 'block' : 'none' }">
-                                    <li class="nav-item" v-if="can('view_sales')">
-                                        <Link :href="r('admin.sales.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Sales') }">
-                                            <i class="nav-icon fas fa-shopping-cart text-blue-400"></i>
-                                            <p>Sales Records</p>
-                                        </Link>
-                                    </li>
-                                    <li class="nav-item" v-if="can('view_customers')">
-                                        <Link :href="r('admin.customers.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Customers') }">
-                                            <i class="nav-icon fas fa-address-book text-blue-400"></i>
-                                            <p>Customers</p>
-                                        </Link>
-                                    </li>
+                                <ul class="nav nav-treeview" :style="{ display: openGroups.procurement ? 'block' : 'none' }">
                                     <li class="nav-item" v-if="can('view_purchases')">
                                         <Link :href="r('admin.purchases.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Purchases') }">
-                                            <i class="nav-icon fas fa-truck-loading text-blue-500"></i>
+                                            <i class="nav-icon fas fa-truck-loading text-purple-500"></i>
                                             <p>Purchases</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item" v-if="can('view_suppliers')">
                                         <Link :href="r('admin.suppliers.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Suppliers') }">
-                                            <i class="nav-icon fas fa-id-badge text-blue-300"></i>
+                                            <i class="nav-icon fas fa-id-badge text-fuchsia-400"></i>
                                             <p>Suppliers</p>
                                         </Link>
                                     </li>
@@ -196,7 +224,7 @@ function toggleGroup(group) {
 
                             <li class="nav-item has-treeview" v-if="can('view_menus') || can('view_pages') || can('view_sliders')" :class="{ 'menu-open': openGroups.website }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('website')">
-                                    <i class="nav-icon fas fa-store text-indigo-400"></i>
+                                    <i class="nav-icon fas fa-store text-pink-400"></i>
                                     <p>Website <i class="right fas" :class="openGroups.website ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
                                 </button>
                                 <ul class="nav nav-treeview" :style="{ display: openGroups.website ? 'block' : 'none' }">
@@ -208,13 +236,13 @@ function toggleGroup(group) {
                                     </li>
                                     <li class="nav-item" v-if="can('view_pages')">
                                         <Link :href="r('admin.pages.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Pages') }">
-                                            <i class="nav-icon fas fa-file-invoice text-indigo-500"></i>
+                                            <i class="nav-icon fas fa-file-invoice text-violet-500"></i>
                                             <p>Static Pages</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item" v-if="can('view_sliders')">
                                         <Link :href="r('admin.sliders.index')" class="nav-link" :class="{ active: $page.component === 'Admin/Sliders/Index' }">
-                                            <i class="nav-icon fas fa-image text-cyan-400"></i>
+                                            <i class="nav-icon fas fa-image text-pink-500"></i>
                                             <p>Sliders</p>
                                         </Link>
                                     </li>
@@ -229,25 +257,25 @@ function toggleGroup(group) {
                                 <ul class="nav nav-treeview" :style="{ display: openGroups.finance ? 'block' : 'none' }">
                                     <li class="nav-item" v-if="can('view_reports')">
                                         <Link :href="r('admin.reports.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Reports') }">
-                                            <i class="nav-icon fas fa-chart-line text-amber-400"></i>
+                                            <i class="nav-icon fas fa-chart-pie text-amber-500"></i>
                                             <p>Reports</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item" v-if="can('view_reports')">
                                         <Link :href="r('admin.reports.meta-campaigns')" class="nav-link" :class="{ active: $page.component === 'Admin/Reports/MetaCampaigns' }">
-                                            <i class="nav-icon fab fa-facebook text-blue-400"></i>
+                                            <i class="nav-icon fab fa-facebook text-blue-600"></i>
                                             <p>Meta Campaigns</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item" v-if="can('view_reports')">
                                         <Link :href="r('admin.reports.area-sales')" class="nav-link" :class="{ active: $page.component === 'Admin/Reports/AreaSalesReport' }">
-                                            <i class="nav-icon fas fa-map-marked-alt text-amber-400"></i>
+                                            <i class="nav-icon fas fa-map-marked-alt text-orange-400"></i>
                                             <p>Area-wise Sales</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item" v-if="can('view_reports')">
                                         <Link :href="r('admin.reports.area-customers')" class="nav-link" :class="{ active: $page.component === 'Admin/Reports/AreaCustomerReport' }">
-                                            <i class="nav-icon fas fa-map-marker-alt text-amber-400"></i>
+                                            <i class="nav-icon fas fa-map-marker-alt text-orange-500"></i>
                                             <p>Area-wise Customers</p>
                                         </Link>
                                     </li>
@@ -263,7 +291,7 @@ function toggleGroup(group) {
                             <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4" v-if="can('view_settings') || can('view_roles') || can('view_users')">System</li>
                             <li class="nav-item has-treeview mb-5" v-if="can('view_settings') || can('view_roles') || can('view_users')" :class="{ 'menu-open': openGroups.system }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('system')">
-                                    <i class="nav-icon fas fa-cog text-slate-400"></i>
+                                    <i class="nav-icon fas fa-gear text-slate-400"></i>
                                     <p>System <i class="right fas" :class="openGroups.system ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
                                 </button>
                                 <ul class="nav nav-treeview" :style="{ display: openGroups.system ? 'block' : 'none' }">
@@ -275,13 +303,13 @@ function toggleGroup(group) {
                                     </li>
                                     <li class="nav-item" v-if="can('view_users')">
                                         <Link :href="r('admin.users.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Users') }">
-                                            <i class="nav-icon fas fa-users text-slate-500"></i>
+                                            <i class="nav-icon fas fa-users text-sky-500"></i>
                                             <p>Users</p>
                                         </Link>
                                     </li>
                                     <li class="nav-item" v-if="can('view_roles')">
                                         <Link :href="r('admin.roles.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Roles') }">
-                                            <i class="nav-icon fas fa-user-lock text-slate-500"></i>
+                                            <i class="nav-icon fas fa-user-shield text-red-500"></i>
                                             <p>Permissions</p>
                                         </Link>
                                     </li>

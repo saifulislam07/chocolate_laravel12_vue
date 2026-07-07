@@ -10,7 +10,7 @@ import {
 
 // Import Swiper components
 import { Swiper, SwiperSlide } from 'swiper/vue';
-import { Pagination, Autoplay, EffectFade, Navigation } from 'swiper/modules';
+import { Autoplay, EffectFade, Navigation } from 'swiper/modules';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -18,7 +18,7 @@ import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 import 'swiper/css/navigation';
 
-const modules = [Pagination, Autoplay, EffectFade, Navigation];
+const modules = [Autoplay, EffectFade, Navigation];
 
 const activeSlideIndex = ref(0);
 function onSlideChange(swiper) {
@@ -72,7 +72,6 @@ function toggleWishlist(productId) {
                 :slides-per-view="1"
                 :loop="true"
                 :autoplay="{ delay: 6000, pauseOnMouseEnter: true }"
-                :pagination="{ el: '.hero-progress', type: 'progressbar' }"
                 :navigation="{ prevEl: '.hero-nav-prev', nextEl: '.hero-nav-next' }"
                 effect="fade"
                 class="h-[80vh] md:h-[90vh]"
@@ -83,7 +82,7 @@ function toggleWishlist(productId) {
                         class="h-full w-full transition-colors duration-1000"
                         :style="{ backgroundColor: slider.bg_color || '#FBEBD9', color: slider.text_color || '#4B2E1E' }"
                     >
-                        <div class="mx-auto grid h-full max-w-7xl grid-cols-1 items-center gap-8 px-6 relative md:grid-cols-[1.1fr_1fr] md:gap-4">
+                        <div class="mx-auto grid h-full max-w-screen-2xl grid-cols-1 items-center gap-8 px-6 relative md:grid-cols-[1.1fr_1fr] md:gap-4">
                             <!-- Background Text (Decorative) -->
                             <div
                                 class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none opacity-[0.03] pointer-events-none"
@@ -161,13 +160,12 @@ function toggleWishlist(productId) {
                     </div>
                 </SwiperSlide>
 
-                <!-- Custom controls: progress bar + arrows + slide counter -->
+                <!-- Custom controls: arrows + slide counter -->
                 <div class="pointer-events-none absolute inset-x-0 bottom-0 z-30 pb-8">
-                    <div class="mx-auto flex max-w-7xl items-center gap-6 px-6">
+                    <div class="mx-auto flex max-w-screen-2xl items-center justify-between px-6">
                         <span class="pointer-events-auto font-serif text-sm tabular-nums opacity-70">
                             {{ String(activeSlideIndex + 1).padStart(2, '0') }} / {{ String(sliders.length).padStart(2, '0') }}
                         </span>
-                        <div class="hero-progress pointer-events-auto relative h-[2px] flex-1 overflow-hidden bg-white/25"></div>
                         <div class="pointer-events-auto flex items-center gap-3">
                             <button type="button" class="hero-nav-prev flex h-9 w-9 items-center justify-center rounded-full border border-current/25 transition hover:border-current/60" aria-label="Previous slide">
                                 <ChevronDownIcon class="h-3.5 w-3.5 rotate-90" />
@@ -183,9 +181,9 @@ function toggleWishlist(productId) {
 
         <!-- Shop by Category -->
         <section class="border-y border-gray-100 py-20 dark:border-white/10">
-            <div class="mx-auto max-w-7xl px-6">
+            <div class="mx-auto max-w-screen-2xl px-6">
                 <div class="mb-12 text-center">
-                    <h2 class="font-serif text-[11px] font-bold uppercase tracking-[0.4em] text-godiva-gold">World of Godiva</h2>
+                    <h2 class="font-serif text-[11px] font-bold uppercase tracking-[0.4em] text-godiva-gold">World of Coco Craft</h2>
                     <p class="mt-4 font-serif text-4xl italic tracking-wide">Shop by Collection</p>
                 </div>
                 <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -217,7 +215,7 @@ function toggleWishlist(productId) {
 
         <!-- Bundle Items Section -->
         <section v-if="bundleItems.length" class="bg-white py-20 dark:bg-godiva-charcoal">
-            <div class="mx-auto max-w-7xl px-6">
+            <div class="mx-auto max-w-screen-2xl px-6">
                 <div class="mb-12 flex items-center justify-between border-b border-gray-200 pb-6 dark:border-white/10">
                     <div>
                         <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-godiva-gold">Curated Sets</p>
@@ -262,7 +260,7 @@ function toggleWishlist(productId) {
         </section>
 
         <!-- Category-wise Products -->
-        <section v-for="section in categorySections" :key="section.id" class="mx-auto max-w-7xl px-6 py-16 border-b border-gray-100 dark:border-white/10">
+        <section v-for="section in categorySections" :key="section.id" class="mx-auto max-w-screen-2xl px-6 py-16 border-b border-gray-100 dark:border-white/10">
             <div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-godiva-gold">Category</p>
@@ -304,7 +302,7 @@ function toggleWishlist(productId) {
         </section>
 
         <!-- New Arrivals Section -->
-        <section v-if="newArrivals.length" class="mx-auto max-w-7xl px-6 py-20">
+        <section v-if="newArrivals.length" class="mx-auto max-w-screen-2xl px-6 py-20">
             <div class="mb-12 flex items-center justify-between border-b border-gray-200 pb-6 dark:border-white/10">
                 <h2 class="font-serif text-3xl italic">New Arrivals</h2>
                 <Link :href="route('products.index')" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition">
@@ -338,7 +336,7 @@ function toggleWishlist(productId) {
 
         <!-- Featured Items Section -->
         <section v-if="featuredItems.length" class="bg-godiva-cream/30 py-20 dark:bg-white/5">
-            <div class="mx-auto max-w-7xl px-6">
+            <div class="mx-auto max-w-screen-2xl px-6">
                 <div class="mb-12 flex items-center justify-between border-b border-gray-200 pb-6 dark:border-white/10">
                     <h2 class="font-serif text-3xl italic">Signature Featured</h2>
                     <Link :href="route('products.index')" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition text-left-sm">View Collections</Link>
@@ -371,7 +369,7 @@ function toggleWishlist(productId) {
         </section>
 
         <!-- Discount/Sale Items Section -->
-        <section v-if="discountItems.length" class="mx-auto max-w-7xl px-6 py-20">
+        <section v-if="discountItems.length" class="mx-auto max-w-screen-2xl px-6 py-20">
             <div class="mb-12 flex items-center justify-between border-b border-gray-200 pb-6 dark:border-white/10">
                 <h2 class="font-serif text-3xl italic">Sweet Offers & Sale</h2>
                 <Link :href="route('products.index')" class="text-[11px] font-bold uppercase tracking-widest hover:text-godiva-gold transition">Shop All Sale</Link>
@@ -466,16 +464,7 @@ function toggleWishlist(productId) {
     50% { opacity: 0.2; transform: scale(1.05); }
 }
 
-/* Swiper Styling: slim progress-bar pagination + arrow nav */
-.hero-progress {
-    color: inherit;
-}
-
-.hero-progress .swiper-pagination-progressbar-fill {
-    background: currentColor !important;
-    opacity: 0.9;
-}
-
+/* Swiper Styling: arrow nav */
 .hero-nav-prev,
 .hero-nav-next {
     color: inherit;

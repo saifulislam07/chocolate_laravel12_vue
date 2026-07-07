@@ -180,7 +180,7 @@ watch(
 
         <div class="bg-white">
             <div class="border-b border-[#eee4d8] bg-[#fcf8f3] py-14">
-                <div class="mx-auto max-w-7xl px-6">
+                <div class="mx-auto max-w-screen-2xl px-6">
                     <nav class="mb-6 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                         <Link href="/" class="transition hover:text-godiva-gold">Home</Link>
                         <ChevronRightIcon class="h-3 w-3" />
@@ -197,7 +197,7 @@ watch(
                 </div>
             </div>
 
-            <main class="mx-auto max-w-7xl px-6 py-10">
+            <main class="mx-auto max-w-screen-2xl px-6 py-10">
                 <section class="mb-10 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
                     <div class="relative">
                         <MagnifyingGlassIcon class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

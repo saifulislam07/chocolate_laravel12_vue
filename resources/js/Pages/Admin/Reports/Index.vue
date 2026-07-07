@@ -38,11 +38,21 @@ defineProps({
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-success shadow-sm">
                             <div class="inner">
-                                <h3>৳{{ summary.total_sales }}</h3>
-                                <p>Total Revenue</p>
+                                <h3>৳{{ summary.net_sales }}</h3>
+                                <p>Net Revenue <span class="d-block text-xs opacity-75">Gross ৳{{ summary.total_sales }} − Returns ৳{{ summary.total_returns }}</span></p>
                             </div>
                             <div class="icon"><i class="fas fa-shopping-cart"></i></div>
                             <Link :href="route('admin.reports.profit-loss')" class="small-box-footer">View Profit/Loss <i class="fas fa-arrow-circle-right"></i></Link>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box shadow-sm" style="background-color: #e11d48;">
+                            <div class="inner">
+                                <h3 class="text-white">৳{{ summary.total_refunds }}</h3>
+                                <p class="text-white">Refunds Issued</p>
+                            </div>
+                            <div class="icon"><i class="fas fa-rotate-left"></i></div>
+                            <Link :href="route('admin.refunds.index')" class="small-box-footer">View Refunds <i class="fas fa-arrow-circle-right text-white"></i></Link>
                         </div>
                     </div>
                     <div class="col-lg-3 col-6">
@@ -102,6 +112,14 @@ defineProps({
                                      </Link>
                                      <Link :href="route('admin.reports.expenses')" class="list-group-item list-group-item-action border-0 px-4 py-3">
                                          <i class="fas fa-wallet mr-3 text-danger"></i> Expense Statement
+                                         <span class="float-right text-muted"><i class="fas fa-chevron-right text-xs"></i></span>
+                                     </Link>
+                                     <Link :href="route('admin.returns.index')" class="list-group-item list-group-item-action border-0 px-4 py-3">
+                                         <i class="fas fa-rotate-left mr-3 text-rose-500"></i> Sales Returns
+                                         <span class="float-right text-muted"><i class="fas fa-chevron-right text-xs"></i></span>
+                                     </Link>
+                                     <Link :href="route('admin.refunds.index')" class="list-group-item list-group-item-action border-0 px-4 py-3">
+                                         <i class="fas fa-money-bill-transfer mr-3 text-amber-500"></i> Return Refunds
                                          <span class="float-right text-muted"><i class="fas fa-chevron-right text-xs"></i></span>
                                      </Link>
                                  </div>

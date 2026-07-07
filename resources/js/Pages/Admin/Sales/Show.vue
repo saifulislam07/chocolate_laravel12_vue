@@ -90,6 +90,9 @@ const getSourceContext = (source) => {
                         <Link :href="route('admin.sales.index')" class="btn btn-secondary mr-2">
                             <i class="fas fa-arrow-left"></i> Back to Sales
                         </Link>
+                        <Link :href="route('admin.returns.create', { order_id: sale.id })" class="btn btn-danger mr-2">
+                            <i class="fas fa-undo"></i> Process Return
+                        </Link>
                         <button class="btn btn-primary" @click="printInvoice">
                             <i class="fas fa-print"></i> Print Invoice
                         </button>
@@ -112,6 +115,8 @@ const getSourceContext = (source) => {
                                         <option value="shipped">Shipped</option>
                                         <option value="delivered">Delivered</option>
                                         <option value="cancelled">Cancelled</option>
+                                        <option value="partially_returned">Partially Returned</option>
+                                        <option value="returned">Returned</option>
                                     </select>
                                 </div>
                                 <div>

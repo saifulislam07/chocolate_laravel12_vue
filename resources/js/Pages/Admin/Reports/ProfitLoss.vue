@@ -77,6 +77,10 @@ const updateReport = () => {
                                         
                                         <!-- Costs -->
                                         <tr>
+                                            <td class="p-4 pl-5 text-muted">Return Refunds</td>
+                                            <td class="p-4 text-right text-danger">- ৳{{ stats.refunds.toFixed(2) }}</td>
+                                        </tr>
+                                        <tr>
                                             <td class="p-4 pl-5 text-muted">Total Purchases (COGS)</td>
                                             <td class="p-4 text-right text-danger">- ৳{{ stats.purchases.toFixed(2) }}</td>
                                         </tr>

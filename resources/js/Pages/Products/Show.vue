@@ -64,7 +64,7 @@ function decrement() {
 
         <div class="bg-white">
             <!-- Breadcrumbs -->
-            <nav class="mx-auto max-w-7xl px-6 py-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+            <nav class="mx-auto max-w-screen-2xl px-6 py-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 <Link href="/" class="hover:text-godiva-gold">Home</Link>
                 <ChevronRightIcon class="h-3 w-3" />
                 <span class="text-godiva-charcoal">{{ product.category || 'Chocolate' }}</span>
@@ -72,7 +72,7 @@ function decrement() {
                 <span class="text-godiva-gold">{{ product.name }}</span>
             </nav>
 
-            <main class="mx-auto max-w-7xl px-6 py-12">
+            <main class="mx-auto max-w-screen-2xl px-6 py-12">
                 <div class="grid gap-16 lg:grid-cols-2">
                     <!-- Image Gallery -->
                     <section class="space-y-4">

@@ -49,13 +49,13 @@ function placeOrder() {
     <Head title="Checkout" />
     <div class="min-h-screen bg-[#f6f1eb] text-[#2f1d15]">
         <header class="border-b border-[#dcc8b0] bg-[#1f120d] text-[#f7ece0]">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+            <div class="mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-5">
                 <Link :href="route('home')" class="text-xl font-semibold tracking-[0.32em]">CHOCOLATE</Link>
                 <Link :href="route('cart.index')" class="text-xs uppercase tracking-[0.24em] text-[#f3dcc3] hover:underline">Back to Bag</Link>
             </div>
         </header>
 
-        <main class="mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-3">
+        <main class="mx-auto grid max-w-screen-2xl gap-8 px-6 py-10 lg:grid-cols-3">
             <section class="lg:col-span-2 rounded-xl border border-[#dcc8b0] bg-white p-6">
                 <h1 class="text-2xl font-semibold">Shipping & Payment</h1>
                 <p class="mt-1 text-xs uppercase tracking-widest text-[#8a6a4c]">Just your phone &amp; address to place an order &mdash; everything else is optional.</p>

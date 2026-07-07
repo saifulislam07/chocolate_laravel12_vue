@@ -78,4 +78,9 @@ class Order extends Model
     {
         return $this->hasMany(Shipment::class);
     }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(SalesReturn::class);
+    }
 }

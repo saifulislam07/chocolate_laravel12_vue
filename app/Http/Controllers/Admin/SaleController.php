@@ -43,7 +43,7 @@ class SaleController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $payload = $request->validate([
-            'status' => ['required', 'in:pending,processing,shipped,delivered,cancelled'],
+            'status' => ['required', 'in:pending,processing,shipped,delivered,cancelled,partially_returned,returned'],
             'payment_status' => ['required', 'in:unpaid,partial,paid'],
         ]);
 

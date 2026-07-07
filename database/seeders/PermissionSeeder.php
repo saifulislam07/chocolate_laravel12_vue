@@ -31,7 +31,9 @@ class PermissionSeeder extends Seeder
             'users',
             'settings',
             'roles',
-            'reports'
+            'reports',
+            'inventory',
+            'returns',
         ];
 
         $actions = ['view', 'create', 'edit', 'delete'];
@@ -67,13 +69,14 @@ class PermissionSeeder extends Seeder
             'Manager' => [
                 'products', 'bundles', 'categories', 'brands', 'units', 'suppliers',
                 'purchases', 'sales', 'expenses', 'expense_categories', 'sliders',
-                'menus', 'pages', 'customers', 'reports',
+                'menus', 'pages', 'customers', 'reports', 'inventory', 'returns',
             ],
             'Seller' => [
                 'products' => ['view', 'create', 'edit'],
                 'bundles' => ['view', 'create', 'edit'],
                 'sales' => ['view', 'create', 'edit'],
                 'customers' => ['view', 'create', 'edit'],
+                'returns' => ['view', 'create'],
             ],
             'Accounts' => [
                 'sales' => ['view'],
@@ -82,6 +85,7 @@ class PermissionSeeder extends Seeder
                 'expense_categories' => ['view', 'create', 'edit'],
                 'reports' => ['view'],
                 'customers' => ['view'],
+                'returns' => ['view'],
             ],
         ];
 
