@@ -15,6 +15,7 @@ class PermissionSeeder extends Seeder
 
         $modules = [
             'products',
+            'bundles',
             'categories',
             'brands',
             'units',
@@ -27,6 +28,7 @@ class PermissionSeeder extends Seeder
             'menus',
             'pages',
             'customers',
+            'users',
             'settings',
             'roles',
             'reports'
@@ -58,6 +60,51 @@ class PermissionSeeder extends Seeder
         $admin = Role::where('name', 'Administrator')->first();
         if ($admin) {
             $admin->syncPermissions(Permission::all());
+        }
+
+        // Default permission sets for the staff-facing roles.
+        $defaultRolePermissions = [
+            'Manager' => [
+                'products', 'bundles', 'categories', 'brands', 'units', 'suppliers',
+                'purchases', 'sales', 'expenses', 'expense_categories', 'sliders',
+                'menus', 'pages', 'customers', 'reports',
+            ],
+            'Seller' => [
+                'products' => ['view', 'create', 'edit'],
+                'bundles' => ['view', 'create', 'edit'],
+                'sales' => ['view', 'create', 'edit'],
+                'customers' => ['view', 'create', 'edit'],
+            ],
+            'Accounts' => [
+                'sales' => ['view'],
+                'purchases' => ['view'],
+                'expenses' => ['view', 'create', 'edit'],
+                'expense_categories' => ['view', 'create', 'edit'],
+                'reports' => ['view'],
+                'customers' => ['view'],
+            ],
+        ];
+
+        foreach ($defaultRolePermissions as $roleName => $moduleConfig) {
+            $role = Role::firstOrCreate(['name' => $roleName]);
+            $rolePermissions = [];
+
+            foreach ($moduleConfig as $key => $value) {
+                if (is_int($key)) {
+                    // Full view/create/edit/delete access to this module.
+                    foreach ($actions as $action) {
+                        $rolePermissions[] = $action . '_' . $value;
+                    }
+                } else {
+                    foreach ($value as $action) {
+                        $rolePermissions[] = $action . '_' . $key;
+                    }
+                }
+            }
+
+            $rolePermissions[] = 'manage_dashboard';
+
+            $role->syncPermissions(array_values(array_intersect($rolePermissions, $permissions)));
         }
     }
 }

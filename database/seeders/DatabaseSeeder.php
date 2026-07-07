@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
@@ -21,6 +22,12 @@ class DatabaseSeeder extends Seeder {
         $adminRole = Role::firstOrCreate(['name' => 'Administrator']);
         Role::firstOrCreate(['name' => 'Staff']);
         Role::firstOrCreate(['name' => 'Customer']);
+        Role::firstOrCreate(['name' => 'Manager']);
+        Role::firstOrCreate(['name' => 'Seller']);
+        Role::firstOrCreate(['name' => 'Accounts']);
+
+        $this->call(PermissionSeeder::class);
+        $this->call(DivisionDistrictSeeder::class);
 
         $masterAdmin = User::query()->updateOrCreate([
             'email' => 'master@admin.com',
@@ -261,7 +268,7 @@ class DatabaseSeeder extends Seeder {
                 'subtitle'    => 'New Centennial Collection',
                 'description' => 'Since 1926, our passion for chocolate has been an endless pursuit of savours and sensations. Our Centennial Pralines are both sweetly nostalgic and at the cutting edge of chocolate design and innovation.',
                 'image'       => '/images/godiva/hero_stack.png',
-                'bg_color'    => '#1C1C1C', // Charcoal
+                'bg_color'    => '#4B2E1E', // Cocoa Brown
                 'text_color'  => '#FFFFFF',
                 'button_text' => 'Discover the Collection',
                 'button_link' => '#',
@@ -272,8 +279,8 @@ class DatabaseSeeder extends Seeder {
                 'subtitle'    => 'Exquisite Gifting',
                 'description' => 'Delight your senses with our premium golden gift collections, crafted with the finest ingredients and century-old traditions.',
                 'image'       => '/images/godiva/hero2.png',
-                'bg_color'    => '#FBE0E3', // Godiva Pink
-                'text_color'  => '#1C1C1C',
+                'bg_color'    => '#FBEBD9', // Soft Orange Tint
+                'text_color'  => '#4B2E1E',
                 'button_text' => 'Shop Gift Boxes',
                 'button_link' => '#',
                 'sort_order'  => 2,
@@ -283,52 +290,65 @@ class DatabaseSeeder extends Seeder {
                 'subtitle'    => 'Limited Edition',
                 'description' => 'Explore our limited-time creations, where seasonal flavors meet artisanal craftsmanship.',
                 'image'       => '/images/godiva/seasonal.png',
-                'bg_color'    => '#F3EFE9', // Cream
-                'text_color'  => '#1C1C1C',
+                'bg_color'    => '#F5EBDD', // Cream
+                'text_color'  => '#4B2E1E',
                 'button_text' => 'View Seasonal Items',
                 'button_link' => '#',
                 'sort_order'  => 3,
             ],
         ];
 
+        // Only seed a slider's starter content if it doesn't already exist — never
+        // overwrite one an admin has since edited via the Sliders admin page.
         foreach ($sliders as $s) {
-            DB::table('sliders')->updateOrInsert(
-                ['title' => $s['title']],
-                [
-                     ...$s,
-                    'is_active'  => true,
+            if (! DB::table('sliders')->where('title', $s['title'])->exists()) {
+                DB::table('sliders')->insert([
+                    ...$s,
+                    'is_active' => true,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]
-            );
+                ]);
+            }
         }
 
-        DB::table('web_settings')->updateOrInsert(
-            ['id' => 1],
-            [
-                'site_name' => 'SweetChocholate',
-                'logo' => '/images/godiva/logo-cute.png',
-                'footer_logo' => '/images/godiva/logo-cute.png',
-                'favicon' => '/images/godiva/logo-cute.png',
-                'email' => 'hello@sweetchocolate.test',
+        // Restore the Coco Craft logo files into public/images from the backup
+        // copies kept in database/seeders/assets/branding, in case they are missing.
+        $brandingBackup = database_path('seeders/assets/branding');
+        File::ensureDirectoryExists(public_path('images'));
+        foreach (['cococraft-logo.svg', 'cococraft-logo-light.svg'] as $logoFile) {
+            if (! File::exists(public_path('images/' . $logoFile)) && File::exists($brandingBackup . '/' . $logoFile)) {
+                File::copy($brandingBackup . '/' . $logoFile, public_path('images/' . $logoFile));
+            }
+        }
+
+        // Only seed default web settings on a truly fresh install — never overwrite
+        // site name / logo / contact info an admin has since configured.
+        if (! DB::table('web_settings')->where('id', 1)->exists()) {
+            DB::table('web_settings')->insert([
+                'id' => 1,
+                'site_name' => 'Coco Craft',
+                'logo' => '/images/cococraft-logo.svg',
+                'footer_logo' => '/images/cococraft-logo-light.svg',
+                'favicon' => '/images/cococraft-logo.svg',
+                'email' => 'hello@cococraft.test',
                 'phone' => '+880 1700 000000',
                 'address' => 'Dhaka, Bangladesh',
                 'maintenance_mode' => false,
                 'maintenance_title' => 'We are polishing the shop',
-                'maintenance_message' => 'SweetChocholate is temporarily unavailable while we make a few improvements.',
+                'maintenance_message' => 'Coco Craft is temporarily unavailable while we make a few improvements.',
                 'updated_at' => now(),
                 'created_at' => now(),
-            ]
-        );
+            ]);
+        }
 
         $footerPages = [
             'about-us' => [
                 'title' => 'About Us',
-                'content' => '<h2>Our Chocolate Story</h2><p>SweetChocholate creates premium chocolate gifts, truffles, bars, and seasonal collections with careful sourcing and thoughtful presentation.</p><p>Update this page from Admin > Static Pages to share your brand story, mission, and values.</p>',
+                'content' => '<h2>Our Chocolate Story</h2><p>Coco Craft creates premium chocolate gifts, truffles, bars, and seasonal collections with careful sourcing and thoughtful presentation.</p><p>Update this page from Admin > Static Pages to share your brand story, mission, and values.</p>',
             ],
             'employment' => [
                 'title' => 'Employment',
-                'content' => '<h2>Careers At SweetChocholate</h2><p>Share current openings, hiring policies, team culture, and application instructions here.</p>',
+                'content' => '<h2>Careers At Coco Craft</h2><p>Share current openings, hiring policies, team culture, and application instructions here.</p>',
             ],
             'retail-store-locations' => [
                 'title' => 'Retail Store Locations',
@@ -344,7 +364,7 @@ class DatabaseSeeder extends Seeder {
             ],
             'contact-us' => [
                 'title' => 'Contact Us',
-                'content' => '<h2>Contact SweetChocholate</h2><p>Email: hello@sweetchocolate.test</p><p>Phone: +880 1700 000000</p><p>Address: Dhaka, Bangladesh</p>',
+                'content' => '<h2>Contact Coco Craft</h2><p>Email: hello@cococraft.test</p><p>Phone: +880 1700 000000</p><p>Address: Dhaka, Bangladesh</p>',
             ],
             'wholesale' => [
                 'title' => 'Wholesale',

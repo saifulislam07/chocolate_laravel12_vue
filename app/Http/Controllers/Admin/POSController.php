@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Customer;
+use App\Models\Division;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -17,7 +18,8 @@ class POSController extends Controller
                 ->where('is_active', true)
                 ->latest()
                 ->get(),
-            'customers' => Customer::latest()->get()
+            'customers' => Customer::latest()->get(),
+            'divisions' => Division::with('districts:id,division_id,name')->get(['id', 'name']),
         ]);
     }
 

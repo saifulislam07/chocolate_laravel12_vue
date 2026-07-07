@@ -22,7 +22,7 @@ function formatMoney(value) {
 
 <template>
     <MainLayout>
-        <Head title="Customer Dashboard | SweetChocholate" />
+        <Head title="Customer Dashboard | Coco Craft" />
 
         <div class="bg-white">
             <section class="border-b border-[#eee4d8] bg-[#fcf8f3] py-14">

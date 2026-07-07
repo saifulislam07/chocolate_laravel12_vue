@@ -9,7 +9,7 @@ class WebSetting extends Model
     protected $fillable = [
         'site_name', 'logo', 'footer_logo', 'favicon', 'email', 'phone', 'address',
         'maintenance_mode', 'maintenance_title', 'maintenance_message',
-        'facebook_url', 'instagram_url',
+        'facebook_url', 'instagram_url', 'youtube_url', 'whatsapp_url', 'tiktok_url', 'linkedin_url', 'pinterest_url',
         'meta_pixel_enabled', 'meta_pixel_id',
         'meta_ads_enabled', 'meta_ads_api_version', 'meta_ads_account_id', 'meta_ads_access_token',
         'messenger_enabled', 'messenger_page_id', 'messenger_theme_color',
@@ -18,6 +18,9 @@ class WebSetting extends Model
         'bkash_app_secret', 'bkash_username', 'bkash_password',
         'nagad_enabled', 'nagad_mode', 'nagad_base_url', 'nagad_merchant_id',
         'nagad_merchant_number', 'nagad_public_key', 'nagad_private_key',
+        'pathao_enabled', 'pathao_base_url', 'pathao_client_id', 'pathao_client_secret',
+        'pathao_username', 'pathao_password', 'pathao_store_id',
+        'steadfast_enabled', 'steadfast_base_url', 'steadfast_api_key', 'steadfast_secret_key',
         'smtp_host', 'smtp_port',
         'smtp_username', 'smtp_password', 'smtp_encryption'
     ];
@@ -31,6 +34,8 @@ class WebSetting extends Model
             'messenger_enabled' => 'boolean',
             'bkash_enabled' => 'boolean',
             'nagad_enabled' => 'boolean',
+            'pathao_enabled' => 'boolean',
+            'steadfast_enabled' => 'boolean',
         ];
     }
 }

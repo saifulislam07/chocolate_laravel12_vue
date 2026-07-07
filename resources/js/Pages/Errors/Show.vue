@@ -21,7 +21,7 @@ const copy = {
     503: {
         eyebrow: "Temporarily unavailable",
         title: "We are polishing the shop",
-        message: "SweetChocholate is temporarily unavailable while we make a few improvements.",
+        message: "Coco Craft is temporarily unavailable while we make a few improvements.",
         action: "Go home",
     },
 };
@@ -30,15 +30,15 @@ const page = copy[props.status] || copy[500];
 </script>
 
 <template>
-    <Head :title="`${status} | SweetChocholate`" />
+    <Head :title="`${status} | Coco Craft`" />
 
     <main class="min-h-screen bg-[#fcf8f3] text-godiva-charcoal">
         <div class="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-16">
             <div class="grid w-full gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
                 <section>
                     <Link href="/" class="inline-flex items-center gap-3">
-                        <img src="/images/godiva/logo-cute.png" alt="SweetChocholate" class="h-14 w-14 object-contain" />
-                        <span class="font-serif text-3xl font-bold">SweetChocholate</span>
+                        <img src="/images/cococraft-logo.svg" alt="Coco Craft" class="h-14 w-14 object-contain" />
+                        <span class="font-serif text-3xl font-bold">Coco Craft</span>
                     </Link>
 
                     <p class="mt-14 text-[11px] font-bold uppercase tracking-[0.35em] text-godiva-gold">{{ page.eyebrow }}</p>

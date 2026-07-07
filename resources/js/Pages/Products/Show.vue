@@ -26,10 +26,23 @@ function formatMoney(value) {
 }
 
 function addToCart() {
-    router.post(route("cart.store"), { 
-        product_id: props.product.id, 
-        quantity: quantity.value 
+    router.post(route("cart.store"), {
+        product_id: props.product.id,
+        quantity: quantity.value
     }, { preserveScroll: true });
+}
+
+const buyingNow = ref(false);
+
+function buyNow() {
+    buyingNow.value = true;
+    router.post(route("cart.store"), {
+        product_id: props.product.id,
+        quantity: quantity.value
+    }, {
+        onSuccess: () => router.visit(route("checkout.index")),
+        onFinish: () => { buyingNow.value = false; },
+    });
 }
 
 function toggleWishlist(productId = props.product.id) {
@@ -139,6 +152,14 @@ function decrement() {
                                 @click="addToCart"
                             >
                                 Add to Bag
+                            </button>
+                            <button
+                                type="button"
+                                class="h-12 w-full flex-1 border border-godiva-gold bg-godiva-gold text-[11px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-godiva-gold-dark disabled:border-gray-300 disabled:bg-gray-300"
+                                :disabled="product.stock <= 0 || buyingNow"
+                                @click="buyNow"
+                            >
+                                {{ buyingNow ? "Processing..." : "Buy Now" }}
                             </button>
                             <button
                                 type="button"

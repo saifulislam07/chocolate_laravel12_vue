@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Order;
+use App\Models\Customer;
+use App\Models\District;
 use App\Models\Expense;
 use App\Models\Supplier;
 use App\Models\WebSetting;
@@ -98,6 +100,72 @@ class ReportController extends Controller
         return Inertia::render('Admin/Reports/ExpenseReport', [
             'expenses' => $query->latest()->get()
         ]);
+    }
+
+    public function areaSales()
+    {
+        $webSales = Order::select('district_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(total) as total_sales'))
+            ->whereNotNull('district_id')
+            ->groupBy('district_id')
+            ->get()
+            ->keyBy('district_id');
+
+        $posSales = Order::query()
+            ->join('customers', 'customers.id', '=', 'orders.customer_id')
+            ->whereNotNull('customers.district_id')
+            ->select('customers.district_id as district_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(orders.total) as total_sales'))
+            ->groupBy('customers.district_id')
+            ->get()
+            ->keyBy('district_id');
+
+        $districtIds = $webSales->keys()->merge($posSales->keys())->unique();
+        $districts = District::with('division')->whereIn('id', $districtIds)->get()->keyBy('id');
+
+        $areas = $districtIds->map(function ($id) use ($webSales, $posSales, $districts) {
+            $district = $districts->get($id);
+
+            return [
+                'district_id' => $id,
+                'district_name' => $district?->name,
+                'division_name' => $district?->division?->name,
+                'orders_count' => ($webSales[$id]->orders_count ?? 0) + ($posSales[$id]->orders_count ?? 0),
+                'total_sales' => (float) (($webSales[$id]->total_sales ?? 0) + ($posSales[$id]->total_sales ?? 0)),
+            ];
+        })->sortByDesc('total_sales')->values();
+
+        return Inertia::render('Admin/Reports/AreaSalesReport', ['areas' => $areas]);
+    }
+
+    public function areaCustomers()
+    {
+        $posCustomers = Customer::select('district_id', DB::raw('COUNT(*) as customers_count'))
+            ->whereNotNull('district_id')
+            ->groupBy('district_id')
+            ->get()
+            ->keyBy('district_id');
+
+        $webCustomers = Order::select('district_id', DB::raw('COUNT(DISTINCT user_id) as customers_count'))
+            ->whereNotNull('district_id')
+            ->whereNotNull('user_id')
+            ->groupBy('district_id')
+            ->get()
+            ->keyBy('district_id');
+
+        $districtIds = $posCustomers->keys()->merge($webCustomers->keys())->unique();
+        $districts = District::with('division')->whereIn('id', $districtIds)->get()->keyBy('id');
+
+        $areas = $districtIds->map(function ($id) use ($posCustomers, $webCustomers, $districts) {
+            $district = $districts->get($id);
+
+            return [
+                'district_id' => $id,
+                'district_name' => $district?->name,
+                'division_name' => $district?->division?->name,
+                'customers_count' => ($posCustomers[$id]->customers_count ?? 0) + ($webCustomers[$id]->customers_count ?? 0),
+            ];
+        })->sortByDesc('customers_count')->values();
+
+        return Inertia::render('Admin/Reports/AreaCustomerReport', ['areas' => $areas]);
     }
 
     public function metaCampaigns(Request $request, MetaAdsReportService $metaAdsReportService)

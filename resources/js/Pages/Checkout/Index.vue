@@ -1,10 +1,12 @@
 <script setup>
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import { computed } from "vue";
 
 const props = defineProps({
     items: { type: Array, default: () => [] },
     summary: { type: Object, required: true },
     paymentGateways: { type: Object, default: () => ({}) },
+    divisions: { type: Array, default: () => [] },
 });
 
 const form = useForm({
@@ -12,11 +14,21 @@ const form = useForm({
     email: "",
     phone: "",
     address: "",
-    city: "",
+    division_id: "",
+    district_id: "",
     postal_code: "",
     payment_method: "cod",
     notes: "",
 });
+
+const districtOptions = computed(() => {
+    const division = props.divisions.find((d) => String(d.id) === String(form.division_id));
+    return division?.districts || [];
+});
+
+function onDivisionChange() {
+    form.district_id = "";
+}
 
 const moneyFormatter = new Intl.NumberFormat("en-BD", { 
     style: "currency", 
@@ -46,12 +58,36 @@ function placeOrder() {
         <main class="mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-3">
             <section class="lg:col-span-2 rounded-xl border border-[#dcc8b0] bg-white p-6">
                 <h1 class="text-2xl font-semibold">Shipping & Payment</h1>
+                <p class="mt-1 text-xs uppercase tracking-widest text-[#8a6a4c]">Just your phone &amp; address to place an order &mdash; everything else is optional.</p>
                 <form class="mt-6 grid gap-4 sm:grid-cols-2" @submit.prevent="placeOrder">
-                    <input v-model="form.full_name" type="text" placeholder="Full Name" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none" />
-                    <input v-model="form.email" type="email" placeholder="Email" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none" />
-                    <input v-model="form.phone" type="text" placeholder="Phone (optional)" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none" />
-                    <input v-model="form.city" type="text" placeholder="City" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none" />
-                    <input v-model="form.postal_code" type="text" placeholder="Postal Code" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none" />
+                    <div class="sm:col-span-2">
+                        <input v-model="form.phone" type="tel" required placeholder="Phone Number *" class="w-full rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none" />
+                        <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">{{ form.errors.phone }}</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <textarea v-model="form.address" rows="3" required placeholder="Delivery Address *" class="w-full rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none"></textarea>
+                        <p v-if="form.errors.address" class="mt-1 text-xs text-red-600">{{ form.errors.address }}</p>
+                    </div>
+                    <div>
+                        <select v-model="form.division_id" required @change="onDivisionChange" class="w-full rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none">
+                            <option value="" disabled>Division *</option>
+                            <option v-for="division in divisions" :key="division.id" :value="division.id">{{ division.name }}</option>
+                        </select>
+                        <p v-if="form.errors.division_id" class="mt-1 text-xs text-red-600">{{ form.errors.division_id }}</p>
+                    </div>
+                    <div>
+                        <select v-model="form.district_id" required :disabled="!form.division_id" class="w-full rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none disabled:opacity-60">
+                            <option value="" disabled>District *</option>
+                            <option v-for="district in districtOptions" :key="district.id" :value="district.id">{{ district.name }}</option>
+                        </select>
+                        <p v-if="form.errors.district_id" class="mt-1 text-xs text-red-600">{{ form.errors.district_id }}</p>
+                    </div>
+
+                    <p class="sm:col-span-2 mt-2 text-xs font-semibold uppercase tracking-widest text-[#8a6a4c]">Optional details</p>
+                    <input v-model="form.full_name" type="text" placeholder="Full Name (optional)" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none" />
+                    <input v-model="form.email" type="email" placeholder="Email (optional)" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none" />
+                    <input v-model="form.postal_code" type="text" placeholder="Postal Code (optional)" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none" />
+
                     <select v-model="form.payment_method" class="rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none">
                         <option value="cod">Cash on Delivery</option>
                         <option value="card">Card (Demo)</option>
@@ -64,7 +100,6 @@ function placeOrder() {
                     <div v-if="form.payment_method === 'nagad'" class="sm:col-span-2 rounded-lg border border-orange-100 bg-orange-50 px-4 py-3 text-sm text-orange-900">
                         Nagad merchant details are configured. Complete redirect needs the final signed Nagad production API details from your merchant account.
                     </div>
-                    <textarea v-model="form.address" rows="3" placeholder="Street Address" class="sm:col-span-2 rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none"></textarea>
                     <textarea v-model="form.notes" rows="3" placeholder="Order notes (optional)" class="sm:col-span-2 rounded border border-[#d8c2a8] px-4 py-3 text-sm focus:border-[#a6784e] focus:outline-none"></textarea>
                     <button type="submit" :disabled="form.processing" class="sm:col-span-2 rounded bg-[#2a1912] py-3 text-sm uppercase tracking-widest text-white transition hover:bg-[#3b2419] disabled:opacity-60">
                         {{ form.processing ? "Placing Order..." : "Place Order" }}

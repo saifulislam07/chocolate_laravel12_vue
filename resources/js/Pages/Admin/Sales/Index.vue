@@ -111,7 +111,7 @@ function deleteSale(id) {
                     <!-- Customer Cell -->
                     <template #cell-customer="{ item }">
                         <div class="font-weight-medium">
-                            {{ item.order_source === 'pos' ? (item.customer?.name || 'Walk-in Customer') : (item.user?.name || 'Guest') }}
+                            {{ item.order_source === 'pos' ? (item.customer?.name || 'Walk-in Customer') : (item.customer_name || item.user?.name || 'Guest') }}
                         </div>
                     </template>
 

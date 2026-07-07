@@ -31,6 +31,11 @@ class WebSettingController extends Controller
             'maintenance_message' => 'nullable|string',
             'facebook_url' => 'nullable|url',
             'instagram_url' => 'nullable|url',
+            'youtube_url' => 'nullable|url',
+            'whatsapp_url' => 'nullable|url',
+            'tiktok_url' => 'nullable|url',
+            'linkedin_url' => 'nullable|url',
+            'pinterest_url' => 'nullable|url',
             'meta_pixel_enabled' => 'boolean',
             'meta_pixel_id' => [Rule::requiredIf($request->boolean('meta_pixel_enabled')), 'nullable', 'regex:/^[0-9]{5,30}$/'],
             'meta_ads_enabled' => 'boolean',
@@ -56,6 +61,17 @@ class WebSettingController extends Controller
             'nagad_merchant_number' => 'nullable|string|max:255',
             'nagad_public_key' => 'nullable|string',
             'nagad_private_key' => 'nullable|string',
+            'pathao_enabled' => 'boolean',
+            'pathao_base_url' => 'nullable|url',
+            'pathao_client_id' => 'nullable|string|max:255',
+            'pathao_client_secret' => 'nullable|string|max:255',
+            'pathao_username' => 'nullable|string|max:255',
+            'pathao_password' => 'nullable|string|max:255',
+            'pathao_store_id' => 'nullable|string|max:255',
+            'steadfast_enabled' => 'boolean',
+            'steadfast_base_url' => 'nullable|url',
+            'steadfast_api_key' => 'nullable|string|max:255',
+            'steadfast_secret_key' => 'nullable|string|max:255',
             'smtp_host' => 'nullable|string',
             'smtp_port' => 'nullable|string',
             'smtp_username' => 'nullable|string',
@@ -72,6 +88,8 @@ class WebSettingController extends Controller
         $validated['nagad_enabled'] = $request->boolean('nagad_enabled');
         $validated['bkash_mode'] = $validated['bkash_mode'] ?: 'sandbox';
         $validated['nagad_mode'] = $validated['nagad_mode'] ?: 'sandbox';
+        $validated['pathao_enabled'] = $request->boolean('pathao_enabled');
+        $validated['steadfast_enabled'] = $request->boolean('steadfast_enabled');
 
         if ($request->hasFile('logo')) {
             if ($settings->logo) {

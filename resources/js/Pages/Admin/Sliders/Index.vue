@@ -27,8 +27,8 @@ const form = useForm({
     subtitle: '',
     description: '',
     image: null,
-    bg_color: '#FBE0E3',
-    text_color: '#1C1C1C',
+    bg_color: '#FBEBD9',
+    text_color: '#4B2E1E',
     button_text: 'Shop Now',
     button_link: '#',
     sort_order: 0,
@@ -52,8 +52,8 @@ function openEditModal(slider) {
     form.title = slider.title;
     form.subtitle = slider.subtitle;
     form.description = slider.description;
-    form.bg_color = slider.bg_color || '#FBE0E3';
-    form.text_color = slider.text_color || '#1C1C1C';
+    form.bg_color = slider.bg_color || '#FBEBD9';
+    form.text_color = slider.text_color || '#4B2E1E';
     form.button_text = slider.button_text || 'Shop Now';
     form.button_link = slider.button_link || '#';
     form.sort_order = slider.sort_order;

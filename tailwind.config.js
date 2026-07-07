@@ -3,6 +3,7 @@ import forms from '@tailwindcss/forms';
 
 /** @type {import('tailwindcss').Config} */
 export default {
+    darkMode: 'class',
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
@@ -17,13 +18,16 @@ export default {
                 serif: ['Cormorant Garamond', ...defaultTheme.fontFamily.serif],
             },
             colors: {
+                // Coco Craft brand palette, sourced from the logo (public/images/cococraft-logo.svg):
+                // chocolate brown, warm orange, lime green accent, and cream.
                 godiva: {
-                    charcoal: '#1C1C1C',
-                    cream: '#F3EFE9',
-                    gold: '#B99D4B',
-                    'gold-dark': '#8C733E',
-                    pink: '#FBE0E3',
-                    prefooter: '#333333',
+                    charcoal: '#4B2E1E',
+                    cream: '#F5EBDD',
+                    gold: '#E89A50',
+                    'gold-dark': '#C97830',
+                    pink: '#FBEBD9',
+                    green: '#B5C934',
+                    prefooter: '#3A2517',
                 }
             }
         },

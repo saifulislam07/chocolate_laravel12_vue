@@ -30,7 +30,7 @@ function removeFromWishlist(productId) {
 
 <template>
     <MainLayout>
-        <Head title="Wishlist | SweetChocholate" />
+        <Head title="Wishlist | Coco Craft" />
 
         <div class="bg-white">
             <section class="border-b border-[#eee4d8] bg-[#fcf8f3] py-16 text-center">

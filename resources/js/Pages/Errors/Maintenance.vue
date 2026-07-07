@@ -4,12 +4,12 @@ import { Head, Link } from "@inertiajs/vue3";
 defineProps({
     status: { type: Number, default: 503 },
     title: { type: String, default: "We are polishing the shop" },
-    message: { type: String, default: "SweetChocholate is temporarily unavailable while we make a few improvements." },
+    message: { type: String, default: "Coco Craft is temporarily unavailable while we make a few improvements." },
 });
 </script>
 
 <template>
-    <Head title="Maintenance | SweetChocholate" />
+    <Head title="Maintenance | Coco Craft" />
 
     <main class="min-h-screen bg-[#1c1c1c] text-white">
         <div class="relative min-h-screen overflow-hidden">
@@ -19,8 +19,8 @@ defineProps({
             <div class="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center px-6 py-16">
                 <section class="max-w-2xl">
                     <Link href="/admin/login" class="inline-flex items-center gap-3">
-                        <img src="/images/godiva/logo-cute.png" alt="SweetChocholate" class="h-14 w-14 object-contain" />
-                        <span class="font-serif text-3xl font-bold">SweetChocholate</span>
+                        <img src="/images/cococraft-logo.svg" alt="Coco Craft" class="h-14 w-14 object-contain" />
+                        <span class="font-serif text-3xl font-bold">Coco Craft</span>
                     </Link>
 
                     <p class="mt-16 text-[11px] font-bold uppercase tracking-[0.35em] text-godiva-gold">{{ status }} Maintenance</p>

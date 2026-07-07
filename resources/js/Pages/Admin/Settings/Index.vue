@@ -15,6 +15,7 @@ const tabs = [
     { id: 'pixel', label: 'Pixel', icon: 'fas fa-bullseye' },
     { id: 'meta_ads', label: 'Meta Ads', icon: 'fab fa-facebook' },
     { id: 'payments', label: 'Payments', icon: 'fas fa-credit-card' },
+    { id: 'courier', label: 'Courier', icon: 'fas fa-truck' },
     { id: 'messenger', label: 'Messenger', icon: 'fab fa-facebook-messenger' },
     { id: 'email', label: 'Email SMTP', icon: 'fas fa-envelope' },
     { id: 'maintenance', label: 'Maintenance', icon: 'fas fa-screwdriver-wrench' },
@@ -78,9 +79,14 @@ const form = useForm({
     address: props.settings?.address || '',
     maintenance_mode: props.settings?.maintenance_mode || false,
     maintenance_title: props.settings?.maintenance_title || 'We are polishing the shop',
-    maintenance_message: props.settings?.maintenance_message || 'SweetChocholate is temporarily unavailable while we make a few improvements.',
+    maintenance_message: props.settings?.maintenance_message || 'Coco Craft is temporarily unavailable while we make a few improvements.',
     facebook_url: props.settings?.facebook_url || '',
     instagram_url: props.settings?.instagram_url || '',
+    youtube_url: props.settings?.youtube_url || '',
+    whatsapp_url: props.settings?.whatsapp_url || '',
+    tiktok_url: props.settings?.tiktok_url || '',
+    linkedin_url: props.settings?.linkedin_url || '',
+    pinterest_url: props.settings?.pinterest_url || '',
     meta_pixel_enabled: props.settings?.meta_pixel_enabled || false,
     meta_pixel_id: props.settings?.meta_pixel_id || '',
     meta_ads_enabled: props.settings?.meta_ads_enabled || false,
@@ -89,8 +95,8 @@ const form = useForm({
     meta_ads_access_token: props.settings?.meta_ads_access_token || '',
     messenger_enabled: props.settings?.messenger_enabled || false,
     messenger_page_id: props.settings?.messenger_page_id || '',
-    messenger_theme_color: props.settings?.messenger_theme_color || '#B99D4B',
-    messenger_logged_in_greeting: props.settings?.messenger_logged_in_greeting || 'Hi! How can we help you with SweetChocholate?',
+    messenger_theme_color: props.settings?.messenger_theme_color || '#E89A50',
+    messenger_logged_in_greeting: props.settings?.messenger_logged_in_greeting || 'Hi! How can we help you with Coco Craft?',
     messenger_logged_out_greeting: props.settings?.messenger_logged_out_greeting || 'Hi! Please log in to Facebook to chat with us.',
     bkash_enabled: props.settings?.bkash_enabled || false,
     bkash_mode: props.settings?.bkash_mode || 'sandbox',
@@ -106,6 +112,17 @@ const form = useForm({
     nagad_merchant_number: props.settings?.nagad_merchant_number || '',
     nagad_public_key: props.settings?.nagad_public_key || '',
     nagad_private_key: props.settings?.nagad_private_key || '',
+    pathao_enabled: props.settings?.pathao_enabled || false,
+    pathao_base_url: props.settings?.pathao_base_url || 'https://api-hermes.pathao.com',
+    pathao_client_id: props.settings?.pathao_client_id || '',
+    pathao_client_secret: props.settings?.pathao_client_secret || '',
+    pathao_username: props.settings?.pathao_username || '',
+    pathao_password: props.settings?.pathao_password || '',
+    pathao_store_id: props.settings?.pathao_store_id || '',
+    steadfast_enabled: props.settings?.steadfast_enabled || false,
+    steadfast_base_url: props.settings?.steadfast_base_url || 'https://portal.packzy.com/api/v1',
+    steadfast_api_key: props.settings?.steadfast_api_key || '',
+    steadfast_secret_key: props.settings?.steadfast_secret_key || '',
     smtp_host: props.settings?.smtp_host || '',
     smtp_port: props.settings?.smtp_port || '',
     smtp_username: props.settings?.smtp_username || '',
@@ -197,6 +214,26 @@ function submit() {
                                             <div class="col-md-6 form-group">
                                                 <label>Instagram URL</label>
                                                 <input type="text" v-model="form.instagram_url" class="form-control" placeholder="https://instagram.com/yourpage">
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <label>YouTube URL</label>
+                                                <input type="text" v-model="form.youtube_url" class="form-control" placeholder="https://youtube.com/@yourchannel">
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <label>WhatsApp URL</label>
+                                                <input type="text" v-model="form.whatsapp_url" class="form-control" placeholder="https://wa.me/8801700000000">
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <label>TikTok URL</label>
+                                                <input type="text" v-model="form.tiktok_url" class="form-control" placeholder="https://tiktok.com/@yourpage">
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <label>LinkedIn URL</label>
+                                                <input type="text" v-model="form.linkedin_url" class="form-control" placeholder="https://linkedin.com/company/yourpage">
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <label>Pinterest URL</label>
+                                                <input type="text" v-model="form.pinterest_url" class="form-control" placeholder="https://pinterest.com/yourpage">
                                             </div>
                                         </div>
                                     </div>
@@ -405,6 +442,75 @@ function submit() {
                                             <div class="form-group mb-0">
                                                 <label>Private Key</label>
                                                 <textarea v-model="form.nagad_private_key" class="form-control" rows="3"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div v-show="activeTab === 'courier'">
+                                        <h3 class="settings-title">Courier Integrations</h3>
+                                        <div class="gateway-panel">
+                                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                                <div>
+                                                    <h5 class="mb-1 font-weight-bold">Pathao Courier</h5>
+                                                    <p class="text-muted text-sm mb-0">Merchant API credentials for parcel booking.</p>
+                                                </div>
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="pathaoEnabled" v-model="form.pathao_enabled">
+                                                    <label class="custom-control-label font-weight-bold" for="pathaoEnabled">Enable</label>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-12 form-group">
+                                                    <label>Base URL</label>
+                                                    <input type="text" v-model="form.pathao_base_url" class="form-control" placeholder="https://api-hermes.pathao.com">
+                                                </div>
+                                                <div class="col-md-6 form-group">
+                                                    <label>Client ID</label>
+                                                    <input type="text" v-model="form.pathao_client_id" class="form-control">
+                                                </div>
+                                                <div class="col-md-6 form-group">
+                                                    <label>Client Secret</label>
+                                                    <input type="password" v-model="form.pathao_client_secret" class="form-control">
+                                                </div>
+                                                <div class="col-md-4 form-group">
+                                                    <label>Username</label>
+                                                    <input type="text" v-model="form.pathao_username" class="form-control">
+                                                </div>
+                                                <div class="col-md-4 form-group">
+                                                    <label>Password</label>
+                                                    <input type="password" v-model="form.pathao_password" class="form-control">
+                                                </div>
+                                                <div class="col-md-4 form-group">
+                                                    <label>Store ID</label>
+                                                    <input type="text" v-model="form.pathao_store_id" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="gateway-panel mt-4">
+                                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                                <div>
+                                                    <h5 class="mb-1 font-weight-bold">Steadfast Courier</h5>
+                                                    <p class="text-muted text-sm mb-0">API key/secret from your Steadfast merchant panel.</p>
+                                                </div>
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="steadfastEnabled" v-model="form.steadfast_enabled">
+                                                    <label class="custom-control-label font-weight-bold" for="steadfastEnabled">Enable</label>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-12 form-group">
+                                                    <label>Base URL</label>
+                                                    <input type="text" v-model="form.steadfast_base_url" class="form-control" placeholder="https://portal.packzy.com/api/v1">
+                                                </div>
+                                                <div class="col-md-6 form-group">
+                                                    <label>API Key</label>
+                                                    <input type="text" v-model="form.steadfast_api_key" class="form-control">
+                                                </div>
+                                                <div class="col-md-6 form-group">
+                                                    <label>Secret Key</label>
+                                                    <input type="password" v-model="form.steadfast_secret_key" class="form-control">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

@@ -37,7 +37,7 @@ const submit = () => {
             <p class="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-godiva-gold">Customer Login</p>
             <h1 class="font-serif text-4xl text-godiva-charcoal mb-4">Welcome Back</h1>
             <p class="text-sm text-godiva-charcoal/60 leading-relaxed font-sans">
-                Enter your credentials to access your SweetChocholate account and continue your journey of taste.
+                Enter your credentials to access your Coco Craft account and continue your journey of taste.
             </p>
         </div>
 

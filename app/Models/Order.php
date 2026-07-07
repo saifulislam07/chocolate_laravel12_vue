@@ -24,6 +24,10 @@ class Order extends Model
         'payment_status',
         'order_source',
         'shipping_address',
+        'customer_phone',
+        'customer_name',
+        'division_id',
+        'district_id',
         'notes',
     ];
 
@@ -50,6 +54,16 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function division(): BelongsTo
+    {
+        return $this->belongsTo(Division::class);
+    }
+
+    public function district(): BelongsTo
+    {
+        return $this->belongsTo(District::class);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
@@ -58,5 +72,10 @@ class Order extends Model
     public function paymentTransactions(): HasMany
     {
         return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class);
     }
 }

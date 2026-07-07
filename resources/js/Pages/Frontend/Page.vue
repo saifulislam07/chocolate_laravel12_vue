@@ -13,7 +13,7 @@ defineProps({
 
         <header class="border-b border-gray-100 bg-godiva-cream px-6 py-20">
             <div class="mx-auto max-w-4xl text-center">
-                <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-godiva-gold">SweetChocholate</p>
+                <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-godiva-gold">Coco Craft</p>
                 <h1 class="mt-5 font-serif text-5xl font-light leading-tight text-godiva-charcoal md:text-6xl">
                     {{ page.title }}
                 </h1>
@@ -42,7 +42,7 @@ defineProps({
     font-family: "Cormorant Garamond", serif;
     font-size: 2rem;
     line-height: 1.2;
-    color: #1C1C1C;
+    color: #4B2E1E;
 }
 
 .page-content :deep(h3) {
@@ -51,7 +51,7 @@ defineProps({
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: #1C1C1C;
+    color: #4B2E1E;
 }
 
 .page-content :deep(p) {
@@ -69,7 +69,7 @@ defineProps({
 }
 
 .page-content :deep(a) {
-    color: #8C733E;
+    color: #C97830;
     text-decoration: underline;
     text-underline-offset: 4px;
 }

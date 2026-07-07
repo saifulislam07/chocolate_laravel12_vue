@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\Division;
 use App\Models\Order;
 use App\Models\PaymentTransaction;
 use App\Models\WebSetting;
@@ -12,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -54,17 +56,22 @@ class CheckoutController extends Controller
                 'total' => $total,
             ],
             'paymentGateways' => $this->paymentGatewayOptions(),
+            'divisions' => Division::with('districts:id,division_id,name')->get(['id', 'name']),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $payload = $request->validate([
-            'full_name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:120'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'full_name' => ['nullable', 'string', 'max:120'],
+            'email' => ['nullable', 'email', 'max:120'],
+            'phone' => ['required', 'string', 'max:50'],
             'address' => ['required', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:120'],
+            'division_id' => ['required', 'exists:divisions,id'],
+            'district_id' => [
+                'required',
+                Rule::exists('districts', 'id')->where('division_id', $request->input('division_id')),
+            ],
             'postal_code' => ['nullable', 'string', 'max:30'],
             'payment_method' => ['required', 'in:cod,card,bkash,nagad'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -82,7 +89,9 @@ class CheckoutController extends Controller
         $tax = round($subtotal * 0.05, 2);
         $total = $subtotal + $shipping + $tax;
 
-        $order = DB::transaction(function () use ($cart, $payload, $subtotal, $shipping, $tax, $total): Order {
+        $district = \App\Models\District::find($payload['district_id']);
+
+        $order = DB::transaction(function () use ($cart, $payload, $district, $subtotal, $shipping, $tax, $total): Order {
             $order = Order::create([
                 'order_number' => 'CHOC-' . now()->format('Ymd') . '-' . strtoupper(substr(uniqid(), -6)),
                 'user_id' => Auth::id(),
@@ -94,14 +103,17 @@ class CheckoutController extends Controller
                 'total' => $total,
                 'payment_method' => $payload['payment_method'],
                 'payment_status' => 'unpaid',
-                'shipping_address' => sprintf(
-                    "%s\n%s\n%s %s\nPhone: %s",
-                    $payload['full_name'],
+                'shipping_address' => collect([
+                    $payload['full_name'] ?? null,
                     $payload['address'],
-                    $payload['city'],
-                    $payload['postal_code'] ?? '',
-                    $payload['phone'] ?? 'N/A'
-                ),
+                    trim(($district?->name ?? '') . ' ' . ($payload['postal_code'] ?? '')) ?: null,
+                    'Phone: ' . $payload['phone'],
+                    isset($payload['email']) ? 'Email: ' . $payload['email'] : null,
+                ])->filter()->implode("\n"),
+                'customer_phone' => $payload['phone'],
+                'customer_name' => $payload['full_name'] ?? null,
+                'division_id' => $payload['division_id'],
+                'district_id' => $payload['district_id'],
                 'notes' => $payload['notes'] ?? null,
             ]);
 

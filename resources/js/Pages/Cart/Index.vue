@@ -49,7 +49,7 @@ function removeItem(itemId) {
 
 <template>
     <MainLayout>
-        <Head title="Your Shopping Bag | SweetChocholate" />
+        <Head title="Your Shopping Bag | Coco Craft" />
 
         <div class="bg-white py-12 sm:py-20 text-godiva-charcoal">
             <main class="mx-auto max-w-7xl px-6">

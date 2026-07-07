@@ -65,6 +65,8 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $user,
+                'roles' => $user?->getRoleNames() ?? [],
+                'permissions' => $user?->getAllPermissions()->pluck('name') ?? [],
             ],
             'cartCount' => (int) $cartCount,
             'wishlistCount' => (int) $wishlistCount,

@@ -176,7 +176,7 @@ watch(
 
 <template>
     <MainLayout>
-        <Head title="Shop Premium Chocolate | SweetChocholate" />
+        <Head title="Shop Premium Chocolate | Coco Craft" />
 
         <div class="bg-white">
             <div class="border-b border-[#eee4d8] bg-[#fcf8f3] py-14">

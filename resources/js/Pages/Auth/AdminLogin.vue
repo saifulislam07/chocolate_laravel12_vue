@@ -30,8 +30,8 @@ function submit() {
                 <div class="absolute inset-0 bg-gradient-to-br from-black via-black/70 to-[#3b2418]/70"></div>
                 <div class="relative z-10 flex h-full flex-col justify-between p-12">
                     <Link href="/" class="inline-flex items-center gap-3">
-                        <img src="/images/godiva/logo-cute.png" alt="SweetChocholate" class="h-12 w-12 object-contain" />
-                        <span class="font-serif text-2xl font-bold">SweetChocholate</span>
+                        <img src="/images/cococraft-logo-light.svg" alt="Coco Craft" class="h-12 w-12 object-contain" />
+                        <span class="font-serif text-2xl font-bold">Coco Craft</span>
                     </Link>
                     <div class="max-w-lg">
                         <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-godiva-gold">Control Room</p>
@@ -44,8 +44,8 @@ function submit() {
             <section class="flex items-center justify-center px-6 py-12">
                 <div class="w-full max-w-md">
                     <Link href="/" class="mb-10 inline-flex items-center gap-3 lg:hidden">
-                        <img src="/images/godiva/logo-cute.png" alt="SweetChocholate" class="h-11 w-11 object-contain" />
-                        <span class="font-serif text-2xl font-bold">SweetChocholate</span>
+                        <img src="/images/cococraft-logo-light.svg" alt="Coco Craft" class="h-11 w-11 object-contain" />
+                        <span class="font-serif text-2xl font-bold">Coco Craft</span>
                     </Link>
 
                     <div class="border border-white/10 bg-white/[0.04] p-8 shadow-2xl backdrop-blur">

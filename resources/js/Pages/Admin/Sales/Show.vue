@@ -1,10 +1,71 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import axios from 'axios';
 
 const props = defineProps({
-    sale: Object
+    sale: Object,
+    courierOptions: { type: Object, default: () => ({ pathao: false, steadfast: false }) },
 });
+
+const statusForm = useForm({
+    status: props.sale.status,
+    payment_status: props.sale.payment_status,
+});
+
+function updateStatus() {
+    statusForm.patch(route('admin.sales.update-status', props.sale.id), {
+        preserveScroll: true,
+    });
+}
+
+const shipForm = useForm({
+    courier: props.courierOptions.steadfast ? 'steadfast' : 'pathao',
+    city_id: '',
+    zone_id: '',
+    area_id: '',
+});
+
+const pathaoCities = ref([]);
+const pathaoZones = ref([]);
+const pathaoAreas = ref([]);
+
+watch(() => shipForm.courier, (courier) => {
+    if (courier === 'pathao' && pathaoCities.value.length === 0) {
+        axios.get(route('admin.courier.pathao.cities')).then((res) => {
+            pathaoCities.value = res.data || [];
+        });
+    }
+});
+
+watch(() => shipForm.city_id, (cityId) => {
+    shipForm.zone_id = '';
+    shipForm.area_id = '';
+    pathaoZones.value = [];
+    pathaoAreas.value = [];
+    if (cityId) {
+        axios.get(route('admin.courier.pathao.zones', cityId)).then((res) => {
+            pathaoZones.value = res.data || [];
+        });
+    }
+});
+
+watch(() => shipForm.zone_id, (zoneId) => {
+    shipForm.area_id = '';
+    pathaoAreas.value = [];
+    if (zoneId) {
+        axios.get(route('admin.courier.pathao.areas', zoneId)).then((res) => {
+            pathaoAreas.value = res.data || [];
+        });
+    }
+});
+
+function submitShip() {
+    shipForm.post(route('admin.sales.ship', props.sale.id), {
+        preserveScroll: true,
+    });
+}
 
 const printInvoice = () => {
     window.print();
@@ -39,6 +100,95 @@ const getSourceContext = (source) => {
 
         <section class="content">
             <div class="container-fluid">
+                <div class="row d-print-none">
+                    <div class="col-12 mb-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-3 d-flex flex-wrap align-items-end gap-3">
+                                <div>
+                                    <label class="text-xs font-bold text-muted text-uppercase tracking-wider mb-1 d-block">Order Status</label>
+                                    <select v-model="statusForm.status" class="form-control form-control-sm">
+                                        <option value="pending">Pending</option>
+                                        <option value="processing">Processing</option>
+                                        <option value="shipped">Shipped</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-muted text-uppercase tracking-wider mb-1 d-block">Payment Status</label>
+                                    <select v-model="statusForm.payment_status" class="form-control form-control-sm">
+                                        <option value="unpaid">Unpaid</option>
+                                        <option value="partial">Partial</option>
+                                        <option value="paid">Paid</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-sm" :disabled="statusForm.processing" @click="updateStatus">
+                                    <i class="fas fa-save mr-1"></i> Update Status
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-3">
+                                <h6 class="font-weight-bold text-uppercase text-xs text-muted mb-3">Courier Shipment</h6>
+
+                                <div v-if="sale.shipments?.length" class="mb-3">
+                                    <div v-for="shipment in sale.shipments" :key="shipment.id" class="d-flex align-items-center justify-content-between border rounded p-2 mb-2">
+                                        <div>
+                                            <span class="badge badge-info-soft text-capitalize mr-2">{{ shipment.courier }}</span>
+                                            <span class="text-sm">Tracking: <strong>{{ shipment.tracking_code || 'N/A' }}</strong></span>
+                                        </div>
+                                        <span class="badge badge-secondary text-capitalize">{{ shipment.status }}</span>
+                                    </div>
+                                </div>
+
+                                <div v-if="!courierOptions.pathao && !courierOptions.steadfast" class="text-sm text-muted">
+                                    No courier is configured yet. Add Pathao or Steadfast credentials in <Link :href="route('admin.settings.index')">Settings &rarr; Courier</Link>.
+                                </div>
+                                <div v-else class="d-flex flex-wrap align-items-end gap-3">
+                                    <div>
+                                        <label class="text-xs font-bold text-muted text-uppercase tracking-wider mb-1 d-block">Courier</label>
+                                        <select v-model="shipForm.courier" class="form-control form-control-sm">
+                                            <option v-if="courierOptions.steadfast" value="steadfast">Steadfast</option>
+                                            <option v-if="courierOptions.pathao" value="pathao">Pathao</option>
+                                        </select>
+                                    </div>
+
+                                    <template v-if="shipForm.courier === 'pathao'">
+                                        <div>
+                                            <label class="text-xs font-bold text-muted text-uppercase tracking-wider mb-1 d-block">City</label>
+                                            <select v-model="shipForm.city_id" class="form-control form-control-sm">
+                                                <option value="">Select City</option>
+                                                <option v-for="city in pathaoCities" :key="city.city_id" :value="city.city_id">{{ city.city_name }}</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-muted text-uppercase tracking-wider mb-1 d-block">Zone</label>
+                                            <select v-model="shipForm.zone_id" class="form-control form-control-sm" :disabled="!shipForm.city_id">
+                                                <option value="">Select Zone</option>
+                                                <option v-for="zone in pathaoZones" :key="zone.zone_id" :value="zone.zone_id">{{ zone.zone_name }}</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-muted text-uppercase tracking-wider mb-1 d-block">Area</label>
+                                            <select v-model="shipForm.area_id" class="form-control form-control-sm" :disabled="!shipForm.zone_id">
+                                                <option value="">Select Area</option>
+                                                <option v-for="area in pathaoAreas" :key="area.area_id" :value="area.area_id">{{ area.area_name }}</option>
+                                            </select>
+                                        </div>
+                                    </template>
+
+                                    <button type="button" class="btn btn-success btn-sm" :disabled="shipForm.processing" @click="submitShip">
+                                        <i class="fas fa-truck mr-1"></i> Book Shipment
+                                    </button>
+                                </div>
+                                <p v-if="shipForm.errors.courier" class="text-danger text-sm mt-2 mb-0">{{ shipForm.errors.courier }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-12">
                         <!-- Main content -->
@@ -67,9 +217,9 @@ const getSourceContext = (source) => {
                                             <span v-if="sale.customer?.email">Email: {{ sale.customer.email }}</span>
                                         </template>
                                         <template v-else>
-                                            <strong class="h5">{{ sale.user?.name || 'Guest User' }}</strong><br>
+                                            <strong class="h5">{{ sale.customer_name || sale.user?.name || 'Guest User' }}</strong><br>
                                             Address: {{ sale.shipping_address || 'N/A' }}<br>
-                                            <span v-if="sale.user?.phone">Phone: {{ sale.user.phone }}<br></span>
+                                            <span v-if="sale.customer_phone">Phone: {{ sale.customer_phone }}<br></span>
                                             Email: {{ sale.user?.email || 'N/A' }}
                                         </template>
                                     </address>

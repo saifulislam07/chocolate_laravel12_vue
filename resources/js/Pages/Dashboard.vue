@@ -1,16 +1,87 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Line, Doughnut } from 'vue-chartjs';
+import {
+    Chart as ChartJS,
+    Title,
+    Tooltip,
+    Legend,
+    LineElement,
+    PointElement,
+    CategoryScale,
+    LinearScale,
+    Filler,
+    ArcElement,
+} from 'chart.js';
+
+ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale, Filler, ArcElement);
 
 const props = defineProps({
     stats: Object,
     recent_orders: Array,
     top_products: Array,
-    recent_expenses: Array
+    recent_expenses: Array,
+    salesTrend: { type: Array, default: () => [] },
+    ordersByStatus: { type: Object, default: () => ({}) },
 });
 
 const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT' }).format(amount);
+    return new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT' }).format(amount || 0);
+};
+
+const salesChartData = computed(() => ({
+    labels: props.salesTrend.map((day) => day.label),
+    datasets: [
+        {
+            label: 'Sales',
+            data: props.salesTrend.map((day) => day.total),
+            borderColor: '#C97830',
+            backgroundColor: 'rgba(232, 154, 80, 0.15)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#C97830',
+        },
+    ],
+}));
+
+const salesChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+        y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+        x: { ticks: { font: { size: 10 } } },
+    },
+};
+
+const statusColors = {
+    pending: '#f59e0b',
+    processing: '#3b82f6',
+    shipped: '#8b5cf6',
+    delivered: '#10b981',
+    cancelled: '#ef4444',
+};
+
+const orderStatusChartData = computed(() => {
+    const labels = Object.keys(props.ordersByStatus);
+    return {
+        labels: labels.map((s) => s.charAt(0).toUpperCase() + s.slice(1)),
+        datasets: [
+            {
+                data: Object.values(props.ordersByStatus),
+                backgroundColor: labels.map((s) => statusColors[s] || '#94a3b8'),
+                borderWidth: 0,
+            },
+        ],
+    };
+});
+
+const orderStatusChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
 };
 </script>
 
@@ -31,6 +102,43 @@ const formatCurrency = (amount) => {
         </div>
 
         <section class="content">
+            <!-- Today Snapshot -->
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #4B2E1E 0%, #3A2517 100%);">
+                        <div class="card-body p-4 text-white">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-white/60 mb-1">Today's Sales</p>
+                                <i class="fas fa-sun text-godiva-gold"></i>
+                            </div>
+                            <h3 class="text-2xl font-black tracking-tight mb-0" style="color: #E89A50;">{{ formatCurrency(stats.today_sales) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-1">Today's Orders</p>
+                                <i class="fas fa-bolt text-blue-500"></i>
+                            </div>
+                            <h3 class="text-2xl font-black text-dark tracking-tight mb-0">{{ stats.today_orders_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-1">New Customers Today</p>
+                                <i class="fas fa-user-plus text-emerald-500"></i>
+                            </div>
+                            <h3 class="text-2xl font-black text-dark tracking-tight mb-0">{{ stats.today_customers_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Summary Stats with Vibrant Styling -->
             <div class="row">
                 <!-- Revenue -->
@@ -47,8 +155,7 @@ const formatCurrency = (amount) => {
                                 </div>
                             </div>
                             <div class="d-flex align-items-center text-xs">
-                                <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold mr-2 text-[10px]">+12.5%</span>
-                                <span class="text-slate-400 font-medium tracking-tight">vs last month</span>
+                                <span class="text-slate-400 font-medium tracking-tight">All-time total</span>
                             </div>
                         </div>
                     </div>
@@ -115,6 +222,31 @@ const formatCurrency = (amount) => {
                 </div>
             </div>
 
+            <!-- Charts -->
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white border-bottom-light pt-4 px-4 pb-3">
+                            <h3 class="text-base font-bold text-slate-800 mb-0">Sales — Last 7 Days</h3>
+                        </div>
+                        <div class="card-body p-4" style="height: 260px;">
+                            <Line :data="salesChartData" :options="salesChartOptions" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white border-bottom-light pt-4 px-4 pb-3">
+                            <h3 class="text-base font-bold text-slate-800 mb-0">Orders by Status</h3>
+                        </div>
+                        <div class="card-body p-4" style="height: 260px;">
+                            <Doughnut v-if="Object.keys(ordersByStatus).length" :data="orderStatusChartData" :options="orderStatusChartOptions" />
+                            <p v-else class="text-sm text-slate-400 text-center mt-5">No orders yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row mt-2">
                 <!-- Orders Table -->
                 <div class="col-lg-8 mb-4">
@@ -139,11 +271,11 @@ const formatCurrency = (amount) => {
                                     </thead>
                                     <tbody class="text-sm">
                                         <tr v-for="order in recent_orders" :key="order.id" class="border-bottom">
-                                            <td class="px-4 py-3 border-0 align-middle"><span class="badge bg-slate-100 text-slate-700">#ORD-{{ order.id }}</span></td>
+                                            <td class="px-4 py-3 border-0 align-middle"><span class="badge bg-slate-100 text-slate-700">{{ order.order_number }}</span></td>
                                             <td class="py-3 border-0 align-middle font-medium text-slate-700">{{ order.user?.name || 'Walk-in' }}</td>
-                                            <td class="py-3 border-0 align-middle font-bold text-indigo-600">{{ formatCurrency(order.total_amount) }}</td>
+                                            <td class="py-3 border-0 align-middle font-bold text-indigo-600">{{ formatCurrency(order.total) }}</td>
                                             <td class="py-3 border-0 align-middle">
-                                                <span class="badge rounded-pill bg-emerald-100 text-emerald-700 px-2 font-bold text-[10px]">SUCCESS</span>
+                                                <span class="badge rounded-pill bg-emerald-100 text-emerald-700 px-2 font-bold text-[10px] text-capitalize">{{ order.status }}</span>
                                             </td>
                                             <td class="text-right px-4 py-3 border-0 align-middle text-slate-400 text-xs">{{ new Date(order.created_at).toLocaleDateString() }}</td>
                                         </tr>
@@ -205,4 +337,3 @@ const formatCurrency = (amount) => {
 .text-xs { font-size: 0.75rem; }
 .text-base { font-size: 1rem; }
 </style>
-

@@ -34,8 +34,8 @@ import { Link } from '@inertiajs/vue3';
 
                 <div class="mb-16">
                     <Link href="/" class="mt-8 inline-flex items-center gap-3">
-                        <img src="/images/godiva/logo-cute.png" alt="SweetChocholate" class="h-12 w-12 object-contain" />
-                        <span class="font-serif text-3xl font-bold tracking-tight text-godiva-charcoal">SweetChocholate</span>
+                        <img src="/images/cococraft-logo.svg" alt="Coco Craft" class="h-12 w-12 object-contain" />
+                        <span class="font-serif text-3xl font-bold tracking-tight text-godiva-charcoal">Coco Craft</span>
                     </Link>
                 </div>
 
@@ -47,7 +47,7 @@ import { Link } from '@inertiajs/vue3';
             <!-- Footer for Auth Pages -->
             <div class="px-6 lg:px-24 py-8 border-t border-godiva-charcoal/5 lg:border-none">
                 <p class="text-[10px] uppercase tracking-[0.3em] text-godiva-charcoal/40 font-bold">
-                    © 2026 SweetChocholate
+                    © 2026 Coco Craft
                 </p>
             </div>
         </div>

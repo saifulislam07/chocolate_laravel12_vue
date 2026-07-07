@@ -6,6 +6,7 @@ import { ref, computed } from 'vue';
 const props = defineProps({
     products: Array,
     customers: Array,
+    divisions: { type: Array, default: () => [] },
 });
 
 const searchQuery = ref('');
@@ -122,7 +123,18 @@ const quickCustomerForm = useForm({
     phone: '',
     email: '',
     address: '',
+    division_id: '',
+    district_id: '',
 });
+
+const quickCustomerDistrictOptions = computed(() => {
+    const division = props.divisions.find((d) => String(d.id) === String(quickCustomerForm.division_id));
+    return division?.districts || [];
+});
+
+function onQuickCustomerDivisionChange() {
+    quickCustomerForm.district_id = '';
+}
 
 const submitQuickCustomer = () => {
     quickCustomerForm.post(route('admin.customers.store'), {
@@ -456,9 +468,25 @@ const printInvoice = () => {
                                 <label class="text-xs">Email (Optional)</label>
                                 <input type="email" v-model="quickCustomerForm.email" class="form-control" placeholder="Email address">
                             </div>
-                            <div class="form-group mb-0">
+                            <div class="form-group">
                                 <label class="text-xs">Address (Optional)</label>
                                 <textarea v-model="quickCustomerForm.address" class="form-control" rows="2" placeholder="Customer address..."></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 form-group">
+                                    <label class="text-xs">Division (Optional)</label>
+                                    <select v-model="quickCustomerForm.division_id" @change="onQuickCustomerDivisionChange" class="form-control">
+                                        <option value="">Select Division</option>
+                                        <option v-for="division in divisions" :key="division.id" :value="division.id">{{ division.name }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 form-group mb-0">
+                                    <label class="text-xs">District (Optional)</label>
+                                    <select v-model="quickCustomerForm.district_id" :disabled="!quickCustomerForm.division_id" class="form-control">
+                                        <option value="">Select District</option>
+                                        <option v-for="district in quickCustomerDistrictOptions" :key="district.id" :value="district.id">{{ district.name }}</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer bg-white border-0" style="border-radius: 0 0 12px 12px;">
