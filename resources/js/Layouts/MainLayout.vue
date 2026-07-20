@@ -10,7 +10,9 @@ import {
     Bars3Icon,
     XMarkIcon,
     ChevronDownIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    PhoneIcon,
+    MapPinIcon,
 } from "@heroicons/vue/24/outline";
 import ThemeToggle from "@/Components/ThemeToggle.vue";
 import BackToTop from "@/Components/BackToTop.vue";
@@ -41,6 +43,10 @@ const submitSearch = () => {
     isSearchOpen.value = false;
     router.get(route('products.index'), { q });
 };
+
+const mainMenu = computed(() => page.props.mainMenu || []);
+const leftMenu = computed(() => mainMenu.value.slice(0, Math.ceil(mainMenu.value.length / 2)));
+const rightMenu = computed(() => mainMenu.value.slice(Math.ceil(mainMenu.value.length / 2)));
 
 const cartCount = computed(() => page.props.cartCount || 0);
 const wishlistCount = computed(() => page.props.wishlistCount || 0);
@@ -78,6 +84,11 @@ const menuHref = (url) => {
 };
 
 const menuComponent = (url) => url?.startsWith('http') ? 'a' : (url ? Link : 'span');
+
+const isActiveMenu = (url) => {
+    const href = menuHref(url);
+    return href === '/' ? page.url === '/' : page.url.startsWith(href);
+};
 
 // Watch for flash messages to show toast
 watch(() => flash.value.success, (message) => {
@@ -131,78 +142,99 @@ watch(shouldShowMessenger, (visible) => {
             </div>
         </Transition>
 
-        <!-- Announcement Bar -->
-        <div class="bg-godiva-pink py-2 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-godiva-charcoal dark:bg-godiva-gold-dark dark:text-godiva-cream">
-            Free Standard Shipping on Orders $60+ Code: FREESHIP60
-        </div>
-
         <!-- Sticky Header -->
-        <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm dark:border-white/10 dark:bg-godiva-charcoal/95">
-            <div class="mx-auto grid max-w-screen-2xl grid-cols-[1fr_auto_1fr] items-center px-6 pt-3 pb-2 md:pb-0">
+        <header class="sticky top-0 z-50 overflow-visible border-b border-black/5 bg-white/95 backdrop-blur-sm dark:border-white/10 dark:bg-godiva-charcoal/95">
+            <div class="mx-auto grid h-[110px] max-w-screen-2xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 overflow-visible">
 
-                <!-- Mobile Menu Button (Left) -->
-                <div class="flex items-center">
+                <!-- Left: Mobile Menu Button + Desktop Left Nav -->
+                <div class="flex items-center gap-8">
                     <button @click="isMobileMenuOpen = true" class="text-godiva-charcoal md:hidden dark:text-godiva-cream">
                         <Bars3Icon class="h-6 w-6" />
                     </button>
+                    <nav class="hidden items-center gap-7 font-menu text-2xl font-normal uppercase tracking-normal md:flex">
+                        <div v-for="menu in leftMenu" :key="menu.id" class="group relative">
+                            <component
+                                :is="menuComponent(menu.url)"
+                                :href="menuHref(menu.url)"
+                                class="flex items-center gap-1 whitespace-nowrap py-2 text-menu-text transition hover:text-menu-active dark:text-godiva-cream"
+                                :class="{ 'text-menu-active': isActiveMenu(menu.url) }"
+                            >
+                                {{ menu.name }}
+                                <ChevronDownIcon v-if="menu.children.length > 0" class="h-3 w-3 stroke-[2.5]" />
+                            </component>
+                            <div v-if="menu.children.length > 0" class="invisible absolute left-1/2 top-full min-w-[220px] -translate-x-1/2 border border-gray-100 bg-white py-4 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100 dark:border-white/10 dark:bg-godiva-prefooter">
+                                <component
+                                    v-for="child in menu.children"
+                                    :key="child.id"
+                                    :is="menuComponent(child.url)"
+                                    :href="menuHref(child.url)"
+                                    class="block px-6 py-2.5 text-[11px] font-medium uppercase tracking-[0.14em] hover:bg-gray-50 hover:text-godiva-gold dark:hover:bg-white/5"
+                                >
+                                    {{ child.name }}
+                                </component>
+                            </div>
+                        </div>
+                    </nav>
                 </div>
 
                 <!-- Logo & Brand (Center) -->
-                <Link href="/" class="justify-self-center px-4">
-                    <img :src="$page.props.webSettings?.logo || '/images/cococraft-logo.svg'" :alt="$page.props.webSettings?.site_name || 'Coco Craft'" class="h-12 w-auto object-contain md:h-16" />
+                <Link href="/" class="relative z-10 justify-self-center self-stretch">
+                    <span class="absolute left-1/2 top-1/2 flex h-[176px] w-[176px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white p-4 shadow-lg">
+                        <img :src="$page.props.webSettings?.logo || '/images/cococraft-logo.svg'" :alt="$page.props.webSettings?.site_name || 'Coco Craft'" class="h-full w-full object-contain" />
+                    </span>
                     <span class="sr-only">{{ $page.props.webSettings?.site_name || 'Coco Craft' }}</span>
                 </Link>
 
-                <!-- Icons (Right) -->
-                <div class="flex justify-end items-center gap-4 md:gap-6">
-                    <button @click="toggleSearch" class="text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream" :class="{ 'text-godiva-gold': isSearchOpen }" aria-label="Search">
-                        <MagnifyingGlassIcon class="h-5 w-5" />
-                    </button>
-                    <ThemeToggle />
-                    <Link
-                        :href="$page.props.auth?.user ? route('customer.dashboard') : route('login')"
-                        class="text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream"
-                        :aria-label="$page.props.auth?.user ? 'My Account' : 'Login'"
-                    >
-                        <UserIcon class="h-5 w-5" />
-                    </Link>
-                    <Link :href="route('wishlist.index')" class="relative text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream">
-                        <HeartIcon class="h-5 w-5" />
-                        <span v-if="wishlistCount > 0" class="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-godiva-charcoal text-[9px] font-bold text-white dark:bg-godiva-gold dark:text-godiva-charcoal">{{ wishlistCount }}</span>
-                    </Link>
-                    <Link :href="route('cart.index')" class="relative text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream">
-                        <ShoppingBagIcon class="h-5 w-5" />
-                        <span v-if="cartCount > 0" class="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-godiva-charcoal text-[9px] font-bold text-white dark:bg-godiva-gold dark:text-godiva-charcoal">{{ cartCount }}</span>
-                    </Link>
-                </div>
-            </div>
+                <!-- Right: Desktop Right Nav + Icons -->
+                <div class="flex items-center justify-end gap-6">
+                    <nav class="hidden items-center gap-7 font-menu text-2xl font-normal uppercase tracking-normal lg:flex">
+                        <div v-for="menu in rightMenu" :key="menu.id" class="group relative">
+                            <component
+                                :is="menuComponent(menu.url)"
+                                :href="menuHref(menu.url)"
+                                class="flex items-center gap-1 whitespace-nowrap py-2 text-menu-text transition hover:text-menu-active dark:text-godiva-cream"
+                                :class="{ 'text-menu-active': isActiveMenu(menu.url) }"
+                            >
+                                {{ menu.name }}
+                                <ChevronDownIcon v-if="menu.children.length > 0" class="h-3 w-3 stroke-[2.5]" />
+                            </component>
+                            <div v-if="menu.children.length > 0" class="invisible absolute left-1/2 top-full min-w-[220px] -translate-x-1/2 border border-gray-100 bg-white py-4 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100 dark:border-white/10 dark:bg-godiva-prefooter">
+                                <component
+                                    v-for="child in menu.children"
+                                    :key="child.id"
+                                    :is="menuComponent(child.url)"
+                                    :href="menuHref(child.url)"
+                                    class="block px-6 py-2.5 text-[11px] font-medium uppercase tracking-[0.14em] hover:bg-gray-50 hover:text-godiva-gold dark:hover:bg-white/5"
+                                >
+                                    {{ child.name }}
+                                </component>
+                            </div>
+                        </div>
+                    </nav>
 
-            <!-- Desktop Navigation (Centered below logo) -->
-            <nav class="mx-auto hidden max-w-screen-2xl items-center justify-center gap-8 px-6 text-[13px] font-medium uppercase tracking-[0.18em] md:flex">
-                <div v-for="menu in $page.props.mainMenu" :key="menu.id" class="group relative">
-                    <component
-                        :is="menuComponent(menu.url)"
-                        :href="menuHref(menu.url)"
-                        class="flex items-center gap-1.5 transition hover:text-godiva-gold py-3 cursor-pointer whitespace-nowrap"
-                    >
-                        {{ menu.name }}
-                        <ChevronDownIcon v-if="menu.children.length > 0" class="h-3 w-3 stroke-[2.5]" />
-                    </component>
-
-                    <!-- Dropdown -->
-                    <div v-if="menu.children.length > 0" class="invisible group-hover:visible absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl border border-gray-100 min-w-[240px] py-4 transition-all opacity-0 group-hover:opacity-100 dark:bg-godiva-prefooter dark:border-white/10">
-                        <component
-                            v-for="child in menu.children"
-                            :key="child.id"
-                            :is="menuComponent(child.url)"
-                            :href="menuHref(child.url)"
-                            class="block px-6 py-2.5 hover:bg-gray-50 hover:text-godiva-gold font-medium text-[11px] uppercase tracking-[0.14em] dark:hover:bg-white/5"
+                    <div class="flex items-center gap-4 md:gap-5">
+                        <button @click="toggleSearch" class="text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream" :class="{ 'text-godiva-gold': isSearchOpen }" aria-label="Search">
+                            <MagnifyingGlassIcon class="h-5 w-5" />
+                        </button>
+                        <ThemeToggle />
+                        <Link :href="route('wishlist.index')" class="relative text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream">
+                            <HeartIcon class="h-5 w-5" />
+                            <span v-if="wishlistCount > 0" class="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-godiva-charcoal text-[9px] font-bold text-white dark:bg-godiva-gold dark:text-godiva-charcoal">{{ wishlistCount }}</span>
+                        </Link>
+                        <Link
+                            :href="$page.props.auth?.user ? route('customer.dashboard') : route('login')"
+                            class="text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream"
+                            :aria-label="$page.props.auth?.user ? 'My Account' : 'Login'"
                         >
-                            {{ child.name }}
-                        </component>
+                            <UserIcon class="h-5 w-5" />
+                        </Link>
+                        <Link :href="route('cart.index')" class="relative text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream">
+                            <ShoppingBagIcon class="h-5 w-5" />
+                            <span v-if="cartCount > 0" class="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-godiva-gold text-[9px] font-bold text-godiva-charcoal">{{ cartCount }}</span>
+                        </Link>
                     </div>
                 </div>
-            </nav>
+            </div>
 
             <!-- Search Bar -->
             <Transition
@@ -348,91 +380,87 @@ watch(shouldShowMessenger, (visible) => {
         </div>
 
         <!-- Footer -->
-        <footer class="bg-godiva-charcoal text-white">
-            <div class="mx-auto max-w-screen-2xl px-6 py-16 md:py-20">
-                <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.3fr_1.4fr_1.4fr_1fr] lg:gap-16">
-                    <div>
-                        <Link href="/" class="mb-8 inline-flex items-center">
-                            <img
-                                :src="$page.props.webSettings?.footer_logo || $page.props.webSettings?.logo || '/images/cococraft-logo-light.svg'"
-                                :alt="$page.props.webSettings?.site_name || 'Coco Craft'"
-                                class="h-16 w-auto object-contain"
-                            />
-                            <span class="sr-only">{{ $page.props.webSettings?.site_name || 'Coco Craft' }}</span>
-                        </Link>
+        <footer class="relative bg-godiva-charcoal text-white">
+            <svg viewBox="0 0 1440 90" preserveAspectRatio="none" class="absolute -top-px left-0 h-16 w-full text-godiva-cream dark:text-white/5" aria-hidden="true">
+                <path fill="currentColor" d="M0,32 C240,90 480,0 720,24 C960,48 1200,96 1440,40 L1440,0 L0,0 Z" />
+            </svg>
 
-                        <h4 class="text-[12px] font-bold uppercase tracking-[0.45em] text-godiva-gold">Sign Up And Save</h4>
-                        <p class="mt-6 max-w-xs text-sm leading-7 text-godiva-cream/85">
+            <div class="mx-auto max-w-screen-2xl px-6 pb-16 pt-20 md:pb-20 md:pt-28">
+                <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-10">
+                    <div>
+                        <h4 class="font-serif text-xl text-godiva-gold">Sign Up and Save</h4>
+                        <p class="mt-5 max-w-xs text-sm leading-7 text-godiva-cream/85">
                             Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.
                         </p>
 
-                        <form class="mt-8 max-w-sm">
+                        <form class="mt-7 max-w-sm">
                             <label class="sr-only" for="footer-email">Email address</label>
-                            <div class="flex items-center border-b border-godiva-cream/70 pb-3">
+                            <div class="flex items-center gap-2 border border-godiva-cream/30 p-1.5">
                                 <input
                                     id="footer-email"
                                     type="email"
                                     placeholder="Enter your email"
-                                    class="w-full border-0 bg-transparent p-0 text-sm text-white placeholder:text-godiva-cream/80 focus:border-0 focus:ring-0"
+                                    class="w-full border-0 bg-transparent px-3 py-1.5 text-sm text-white placeholder:text-godiva-cream/60 focus:border-0 focus:ring-0"
                                 />
-                                <button type="submit" class="ml-4 text-godiva-cream transition hover:text-godiva-gold" aria-label="Subscribe">
-                                    <EnvelopeIcon class="h-5 w-5" />
+                                <button type="submit" class="shrink-0 bg-godiva-gold px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-godiva-charcoal transition hover:bg-godiva-gold-dark">
+                                    Submit
                                 </button>
                             </div>
                         </form>
+                    </div>
 
-                        <div class="mt-8 flex items-center gap-5">
+                    <div>
+                        <h4 class="font-serif text-xl text-godiva-gold">Company Information</h4>
+                        <div class="mt-7 flex flex-col gap-4 text-sm font-medium text-godiva-cream/90">
+                            <Link :href="route('page.public', 'about-us')" class="transition hover:text-godiva-gold">About Us</Link>
+                            <Link :href="route('page.public', 'employment')" class="transition hover:text-godiva-gold">Employment</Link>
+                            <Link :href="route('page.public', 'retail-store-locations')" class="transition hover:text-godiva-gold">Retail Store</Link>
+                            <Link :href="route('page.public', 'terms-of-service')" class="transition hover:text-godiva-gold">Terms of Service</Link>
+                            <Link :href="route('page.public', 'wholesale')" class="transition hover:text-godiva-gold">Wholesale</Link>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-serif text-xl text-godiva-gold">Useful Links</h4>
+                        <div class="mt-7 flex flex-col gap-4 text-sm font-medium text-godiva-cream/90">
+                            <Link :href="route('products.index')" class="transition hover:text-godiva-gold">Products</Link>
+                            <Link :href="route('page.public', 'privacy-policy')" class="transition hover:text-godiva-gold">Privacy Policy</Link>
+                            <Link :href="route('page.public', 'refund-policy')" class="transition hover:text-godiva-gold">Refund and Returns</Link>
+                            <Link :href="route('customer.dashboard')" class="transition hover:text-godiva-gold">Order Status</Link>
+                            <Link :href="route('page.public', 'become-an-affiliate')" class="transition hover:text-godiva-gold">Become an Affiliate</Link>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-serif text-xl text-godiva-gold">Contact Information</h4>
+                        <div class="mt-7 flex flex-col gap-4 text-sm font-medium text-godiva-cream/90">
+                            <a v-if="$page.props.webSettings?.phone" :href="`tel:${$page.props.webSettings.phone}`" class="flex items-center gap-3 transition hover:text-godiva-gold">
+                                <PhoneIcon class="h-4 w-4 shrink-0 text-godiva-gold" />{{ $page.props.webSettings.phone }}
+                            </a>
+                            <a v-if="$page.props.webSettings?.email" :href="`mailto:${$page.props.webSettings.email}`" class="flex items-center gap-3 transition hover:text-godiva-gold">
+                                <EnvelopeIcon class="h-4 w-4 shrink-0 text-godiva-gold" />{{ $page.props.webSettings.email }}
+                            </a>
+                            <div v-if="$page.props.webSettings?.address" class="flex items-start gap-3">
+                                <MapPinIcon class="mt-0.5 h-4 w-4 shrink-0 text-godiva-gold" />{{ $page.props.webSettings.address }}
+                            </div>
+                        </div>
+
+                        <div class="mt-7 flex items-center gap-4">
                             <a
                                 v-for="social in socialLinks"
                                 :key="social.key"
                                 :href="social.url"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="flex h-9 w-9 items-center justify-center border border-white/15 text-sm font-bold uppercase transition hover:border-godiva-gold hover:text-godiva-gold"
+                                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-sm font-bold uppercase transition hover:border-godiva-gold hover:text-godiva-gold"
                                 :aria-label="social.label"
                             >{{ social.badge }}</a>
                         </div>
                     </div>
-
-                    <div>
-                        <h4 class="text-[12px] font-bold uppercase tracking-[0.45em] text-godiva-gold">Company Information</h4>
-                        <div class="mt-7 flex flex-col gap-4 text-sm font-medium text-godiva-cream/90">
-                            <Link :href="route('page.public', 'about-us')" class="transition hover:text-godiva-gold">About Us</Link>
-                            <Link :href="route('page.public', 'employment')" class="transition hover:text-godiva-gold">Employment</Link>
-                            <Link :href="route('page.public', 'retail-store-locations')" class="transition hover:text-godiva-gold">Retail Store Locations</Link>
-                            <Link :href="route('page.public', 'factory-tours')" class="transition hover:text-godiva-gold">Factory Tours</Link>
-                            <Link :href="route('page.public', 'terms-of-service')" class="transition hover:text-godiva-gold">Terms of Service</Link>
-                            <Link :href="route('page.public', 'contact-us')" class="transition hover:text-godiva-gold">Contact Us</Link>
-                            <Link :href="route('page.public', 'wholesale')" class="transition hover:text-godiva-gold">Wholesale</Link>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-[12px] font-bold uppercase tracking-[0.45em] text-godiva-gold">Help & Information</h4>
-                        <div class="mt-7 flex flex-col gap-4 text-sm font-medium text-godiva-cream/90">
-                            <Link :href="route('page.public', 'faq')" class="transition hover:text-godiva-gold">FAQ</Link>
-                            <Link :href="route('page.public', 'privacy-policy')" class="transition hover:text-godiva-gold">Privacy Policy</Link>
-                            <Link :href="route('page.public', 'shipping-policy')" class="transition hover:text-godiva-gold">Shipping Policy</Link>
-                            <Link :href="route('page.public', 'refund-policy')" class="transition hover:text-godiva-gold">Refund Policy</Link>
-                            <Link :href="route('page.public', 'terms-of-service')" class="transition hover:text-godiva-gold">Terms of Service</Link>
-                            <Link :href="route('page.public', 'factory-expansion')" class="transition hover:text-godiva-gold">Factory Expansion</Link>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-[12px] font-bold uppercase tracking-[0.45em] text-godiva-gold">Shop</h4>
-                        <div class="mt-7 flex flex-col gap-4 text-sm font-medium text-godiva-cream/90">
-                            <Link :href="route('products.index')" class="transition hover:text-godiva-gold">Seasonal</Link>
-                            <Link :href="route('products.index')" class="transition hover:text-godiva-gold">Shop Chocolates</Link>
-                            <a href="/shop?q=gift" class="transition hover:text-godiva-gold">Gift Ideas</a>
-                            <a href="/shop?sort=featured" class="transition hover:text-godiva-gold">Best Sellers</a>
-                        </div>
-                    </div>
                 </div>
 
-                <div class="mt-16 flex flex-col gap-4 border-t border-white/10 pt-8 text-[10px] uppercase tracking-[0.25em] text-godiva-cream/55 md:flex-row md:items-center md:justify-between">
-                    <div>© 2026 {{ $page.props.webSettings?.site_name || 'Coco Craft' }}. All Rights Reserved.</div>
-                    <div class="text-godiva-gold/80">Premium Chocolate Gifts & Collections</div>
+                <div class="mt-16 border-t border-white/10 pt-8 text-center text-[11px] uppercase tracking-[0.25em] text-godiva-cream/55">
+                    Copyright © {{ new Date().getFullYear() }} {{ $page.props.webSettings?.site_name || 'Cococraft' }}. All Rights Reserved.
                 </div>
             </div>
         </footer>

@@ -16,10 +16,15 @@ export default {
             fontFamily: {
                 sans: ['Outfit', ...defaultTheme.fontFamily.sans],
                 serif: ['Cormorant Garamond', ...defaultTheme.fontFamily.serif],
+                script: ['"Dancing Script"', 'cursive'],
+                menu: ['Oswald', ...defaultTheme.fontFamily.sans],
+                // Figma "CocoCraft" home spec fonts
+                heading: ['Oswald', ...defaultTheme.fontFamily.sans],
+                corinthia: ['Corinthia', 'cursive'],
+                body: ['Parkinsans', 'Outfit', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                // Coco Craft brand palette, sourced from the logo (public/images/cococraft-logo.svg):
-                // chocolate brown, warm orange, lime green accent, and cream.
+                // Coco Craft brand palette, per Figma spec.
                 godiva: {
                     charcoal: '#4B2E1E',
                     cream: '#F5EBDD',
@@ -28,6 +33,22 @@ export default {
                     pink: '#FBEBD9',
                     green: '#B5C934',
                     prefooter: '#3A2517',
+                },
+                // Menu-specific spec colors (Figma Dev Mode): default + active/hover nav text.
+                menu: {
+                    text: '#484747',
+                    active: '#F69521',
+                },
+                // CocoCraft home page — exact Figma Dev Mode hexes.
+                cocov: {
+                    gold: '#F69521',
+                    text: '#484747',
+                    muted: '#B3AEAC',
+                    card: '#F6F2EC',
+                    offer: '#F4EADF',
+                    line: '#F2E4D6',
+                    brown: '#6B2410',
+                    'brown-dark': '#430F00',
                 }
             }
         },

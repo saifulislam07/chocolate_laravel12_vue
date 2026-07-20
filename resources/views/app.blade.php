@@ -7,7 +7,10 @@
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts -->
-        <link href="https://fonts.bunny.net/css?family=outfit:400,500,600,700|cormorant-garamond:400,500,600,700" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=outfit:400,500,600,700|cormorant-garamond:400,500,600,700|dancing-script:500,700|oswald:400,500,600,700" rel="stylesheet" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Corinthia:wght@400;700&family=Parkinsans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
         @routes
