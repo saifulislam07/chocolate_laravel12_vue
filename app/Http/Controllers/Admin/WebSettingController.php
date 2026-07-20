@@ -81,13 +81,13 @@ class WebSettingController extends Controller
         $validated['maintenance_mode'] = $request->boolean('maintenance_mode');
         $validated['meta_pixel_enabled'] = $request->boolean('meta_pixel_enabled');
         $validated['meta_ads_enabled'] = $request->boolean('meta_ads_enabled');
-        $validated['meta_ads_api_version'] = $validated['meta_ads_api_version'] ?: 'v24.0';
+        $validated['meta_ads_api_version'] = ($validated['meta_ads_api_version'] ?? null) ?: 'v24.0';
         $validated['messenger_enabled'] = $request->boolean('messenger_enabled');
-        $validated['messenger_theme_color'] = $validated['messenger_theme_color'] ?: '#B99D4B';
+        $validated['messenger_theme_color'] = ($validated['messenger_theme_color'] ?? null) ?: '#B99D4B';
         $validated['bkash_enabled'] = $request->boolean('bkash_enabled');
         $validated['nagad_enabled'] = $request->boolean('nagad_enabled');
-        $validated['bkash_mode'] = $validated['bkash_mode'] ?: 'sandbox';
-        $validated['nagad_mode'] = $validated['nagad_mode'] ?: 'sandbox';
+        $validated['bkash_mode'] = ($validated['bkash_mode'] ?? null) ?: 'sandbox';
+        $validated['nagad_mode'] = ($validated['nagad_mode'] ?? null) ?: 'sandbox';
         $validated['pathao_enabled'] = $request->boolean('pathao_enabled');
         $validated['steadfast_enabled'] = $request->boolean('steadfast_enabled');
 

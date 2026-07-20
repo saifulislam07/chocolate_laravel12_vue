@@ -1,55 +1,16 @@
 <script setup>
-import { Head, Link, usePage, router } from "@inertiajs/vue3";
-import { computed, nextTick, ref, watch } from "vue";
-import {
-    ShoppingBagIcon,
-    UserIcon,
-    MagnifyingGlassIcon,
-    HeartIcon,
-    EnvelopeIcon,
-    Bars3Icon,
-    XMarkIcon,
-    ChevronDownIcon,
-    CheckCircleIcon,
-    PhoneIcon,
-    MapPinIcon,
-} from "@heroicons/vue/24/outline";
-import ThemeToggle from "@/Components/ThemeToggle.vue";
+import { Head, usePage } from "@inertiajs/vue3";
+import { computed, ref, watch } from "vue";
+import { XMarkIcon, CheckCircleIcon } from "@heroicons/vue/24/outline";
+import SiteHeader from "@/Components/SiteHeader.vue";
+import SiteFooter from "@/Components/SiteFooter.vue";
 import BackToTop from "@/Components/BackToTop.vue";
 
 const page = usePage();
-const isMobileMenuOpen = ref(false);
-const isMessengerOpen = ref(false);
 const showToast = ref(false);
 const toastMessage = ref("");
-const isSearchOpen = ref(false);
-const searchQuery = ref("");
-const searchInput = ref(null);
+const isMessengerOpen = ref(false);
 
-const toggleSearch = async () => {
-    isSearchOpen.value = !isSearchOpen.value;
-    if (isSearchOpen.value) {
-        await nextTick();
-        searchInput.value?.focus();
-    }
-};
-
-const submitSearch = () => {
-    const q = searchQuery.value.trim();
-    if (!q) {
-        searchInput.value?.focus();
-        return;
-    }
-    isSearchOpen.value = false;
-    router.get(route('products.index'), { q });
-};
-
-const mainMenu = computed(() => page.props.mainMenu || []);
-const leftMenu = computed(() => mainMenu.value.slice(0, Math.ceil(mainMenu.value.length / 2)));
-const rightMenu = computed(() => mainMenu.value.slice(Math.ceil(mainMenu.value.length / 2)));
-
-const cartCount = computed(() => page.props.cartCount || 0);
-const wishlistCount = computed(() => page.props.wishlistCount || 0);
 const flash = computed(() => page.props.flash || {});
 const messengerSettings = computed(() => page.props.webSettings || {});
 const shouldShowMessenger = computed(() => Boolean(
@@ -57,40 +18,6 @@ const shouldShowMessenger = computed(() => Boolean(
 ));
 const messengerLink = computed(() => `https://m.me/${messengerSettings.value.messenger_page_id}`);
 
-const socialPlatforms = [
-    { key: 'facebook_url', label: 'Facebook', badge: 'f' },
-    { key: 'instagram_url', label: 'Instagram', badge: 'Ig' },
-    { key: 'youtube_url', label: 'YouTube', badge: 'Yt' },
-    { key: 'whatsapp_url', label: 'WhatsApp', badge: 'Wa' },
-    { key: 'tiktok_url', label: 'TikTok', badge: 'Tt' },
-    { key: 'linkedin_url', label: 'LinkedIn', badge: 'In' },
-    { key: 'pinterest_url', label: 'Pinterest', badge: 'Pi' },
-];
-
-const socialLinks = computed(() => socialPlatforms
-    .map((platform) => ({ ...platform, url: page.props.webSettings?.[platform.key] }))
-    .filter((platform) => Boolean(platform.url)));
-
-const menuHref = (url) => {
-    if (!url) {
-        return '#';
-    }
-
-    if (url.startsWith('http') || url.startsWith('/')) {
-        return url;
-    }
-
-    return `/p/${url}`;
-};
-
-const menuComponent = (url) => url?.startsWith('http') ? 'a' : (url ? Link : 'span');
-
-const isActiveMenu = (url) => {
-    const href = menuHref(url);
-    return href === '/' ? page.url === '/' : page.url.startsWith(href);
-};
-
-// Watch for flash messages to show toast
 watch(() => flash.value.success, (message) => {
     if (message) {
         toastMessage.value = message;
@@ -109,9 +36,9 @@ watch(shouldShowMessenger, (visible) => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-white font-sans text-godiva-charcoal antialiased dark:bg-godiva-charcoal dark:text-godiva-cream">
-        <Head :title="($page.props.webSettings?.site_name || 'Coco Craft') + ' | Premium Belgian Chocolate'">
-            <link v-if="$page.props.webSettings?.favicon" rel="icon" :href="$page.props.webSettings.favicon">
+    <div class="min-h-screen bg-white font-body text-cocov-text antialiased">
+        <Head :title="(page.props.webSettings?.site_name || 'CocoCraft') + ' | A Bite of Love'">
+            <link v-if="page.props.webSettings?.favicon" rel="icon" :href="page.props.webSettings.favicon">
         </Head>
 
         <!-- Toast Notification -->
@@ -123,17 +50,17 @@ watch(shouldShowMessenger, (visible) => {
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
-            <div v-if="showToast" class="fixed top-24 right-6 z-[100] w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-2xl ring-1 ring-black ring-opacity-5 dark:bg-godiva-prefooter dark:ring-white/10">
+            <div v-if="showToast" class="fixed top-24 right-6 z-[100] w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-2xl ring-1 ring-black ring-opacity-5">
                 <div class="p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <CheckCircleIcon class="h-6 w-6 text-green-400" aria-hidden="true" />
                         </div>
                         <div class="ml-3 w-0 flex-1 pt-0.5">
-                            <p class="text-sm font-medium text-gray-900 dark:text-godiva-cream">{{ toastMessage }}</p>
+                            <p class="text-sm font-medium text-gray-900">{{ toastMessage }}</p>
                         </div>
                         <div class="ml-4 flex flex-shrink-0">
-                            <button type="button" @click="showToast = false" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none dark:bg-transparent dark:hover:text-gray-300">
+                            <button type="button" @click="showToast = false" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none">
                                 <XMarkIcon class="h-5 w-5" />
                             </button>
                         </div>
@@ -142,171 +69,9 @@ watch(shouldShowMessenger, (visible) => {
             </div>
         </Transition>
 
-        <!-- Sticky Header -->
-        <header class="sticky top-0 z-50 overflow-visible border-b border-black/5 bg-white/95 backdrop-blur-sm dark:border-white/10 dark:bg-godiva-charcoal/95">
-            <div class="mx-auto grid h-[110px] max-w-screen-2xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 overflow-visible">
+        <SiteHeader />
 
-                <!-- Left: Mobile Menu Button + Desktop Left Nav -->
-                <div class="flex items-center gap-8">
-                    <button @click="isMobileMenuOpen = true" class="text-godiva-charcoal md:hidden dark:text-godiva-cream">
-                        <Bars3Icon class="h-6 w-6" />
-                    </button>
-                    <nav class="hidden items-center gap-7 font-menu text-2xl font-normal uppercase tracking-normal md:flex">
-                        <div v-for="menu in leftMenu" :key="menu.id" class="group relative">
-                            <component
-                                :is="menuComponent(menu.url)"
-                                :href="menuHref(menu.url)"
-                                class="flex items-center gap-1 whitespace-nowrap py-2 text-menu-text transition hover:text-menu-active dark:text-godiva-cream"
-                                :class="{ 'text-menu-active': isActiveMenu(menu.url) }"
-                            >
-                                {{ menu.name }}
-                                <ChevronDownIcon v-if="menu.children.length > 0" class="h-3 w-3 stroke-[2.5]" />
-                            </component>
-                            <div v-if="menu.children.length > 0" class="invisible absolute left-1/2 top-full min-w-[220px] -translate-x-1/2 border border-gray-100 bg-white py-4 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100 dark:border-white/10 dark:bg-godiva-prefooter">
-                                <component
-                                    v-for="child in menu.children"
-                                    :key="child.id"
-                                    :is="menuComponent(child.url)"
-                                    :href="menuHref(child.url)"
-                                    class="block px-6 py-2.5 text-[11px] font-medium uppercase tracking-[0.14em] hover:bg-gray-50 hover:text-godiva-gold dark:hover:bg-white/5"
-                                >
-                                    {{ child.name }}
-                                </component>
-                            </div>
-                        </div>
-                    </nav>
-                </div>
-
-                <!-- Logo & Brand (Center) -->
-                <Link href="/" class="relative z-10 justify-self-center self-stretch">
-                    <span class="absolute left-1/2 top-1/2 flex h-[176px] w-[176px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white p-4 shadow-lg">
-                        <img :src="$page.props.webSettings?.logo || '/images/cococraft-logo.svg'" :alt="$page.props.webSettings?.site_name || 'Coco Craft'" class="h-full w-full object-contain" />
-                    </span>
-                    <span class="sr-only">{{ $page.props.webSettings?.site_name || 'Coco Craft' }}</span>
-                </Link>
-
-                <!-- Right: Desktop Right Nav + Icons -->
-                <div class="flex items-center justify-end gap-6">
-                    <nav class="hidden items-center gap-7 font-menu text-2xl font-normal uppercase tracking-normal lg:flex">
-                        <div v-for="menu in rightMenu" :key="menu.id" class="group relative">
-                            <component
-                                :is="menuComponent(menu.url)"
-                                :href="menuHref(menu.url)"
-                                class="flex items-center gap-1 whitespace-nowrap py-2 text-menu-text transition hover:text-menu-active dark:text-godiva-cream"
-                                :class="{ 'text-menu-active': isActiveMenu(menu.url) }"
-                            >
-                                {{ menu.name }}
-                                <ChevronDownIcon v-if="menu.children.length > 0" class="h-3 w-3 stroke-[2.5]" />
-                            </component>
-                            <div v-if="menu.children.length > 0" class="invisible absolute left-1/2 top-full min-w-[220px] -translate-x-1/2 border border-gray-100 bg-white py-4 opacity-0 shadow-xl transition-all group-hover:visible group-hover:opacity-100 dark:border-white/10 dark:bg-godiva-prefooter">
-                                <component
-                                    v-for="child in menu.children"
-                                    :key="child.id"
-                                    :is="menuComponent(child.url)"
-                                    :href="menuHref(child.url)"
-                                    class="block px-6 py-2.5 text-[11px] font-medium uppercase tracking-[0.14em] hover:bg-gray-50 hover:text-godiva-gold dark:hover:bg-white/5"
-                                >
-                                    {{ child.name }}
-                                </component>
-                            </div>
-                        </div>
-                    </nav>
-
-                    <div class="flex items-center gap-4 md:gap-5">
-                        <button @click="toggleSearch" class="text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream" :class="{ 'text-godiva-gold': isSearchOpen }" aria-label="Search">
-                            <MagnifyingGlassIcon class="h-5 w-5" />
-                        </button>
-                        <ThemeToggle />
-                        <Link :href="route('wishlist.index')" class="relative text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream">
-                            <HeartIcon class="h-5 w-5" />
-                            <span v-if="wishlistCount > 0" class="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-godiva-charcoal text-[9px] font-bold text-white dark:bg-godiva-gold dark:text-godiva-charcoal">{{ wishlistCount }}</span>
-                        </Link>
-                        <Link
-                            :href="$page.props.auth?.user ? route('customer.dashboard') : route('login')"
-                            class="text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream"
-                            :aria-label="$page.props.auth?.user ? 'My Account' : 'Login'"
-                        >
-                            <UserIcon class="h-5 w-5" />
-                        </Link>
-                        <Link :href="route('cart.index')" class="relative text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream">
-                            <ShoppingBagIcon class="h-5 w-5" />
-                            <span v-if="cartCount > 0" class="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-godiva-gold text-[9px] font-bold text-godiva-charcoal">{{ cartCount }}</span>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Search Bar -->
-            <Transition
-                enter-active-class="transition ease-out duration-200"
-                enter-from-class="-translate-y-2 opacity-0"
-                enter-to-class="translate-y-0 opacity-100"
-                leave-active-class="transition ease-in duration-150"
-                leave-from-class="translate-y-0 opacity-100"
-                leave-to-class="-translate-y-2 opacity-0"
-            >
-                <div v-if="isSearchOpen" class="border-t border-gray-100 bg-white dark:border-white/10 dark:bg-godiva-charcoal">
-                    <form @submit.prevent="submitSearch" class="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4">
-                        <MagnifyingGlassIcon class="h-5 w-5 shrink-0 text-gray-400" />
-                        <input
-                            ref="searchInput"
-                            v-model="searchQuery"
-                            type="search"
-                            placeholder="Search chocolates, gifts, collections..."
-                            class="w-full border-0 bg-transparent p-0 text-sm text-godiva-charcoal placeholder:text-gray-400 focus:border-0 focus:outline-none focus:ring-0 dark:text-godiva-cream"
-                            @keydown.esc="isSearchOpen = false"
-                        />
-                        <button type="submit" class="shrink-0 text-[11px] font-bold uppercase tracking-[0.2em] text-godiva-charcoal transition hover:text-godiva-gold dark:text-godiva-cream">
-                            Search
-                        </button>
-                        <button type="button" @click="isSearchOpen = false" class="shrink-0 text-gray-400 transition hover:text-godiva-charcoal dark:hover:text-godiva-cream" aria-label="Close search">
-                            <XMarkIcon class="h-5 w-5" />
-                        </button>
-                    </form>
-                </div>
-            </Transition>
-
-            <!-- Mobile Navigation Overlay -->
-            <div
-                v-if="isMobileMenuOpen"
-                class="fixed inset-0 z-[100] bg-white transition-all duration-300 md:hidden dark:bg-godiva-charcoal"
-            >
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
-                    <Link href="/" @click="isMobileMenuOpen = false" class="flex items-center gap-2">
-                        <img :src="$page.props.webSettings?.logo || '/images/cococraft-logo.svg'" :alt="$page.props.webSettings?.site_name || 'Coco Craft'" class="h-10 w-auto object-contain" />
-                        <span class="sr-only">{{ $page.props.webSettings?.site_name || 'Coco Craft' }}</span>
-                    </Link>
-                    <button @click="isMobileMenuOpen = false" class="text-godiva-charcoal dark:text-godiva-cream">
-                        <XMarkIcon class="h-6 w-6" />
-                    </button>
-                </div>
-                <nav class="flex flex-col gap-6 px-8 py-10 text-sm font-bold uppercase tracking-[0.18em] dark:text-godiva-cream">
-                    <div v-for="menu in $page.props.mainMenu" :key="menu.id" class="border-b border-gray-100 pb-5 dark:border-white/10">
-                        <component
-                            :is="menuComponent(menu.url)"
-                            :href="menuHref(menu.url)"
-                            class="block"
-                            @click="isMobileMenuOpen = false"
-                        >
-                            {{ menu.name }}
-                        </component>
-                        <div v-if="menu.children.length > 0" class="mt-4 flex flex-col gap-3 pl-4 text-[11px] font-medium tracking-[0.14em] text-gray-500">
-                            <component
-                                v-for="child in menu.children"
-                                :key="child.id"
-                                :is="menuComponent(child.url)"
-                                :href="menuHref(child.url)"
-                                @click="isMobileMenuOpen = false"
-                            >
-                                {{ child.name }}
-                            </component>
-                        </div>
-                    </div>
-                </nav>
-            </div>
-        </header>
-
-        <main :class="{ 'blur-sm': isMobileMenuOpen }">
+        <main>
             <slot />
         </main>
 
@@ -321,17 +86,17 @@ watch(shouldShowMessenger, (visible) => {
                 leave-from-class="translate-y-0 opacity-100"
                 leave-to-class="translate-y-3 opacity-0"
             >
-                <div v-if="isMessengerOpen" class="w-[330px] overflow-hidden rounded-2xl bg-white text-godiva-charcoal shadow-2xl ring-1 ring-black/5 sm:w-[360px]">
+                <div v-if="isMessengerOpen" class="w-[330px] overflow-hidden rounded-2xl bg-white text-cocov-text shadow-2xl ring-1 ring-black/5 sm:w-[360px]">
                     <div class="flex items-center gap-4 border-b border-gray-100 px-5 py-4">
-                        <div class="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-godiva-cream p-1.5">
-                            <img :src="$page.props.webSettings?.logo || '/images/cococraft-logo.svg'" :alt="$page.props.webSettings?.site_name || 'Coco Craft'" class="h-full w-full rounded-full object-contain" />
+                        <div class="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-cocov-offer p-1.5">
+                            <img :src="page.props.webSettings?.logo || '/images/cococraft-v2/logo.png'" :alt="page.props.webSettings?.site_name || 'CocoCraft'" class="h-full w-full rounded-full object-contain" />
                             <span class="absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-white bg-emerald-400"></span>
                         </div>
                         <div class="min-w-0 flex-1">
-                            <p class="text-sm font-bold leading-5">{{ $page.props.webSettings?.site_name || 'Coco Craft' }}</p>
+                            <p class="text-sm font-bold leading-5">{{ page.props.webSettings?.site_name || 'CocoCraft' }}</p>
                             <p class="mt-0.5 text-xs text-gray-500">Online</p>
                         </div>
-                        <button type="button" class="text-gray-400 transition hover:text-godiva-charcoal" aria-label="Close Messenger chat" @click="isMessengerOpen = false">
+                        <button type="button" class="text-gray-400 transition hover:text-cocov-text" aria-label="Close Messenger chat" @click="isMessengerOpen = false">
                             <XMarkIcon class="h-5 w-5" />
                         </button>
                     </div>
@@ -339,8 +104,8 @@ watch(shouldShowMessenger, (visible) => {
                     <div class="min-h-[145px] px-5 py-4">
                         <p class="mb-4 text-center text-[11px] text-gray-300">{{ new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</p>
                         <div class="flex items-center gap-2">
-                            <div class="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-godiva-cream p-1">
-                                <img :src="$page.props.webSettings?.logo || '/images/cococraft-logo.svg'" :alt="$page.props.webSettings?.site_name || 'Coco Craft'" class="h-full w-full rounded-full object-contain" />
+                            <div class="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-cocov-offer p-1">
+                                <img :src="page.props.webSettings?.logo || '/images/cococraft-v2/logo.png'" :alt="page.props.webSettings?.site_name || 'CocoCraft'" class="h-full w-full rounded-full object-contain" />
                             </div>
                             <div class="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-700">
                                 {{ messengerSettings.messenger_logged_in_greeting || 'Hi! How can we help you?' }}
@@ -354,7 +119,7 @@ watch(shouldShowMessenger, (visible) => {
                             target="_blank"
                             rel="noopener noreferrer"
                             class="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-                            :style="{ backgroundColor: messengerSettings.messenger_theme_color || '#E89A50' }"
+                            :style="{ backgroundColor: messengerSettings.messenger_theme_color || '#F69521' }"
                         >
                             <svg viewBox="0 0 36 36" class="h-5 w-5 fill-current" aria-hidden="true">
                                 <path d="M18 3.2C9.5 3.2 3 9.4 3 17.7c0 4.3 1.8 8 4.7 10.5v4.6l4.4-2.4c1.8.6 3.8.9 5.9.9 8.5 0 15-6.2 15-14.5S26.5 3.2 18 3.2Zm1.6 19.4-3.8-4-7.4 4 8.1-8.6 3.9 4 7.3-4-8.1 8.6Z" />
@@ -368,7 +133,7 @@ watch(shouldShowMessenger, (visible) => {
             <button
                 type="button"
                 class="relative flex h-16 w-16 items-center justify-center rounded-full text-white shadow-2xl transition hover:-translate-y-0.5"
-                :style="{ backgroundColor: messengerSettings.messenger_theme_color || '#E89A50' }"
+                :style="{ backgroundColor: messengerSettings.messenger_theme_color || '#F69521' }"
                 aria-label="Open Messenger chat"
                 @click="isMessengerOpen = !isMessengerOpen"
             >
@@ -379,90 +144,6 @@ watch(shouldShowMessenger, (visible) => {
             </button>
         </div>
 
-        <!-- Footer -->
-        <footer class="relative bg-godiva-charcoal text-white">
-            <svg viewBox="0 0 1440 90" preserveAspectRatio="none" class="absolute -top-px left-0 h-16 w-full text-godiva-cream dark:text-white/5" aria-hidden="true">
-                <path fill="currentColor" d="M0,32 C240,90 480,0 720,24 C960,48 1200,96 1440,40 L1440,0 L0,0 Z" />
-            </svg>
-
-            <div class="mx-auto max-w-screen-2xl px-6 pb-16 pt-20 md:pb-20 md:pt-28">
-                <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-10">
-                    <div>
-                        <h4 class="font-serif text-xl text-godiva-gold">Sign Up and Save</h4>
-                        <p class="mt-5 max-w-xs text-sm leading-7 text-godiva-cream/85">
-                            Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.
-                        </p>
-
-                        <form class="mt-7 max-w-sm">
-                            <label class="sr-only" for="footer-email">Email address</label>
-                            <div class="flex items-center gap-2 border border-godiva-cream/30 p-1.5">
-                                <input
-                                    id="footer-email"
-                                    type="email"
-                                    placeholder="Enter your email"
-                                    class="w-full border-0 bg-transparent px-3 py-1.5 text-sm text-white placeholder:text-godiva-cream/60 focus:border-0 focus:ring-0"
-                                />
-                                <button type="submit" class="shrink-0 bg-godiva-gold px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-godiva-charcoal transition hover:bg-godiva-gold-dark">
-                                    Submit
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div>
-                        <h4 class="font-serif text-xl text-godiva-gold">Company Information</h4>
-                        <div class="mt-7 flex flex-col gap-4 text-sm font-medium text-godiva-cream/90">
-                            <Link :href="route('page.public', 'about-us')" class="transition hover:text-godiva-gold">About Us</Link>
-                            <Link :href="route('page.public', 'employment')" class="transition hover:text-godiva-gold">Employment</Link>
-                            <Link :href="route('page.public', 'retail-store-locations')" class="transition hover:text-godiva-gold">Retail Store</Link>
-                            <Link :href="route('page.public', 'terms-of-service')" class="transition hover:text-godiva-gold">Terms of Service</Link>
-                            <Link :href="route('page.public', 'wholesale')" class="transition hover:text-godiva-gold">Wholesale</Link>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="font-serif text-xl text-godiva-gold">Useful Links</h4>
-                        <div class="mt-7 flex flex-col gap-4 text-sm font-medium text-godiva-cream/90">
-                            <Link :href="route('products.index')" class="transition hover:text-godiva-gold">Products</Link>
-                            <Link :href="route('page.public', 'privacy-policy')" class="transition hover:text-godiva-gold">Privacy Policy</Link>
-                            <Link :href="route('page.public', 'refund-policy')" class="transition hover:text-godiva-gold">Refund and Returns</Link>
-                            <Link :href="route('customer.dashboard')" class="transition hover:text-godiva-gold">Order Status</Link>
-                            <Link :href="route('page.public', 'become-an-affiliate')" class="transition hover:text-godiva-gold">Become an Affiliate</Link>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="font-serif text-xl text-godiva-gold">Contact Information</h4>
-                        <div class="mt-7 flex flex-col gap-4 text-sm font-medium text-godiva-cream/90">
-                            <a v-if="$page.props.webSettings?.phone" :href="`tel:${$page.props.webSettings.phone}`" class="flex items-center gap-3 transition hover:text-godiva-gold">
-                                <PhoneIcon class="h-4 w-4 shrink-0 text-godiva-gold" />{{ $page.props.webSettings.phone }}
-                            </a>
-                            <a v-if="$page.props.webSettings?.email" :href="`mailto:${$page.props.webSettings.email}`" class="flex items-center gap-3 transition hover:text-godiva-gold">
-                                <EnvelopeIcon class="h-4 w-4 shrink-0 text-godiva-gold" />{{ $page.props.webSettings.email }}
-                            </a>
-                            <div v-if="$page.props.webSettings?.address" class="flex items-start gap-3">
-                                <MapPinIcon class="mt-0.5 h-4 w-4 shrink-0 text-godiva-gold" />{{ $page.props.webSettings.address }}
-                            </div>
-                        </div>
-
-                        <div class="mt-7 flex items-center gap-4">
-                            <a
-                                v-for="social in socialLinks"
-                                :key="social.key"
-                                :href="social.url"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-sm font-bold uppercase transition hover:border-godiva-gold hover:text-godiva-gold"
-                                :aria-label="social.label"
-                            >{{ social.badge }}</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-16 border-t border-white/10 pt-8 text-center text-[11px] uppercase tracking-[0.25em] text-godiva-cream/55">
-                    Copyright © {{ new Date().getFullYear() }} {{ $page.props.webSettings?.site_name || 'Cococraft' }}. All Rights Reserved.
-                </div>
-            </div>
-        </footer>
+        <SiteFooter />
     </div>
 </template>

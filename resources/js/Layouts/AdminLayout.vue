@@ -1,6 +1,11 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
+import { onBeforeUnmount, onMounted, ref, computed, watch } from 'vue';
 import { Link, Head, usePage, router } from '@inertiajs/vue3';
+
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref('success');
+let toastTimer = null;
 
 const isSidebarOpen = ref(true);
 const isNavigating = ref(false);
@@ -56,6 +61,26 @@ function toggleSidebar() {
 function toggleGroup(group) {
     openGroups.value[group] = !openGroups.value[group];
 }
+
+const flash = computed(() => page.props.flash || {});
+watch(() => flash.value.success, (message) => {
+    if (message) {
+        toastMessage.value = message;
+        toastType.value = 'success';
+        showToast.value = true;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { showToast.value = false; }, 3500);
+    }
+}, { immediate: true });
+watch(() => flash.value.error, (message) => {
+    if (message) {
+        toastMessage.value = message;
+        toastType.value = 'error';
+        showToast.value = true;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { showToast.value = false; }, 5000);
+    }
+}, { immediate: true });
 </script>
 
 <template>
@@ -66,6 +91,35 @@ function toggleGroup(group) {
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
             <link v-if="$page.props.webSettings?.favicon" rel="icon" :href="$page.props.webSettings.favicon">
         </Head>
+
+        <!-- Toast Notification -->
+        <Transition
+            enter-active-class="transform ease-out duration-300 transition"
+            enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+            enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+            leave-active-class="transition ease-in duration-100"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+        >
+            <div v-if="showToast" class="fixed top-6 right-6 z-[2000] w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-2xl ring-1 ring-black ring-opacity-5">
+                <div class="p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 pt-0.5">
+                            <i v-if="toastType === 'success'" class="fas fa-check-circle text-green-500 text-lg"></i>
+                            <i v-else class="fas fa-triangle-exclamation text-red-500 text-lg"></i>
+                        </div>
+                        <div class="ml-3 w-0 flex-1">
+                            <p class="text-sm font-medium text-gray-900">{{ toastMessage }}</p>
+                        </div>
+                        <div class="ml-4 flex flex-shrink-0">
+                            <button type="button" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none" @click="showToast = false">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Transition>
 
         <div class="wrapper">
             <!-- Navbar -->
@@ -222,7 +276,7 @@ function toggleGroup(group) {
                                 </ul>
                             </li>
 
-                            <li class="nav-item has-treeview" v-if="can('view_menus') || can('view_pages') || can('view_sliders')" :class="{ 'menu-open': openGroups.website }">
+                            <li class="nav-item has-treeview" v-if="can('view_menus') || can('view_pages') || can('view_sliders') || can('view_testimonials')" :class="{ 'menu-open': openGroups.website }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('website')">
                                     <i class="nav-icon fas fa-store text-pink-400"></i>
                                     <p>Website <i class="right fas" :class="openGroups.website ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
@@ -244,6 +298,12 @@ function toggleGroup(group) {
                                         <Link :href="r('admin.sliders.index')" class="nav-link" :class="{ active: $page.component === 'Admin/Sliders/Index' }">
                                             <i class="nav-icon fas fa-image text-pink-500"></i>
                                             <p>Sliders</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item" v-if="can('view_testimonials')">
+                                        <Link :href="r('admin.testimonials.index')" class="nav-link" :class="{ active: $page.component === 'Admin/Testimonials/Index' }">
+                                            <i class="nav-icon fas fa-comment-dots text-teal-500"></i>
+                                            <p>Testimonials</p>
                                         </Link>
                                     </li>
                                 </ul>

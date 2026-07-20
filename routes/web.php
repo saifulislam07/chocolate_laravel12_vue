@@ -23,6 +23,7 @@ Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.in
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
 Route::get('/payment/bkash/callback', [CheckoutController::class, 'bkashCallback'])->name('payment.bkash.callback');
+Route::post('/newsletter/subscribe', [\App\Http\Controllers\NewsletterController::class, 'store'])->name('newsletter.subscribe');
 
 Route::middleware('auth')->group(function () {
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
@@ -70,6 +71,7 @@ Route::middleware('auth')->group(function () {
 
     // Admin Routes (each section gated by that module's "view" permission)
     Route::resource('/admin/sliders', \App\Http\Controllers\Admin\SliderController::class)->names('admin.sliders')->middleware('permission:view_sliders');
+    Route::resource('/admin/testimonials', \App\Http\Controllers\Admin\TestimonialController::class)->names('admin.testimonials')->middleware('permission:view_testimonials');
 
     Route::resource('/admin/suppliers', \App\Http\Controllers\Admin\SupplierController::class)->names('admin.suppliers')->middleware('permission:view_suppliers');
     Route::resource('/admin/categories', \App\Http\Controllers\Admin\CategoryController::class)->names('admin.categories')->middleware('permission:view_categories');

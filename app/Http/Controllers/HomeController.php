@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Page;
 use App\Models\Product;
 use App\Models\Slider;
+use App\Models\Testimonial;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -65,11 +67,25 @@ class HomeController extends Controller
                 'image' => $category->image ?: $category->products()->with('images')->where('is_active', true)->first()?->images->first()?->image_path,
             ]);
 
+        $testimonials = Testimonial::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get(['id', 'customer_name', 'location', 'quote']);
+
+        $aboutPage = Page::where('slug', 'about-us')->where('is_active', true)->first();
+        // The homepage teaser already renders its own "About Cococraft" heading,
+        // so drop a leading <h2> from the page content to avoid a duplicate title.
+        $aboutContent = $aboutPage?->content
+            ? preg_replace('/^\s*<h2[^>]*>.*?<\/h2>\s*/i', '', $aboutPage->content, 1)
+            : null;
+
         return [
             'sliders' => $sliders,
             'categories' => $categories,
             'featuredItems' => $featuredItems,
             'newArrivals' => $newArrivals,
+            'testimonials' => $testimonials,
+            'aboutContent' => $aboutContent,
         ];
     }
 

@@ -25,6 +25,7 @@ class PermissionSeeder extends Seeder
             'expenses',
             'expense_categories',
             'sliders',
+            'testimonials',
             'menus',
             'pages',
             'customers',
@@ -68,7 +69,7 @@ class PermissionSeeder extends Seeder
         $defaultRolePermissions = [
             'Manager' => [
                 'products', 'bundles', 'categories', 'brands', 'units', 'suppliers',
-                'purchases', 'sales', 'expenses', 'expense_categories', 'sliders',
+                'purchases', 'sales', 'expenses', 'expense_categories', 'sliders', 'testimonials',
                 'menus', 'pages', 'customers', 'reports', 'inventory', 'returns',
             ],
             'Seller' => [

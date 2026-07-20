@@ -136,7 +136,28 @@ const form = useForm({
 function submit() {
     form.post(route('admin.settings.update'), {
         preserveScroll: true,
+        onError: () => {
+            const firstField = Object.keys(form.errors)[0];
+            if (firstField) {
+                activeTab.value = tabForField(firstField);
+            }
+        },
     });
+}
+
+const fieldTabPrefixes = [
+    ['logo', 'branding'], ['footer_logo', 'branding'], ['favicon', 'branding'],
+    ['meta_pixel', 'pixel'],
+    ['meta_ads', 'meta_ads'],
+    ['bkash', 'payments'], ['nagad', 'payments'],
+    ['pathao', 'courier'], ['steadfast', 'courier'],
+    ['messenger', 'messenger'],
+    ['smtp', 'email'],
+    ['maintenance', 'maintenance'],
+];
+function tabForField(field) {
+    const match = fieldTabPrefixes.find(([prefix]) => field.startsWith(prefix));
+    return match ? match[1] : 'general';
 }
 </script>
 
@@ -163,6 +184,15 @@ function submit() {
         <section class="content">
             <div class="container-fluid">
                 <form @submit.prevent="submit">
+                    <div v-if="Object.keys(form.errors).length" class="alert alert-danger d-flex align-items-start shadow-sm">
+                        <i class="fas fa-triangle-exclamation mr-3 mt-1"></i>
+                        <div>
+                            <strong>Couldn't save settings — please fix the following:</strong>
+                            <ul class="mb-0 mt-1 pl-3">
+                                <li v-for="(message, field) in form.errors" :key="field">{{ message }}</li>
+                            </ul>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-lg-3">
                             <div class="card settings-nav-card">
