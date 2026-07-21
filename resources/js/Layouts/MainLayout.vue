@@ -1,7 +1,7 @@
 <script setup>
 import { Head, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
-import { XMarkIcon, CheckCircleIcon } from "@heroicons/vue/24/outline";
+import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/vue/24/outline";
 import SiteHeader from "@/Components/SiteHeader.vue";
 import SiteFooter from "@/Components/SiteFooter.vue";
 import BackToTop from "@/Components/BackToTop.vue";
@@ -9,6 +9,7 @@ import BackToTop from "@/Components/BackToTop.vue";
 const page = usePage();
 const showToast = ref(false);
 const toastMessage = ref("");
+const toastType = ref("success");
 const isMessengerOpen = ref(false);
 
 const flash = computed(() => page.props.flash || {});
@@ -18,14 +19,21 @@ const shouldShowMessenger = computed(() => Boolean(
 ));
 const messengerLink = computed(() => `https://m.me/${messengerSettings.value.messenger_page_id}`);
 
+function fireToast(message, type) {
+    toastMessage.value = message;
+    toastType.value = type;
+    showToast.value = true;
+    setTimeout(() => {
+        showToast.value = false;
+    }, 3500);
+}
+
 watch(() => flash.value.success, (message) => {
-    if (message) {
-        toastMessage.value = message;
-        showToast.value = true;
-        setTimeout(() => {
-            showToast.value = false;
-        }, 3000);
-    }
+    if (message) fireToast(message, "success");
+}, { immediate: true });
+
+watch(() => flash.value.error, (message) => {
+    if (message) fireToast(message, "error");
 }, { immediate: true });
 
 watch(shouldShowMessenger, (visible) => {
@@ -50,17 +58,22 @@ watch(shouldShowMessenger, (visible) => {
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
-            <div v-if="showToast" class="fixed top-24 right-6 z-[100] w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-2xl ring-1 ring-black ring-opacity-5">
+            <div
+                v-if="showToast"
+                class="fixed top-24 right-6 z-[100] w-full max-w-sm overflow-hidden rounded-[3px] border-l-4 bg-white shadow-2xl ring-1 ring-black/5"
+                :class="toastType === 'error' ? 'border-red-500' : 'border-cocov-gold'"
+            >
                 <div class="p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <CheckCircleIcon class="h-6 w-6 text-green-400" aria-hidden="true" />
+                            <ExclamationCircleIcon v-if="toastType === 'error'" class="h-6 w-6 text-red-500" aria-hidden="true" />
+                            <CheckCircleIcon v-else class="h-6 w-6 text-cocov-gold" aria-hidden="true" />
                         </div>
                         <div class="ml-3 w-0 flex-1 pt-0.5">
-                            <p class="text-sm font-medium text-gray-900">{{ toastMessage }}</p>
+                            <p class="text-sm font-medium text-cocov-text">{{ toastMessage }}</p>
                         </div>
                         <div class="ml-4 flex flex-shrink-0">
-                            <button type="button" @click="showToast = false" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none">
+                            <button type="button" @click="showToast = false" class="inline-flex rounded-md text-cocov-text/40 transition hover:text-cocov-gold focus:outline-none">
                                 <XMarkIcon class="h-5 w-5" />
                             </button>
                         </div>

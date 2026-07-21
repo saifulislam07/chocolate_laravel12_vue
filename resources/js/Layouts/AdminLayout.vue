@@ -15,10 +15,10 @@ let offNavFinish = null;
 const openGroups = ref({
     orders: true,
     catalog: true,
-    procurement: false,
-    website: false,
-    finance: false,
-    system: false,
+    procurement: true,
+    website: true,
+    finance: true,
+    system: true,
 });
 const page = usePage();
 const bodyClasses = ['hold-transition', 'sidebar-mini', 'layout-fixed'];

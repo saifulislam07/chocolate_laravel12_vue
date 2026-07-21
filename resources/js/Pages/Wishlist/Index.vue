@@ -38,8 +38,8 @@ function removeFromWishlist(productId) {
                     <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-red-500 shadow-sm">
                         <HeartIcon class="h-6 w-6 fill-current" />
                     </div>
-                    <h1 class="mt-6 font-serif text-5xl italic tracking-tight text-godiva-charcoal">Wishlist</h1>
-                    <p class="mt-4 text-[11px] font-bold uppercase tracking-[0.3em] text-godiva-gold">Saved sweets for later</p>
+                    <h1 class="mt-6 font-heading text-5xl uppercase tracking-tight text-cocov-text">Wishlist</h1>
+                    <p class="mt-4 text-[11px] font-bold uppercase tracking-[0.3em] text-cocov-gold">Saved sweets for later</p>
                 </div>
             </section>
 
@@ -49,7 +49,7 @@ function removeFromWishlist(productId) {
                         <div class="relative aspect-square overflow-hidden bg-white p-4">
                             <button
                                 type="button"
-                                class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-red-500 shadow-sm transition hover:text-godiva-charcoal"
+                                class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-red-500 shadow-sm transition hover:text-cocov-text"
                                 @click="removeFromWishlist(item.product.id)"
                             >
                                 <TrashIcon class="h-4 w-4" />
@@ -62,8 +62,8 @@ function removeFromWishlist(productId) {
                         </div>
 
                         <div class="flex flex-1 flex-col p-6 text-center">
-                            <h3 class="font-serif text-lg uppercase leading-tight tracking-tight">
-                                <Link :href="route('products.show', item.product.slug)" class="transition hover:text-godiva-gold">
+                            <h3 class="font-heading text-lg uppercase leading-tight tracking-tight">
+                                <Link :href="route('products.show', item.product.slug)" class="transition hover:text-cocov-gold">
                                     {{ item.product.name }}
                                 </Link>
                             </h3>
@@ -71,13 +71,13 @@ function removeFromWishlist(productId) {
                                 <span v-if="item.product.compare_at_price > item.product.price" class="text-xs tracking-widest text-gray-400 line-through">
                                     {{ formatMoney(item.product.compare_at_price) }}
                                 </span>
-                                <span class="font-serif text-xl" :class="item.product.compare_at_price > item.product.price ? 'text-red-600' : 'text-godiva-charcoal'">
+                                <span class="font-heading text-xl" :class="item.product.compare_at_price > item.product.price ? 'text-red-600' : 'text-cocov-text'">
                                     {{ formatMoney(item.product.price) }}
                                 </span>
                             </div>
                             <button
                                 type="button"
-                                class="mt-6 flex h-11 items-center justify-center gap-2 bg-godiva-charcoal px-4 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-godiva-gold disabled:bg-gray-300"
+                                class="mt-6 flex h-11 items-center justify-center gap-2 bg-cocov-gold px-4 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-[#e0851a] disabled:bg-gray-300"
                                 :disabled="item.product.stock <= 0"
                                 @click="addToCart(item.product.id)"
                             >
@@ -89,9 +89,9 @@ function removeFromWishlist(productId) {
                 </div>
 
                 <div v-else class="mx-auto max-w-xl py-24 text-center">
-                    <p class="font-serif text-3xl italic text-godiva-charcoal">Your wishlist is empty.</p>
+                    <p class="font-heading text-3xl uppercase text-cocov-text">Your wishlist is empty.</p>
                     <p class="mt-4 text-sm leading-7 text-gray-500">Save your favorite chocolates and come back when the craving calls.</p>
-                    <Link :href="route('products.index')" class="mt-8 inline-flex bg-godiva-charcoal px-10 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-godiva-gold">
+                    <Link :href="route('products.index')" class="mt-8 inline-flex rounded-[3px] bg-cocov-gold px-10 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-[#e0851a]">
                         Browse Chocolates
                     </Link>
                 </div>

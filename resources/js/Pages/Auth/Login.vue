@@ -34,14 +34,14 @@ const submit = () => {
         <Head title="Log in" />
 
         <div class="mb-12">
-            <p class="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-godiva-gold">Customer Login</p>
-            <h1 class="font-serif text-4xl text-godiva-charcoal mb-4">Welcome Back</h1>
-            <p class="text-sm text-godiva-charcoal/60 leading-relaxed font-sans">
+            <p class="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-cocov-gold">Customer Login</p>
+            <h1 class="font-heading text-4xl text-cocov-text mb-4">Welcome Back</h1>
+            <p class="text-sm text-cocov-text/60 leading-relaxed">
                 Enter your credentials to access your Coco Craft account and continue your journey of taste.
             </p>
         </div>
 
-        <div v-if="status" class="mb-6 px-4 py-3 bg-green-50 text-sm font-medium text-green-600 border border-green-100 italic">
+        <div v-if="status" class="mb-6 border border-green-100 bg-green-50 px-4 py-3 text-sm font-medium text-green-600">
             {{ status }}
         </div>
 
@@ -69,7 +69,7 @@ const submit = () => {
                     <Link
                         v-if="canResetPassword"
                         :href="route('password.request')"
-                        class="text-[10px] uppercase tracking-widest text-godiva-gold hover:text-godiva-gold-dark transition-colors font-bold"
+                        class="text-[10px] uppercase tracking-widest text-cocov-gold hover:text-[#e0851a] transition-colors font-bold"
                     >
                         Forgot password?
                     </Link>
@@ -91,7 +91,7 @@ const submit = () => {
             <div class="mt-4 flex items-center">
                 <label class="flex items-center group cursor-pointer">
                     <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-3 text-[10px] uppercase tracking-[0.2em] text-godiva-charcoal/40 group-hover:text-godiva-charcoal transition-colors font-bold"
+                    <span class="ms-3 text-[10px] uppercase tracking-[0.2em] text-cocov-text/40 group-hover:text-cocov-text transition-colors font-bold"
                         >Keep me signed in</span
                     >
                 </label>
@@ -107,14 +107,14 @@ const submit = () => {
                 </PrimaryButton>
             </div>
             
-            <p class="mt-8 text-center text-[10px] uppercase tracking-[0.2em] text-godiva-charcoal/40">
+            <p class="mt-8 text-center text-[10px] uppercase tracking-[0.2em] text-cocov-text/40">
                 Don't have an account? 
-                <Link :href="route('register')" class="text-godiva-gold hover:text-godiva-gold-dark font-bold ml-1 transition-colors">Join the family</Link>
+                <Link :href="route('register')" class="text-cocov-gold hover:text-[#e0851a] font-bold ml-1 transition-colors">Join the family</Link>
             </p>
 
-            <p class="mt-5 text-center text-[10px] uppercase tracking-[0.2em] text-godiva-charcoal/35">
+            <p class="mt-5 text-center text-[10px] uppercase tracking-[0.2em] text-cocov-text/35">
                 Admin?
-                <Link :href="route('admin.login')" class="text-godiva-charcoal hover:text-godiva-gold font-bold ml-1 transition-colors">Use admin login</Link>
+                <Link :href="route('admin.login')" class="text-cocov-text hover:text-cocov-gold font-bold ml-1 transition-colors">Use admin login</Link>
             </p>
         </form>
     </GuestLayout>

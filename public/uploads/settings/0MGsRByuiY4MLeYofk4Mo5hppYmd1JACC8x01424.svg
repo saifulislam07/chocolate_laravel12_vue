@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 310" role="img" aria-label="Coco Craft">
+    <!-- C -->
+    <path d="M116 193 A56 56 0 1 1 116 107" fill="none" stroke="#4B2E1E" stroke-width="34" stroke-linecap="round" transform="rotate(-18 80 150)"/>
+    <!-- o (green) -->
+    <circle cx="165" cy="185" r="32" fill="none" stroke="#4B2E1E" stroke-width="20"/>
+    <circle cx="165" cy="185" r="25" fill="#B5C934"/>
+    <!-- C -->
+    <path d="M274.6 135.2 A46 46 0 1 1 274.6 64.8" fill="none" stroke="#4B2E1E" stroke-width="28" stroke-linecap="round" transform="rotate(10 245 100)"/>
+    <!-- o (orange) -->
+    <circle cx="340" cy="150" r="36" fill="none" stroke="#4B2E1E" stroke-width="22"/>
+    <circle cx="340" cy="150" r="28" fill="#E89A50"/>
+    <!-- accent ovals -->
+    <ellipse cx="405" cy="45" rx="19" ry="26" fill="#B5C934" transform="rotate(30 405 45)"/>
+    <ellipse cx="82" cy="258" rx="15" ry="20" fill="#E89A50" transform="rotate(-20 82 258)"/>
+    <!-- flourish -->
+    <path d="M300 212 C336 182 380 188 396 206 C406 218 388 226 374 216" fill="none" stroke="#4B2E1E" stroke-width="7" stroke-linecap="round"/>
+    <!-- craft -->
+    <text x="172" y="276" font-size="86" fill="#4B2E1E" font-family="'Brush Script MT','Segoe Script','Lucida Handwriting',cursive" font-style="italic" transform="rotate(-8 270 250)">craft</text>
+</svg>

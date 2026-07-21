@@ -29,7 +29,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll));
             v-if="visible"
             type="button"
             @click="scrollToTop"
-            class="fixed bottom-28 right-6 z-[80] flex h-11 w-11 items-center justify-center rounded-full bg-godiva-charcoal text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-godiva-gold dark:bg-godiva-cream dark:text-godiva-charcoal"
+            class="fixed bottom-28 right-6 z-[80] flex h-11 w-11 items-center justify-center rounded-full bg-cocov-gold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[#e0851a]"
             aria-label="Back to top"
         >
             <ChevronUpIcon class="h-5 w-5" />

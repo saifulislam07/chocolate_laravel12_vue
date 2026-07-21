@@ -20,18 +20,18 @@ defineProps({
                 <section class="max-w-2xl">
                     <Link href="/admin/login" class="inline-flex items-center gap-3">
                         <img src="/images/cococraft-logo.svg" alt="Coco Craft" class="h-14 w-14 object-contain" />
-                        <span class="font-serif text-3xl font-bold">Coco Craft</span>
+                        <span class="font-heading text-3xl font-bold">Coco Craft</span>
                     </Link>
 
-                    <p class="mt-16 text-[11px] font-bold uppercase tracking-[0.35em] text-godiva-gold">{{ status }} Maintenance</p>
-                    <h1 class="mt-6 font-serif text-6xl italic leading-none lg:text-7xl">{{ title }}</h1>
+                    <p class="mt-16 text-[11px] font-bold uppercase tracking-[0.35em] text-cocov-gold">{{ status }} Maintenance</p>
+                    <h1 class="mt-6 font-heading text-6xl uppercase leading-none lg:text-7xl">{{ title }}</h1>
                     <p class="mt-8 max-w-xl text-base leading-9 text-white/65">{{ message }}</p>
 
                     <div class="mt-12 flex flex-wrap gap-3">
-                        <button type="button" class="bg-white px-8 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-black transition hover:bg-godiva-gold" @click="location.reload()">
+                        <button type="button" class="rounded-[3px] bg-cocov-gold px-8 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white transition hover:bg-[#e0851a]" @click="location.reload()">
                             Check Again
                         </button>
-                        <Link href="/admin/login" class="border border-white/15 px-8 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white/65 transition hover:border-godiva-gold hover:text-godiva-gold">
+                        <Link href="/admin/login" class="rounded-[3px] border border-white/15 px-8 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white/65 transition hover:border-cocov-gold hover:text-cocov-gold">
                             Admin Login
                         </Link>
                     </div>

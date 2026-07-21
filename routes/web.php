@@ -12,6 +12,7 @@ use Inertia\Inertia;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/home-v2', [HomeController::class, 'v2'])->name('home.v2');
 Route::get('/shop', [ProductController::class, 'index'])->name('products.index');
+Route::get('/search/suggestions', [ProductController::class, 'searchSuggestions'])->name('products.search');
 Route::get('/categories/{category:slug}', [ProductController::class, 'category'])->name('categories.show');
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.store');

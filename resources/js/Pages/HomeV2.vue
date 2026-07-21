@@ -193,7 +193,7 @@ onUnmounted(() => {
                     <h2 class="mt-1 font-heading text-3xl uppercase leading-tight text-cocov-text md:text-[48px]">Signature Featured</h2>
                     <p class="mx-auto mt-4 max-w-[760px] text-[15px] leading-[25px] text-black/80">{{ sectionDesc }}</p>
                 </div>
-                <div class="grid grid-cols-2 gap-5 lg:grid-cols-4 lg:gap-[35px]">
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-[35px]">
                     <article v-for="product in featuredItems" :key="product.id" class="group relative flex flex-col overflow-hidden bg-cocov-card">
                         <div class="relative aspect-square overflow-hidden">
                             <Link :href="route('products.show', product.slug)">

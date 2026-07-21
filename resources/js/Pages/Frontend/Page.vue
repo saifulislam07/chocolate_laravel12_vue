@@ -11,13 +11,13 @@ defineProps({
     <MainLayout>
         <Head :title="page.title" />
 
-        <header class="border-b border-gray-100 bg-godiva-cream px-6 py-20">
+        <header class="border-b border-gray-100 bg-cocov-card px-6 py-20">
             <div class="mx-auto max-w-4xl text-center">
-                <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-godiva-gold">Coco Craft</p>
-                <h1 class="mt-5 font-serif text-5xl font-light leading-tight text-godiva-charcoal md:text-6xl">
+                <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-cocov-gold">Coco Craft</p>
+                <h1 class="mt-5 font-heading text-5xl uppercase leading-tight text-cocov-text md:text-6xl">
                     {{ page.title }}
                 </h1>
-                <div class="mx-auto mt-8 h-px w-24 bg-godiva-gold"></div>
+                <div class="mx-auto mt-8 h-px w-24 bg-cocov-gold"></div>
             </div>
         </header>
 
@@ -27,7 +27,7 @@ defineProps({
             </article>
 
             <div class="mt-14 border-t border-gray-100 pt-8">
-                <Link :href="route('products.index')" class="text-[11px] font-bold uppercase tracking-[0.24em] text-godiva-charcoal transition hover:text-godiva-gold">
+                <Link :href="route('products.index')" class="text-[11px] font-bold uppercase tracking-[0.24em] text-cocov-text transition hover:text-cocov-gold">
                     Back To Shop
                 </Link>
             </div>
@@ -39,10 +39,11 @@ defineProps({
 .page-content :deep(h2) {
     margin-top: 2.5rem;
     margin-bottom: 1rem;
-    font-family: "Cormorant Garamond", serif;
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
     font-size: 2rem;
     line-height: 1.2;
-    color: #4B2E1E;
+    color: #484747;
 }
 
 .page-content :deep(h3) {
@@ -51,7 +52,7 @@ defineProps({
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: #4B2E1E;
+    color: #484747;
 }
 
 .page-content :deep(p) {
@@ -69,7 +70,7 @@ defineProps({
 }
 
 .page-content :deep(a) {
-    color: #C97830;
+    color: #F69521;
     text-decoration: underline;
     text-underline-offset: 4px;
 }

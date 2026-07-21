@@ -114,6 +114,36 @@ class ProductController extends Controller
 
         return redirect()->route('products.index', ['category' => $category->slug]);
     }
+
+    public function searchSuggestions(Request $request)
+    {
+        $q = trim((string) $request->string('q'));
+
+        if ($q === '') {
+            return response()->json(['results' => []]);
+        }
+
+        $results = Product::query()
+            ->with('images')
+            ->where('is_active', true)
+            ->where(function ($query) use ($q) {
+                $query->where('name', 'like', '%' . $q . '%')
+                    ->orWhere('sku', 'like', '%' . $q . '%');
+            })
+            ->latest()
+            ->take(6)
+            ->get()
+            ->map(fn (Product $product): array => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'price' => (float) $product->price,
+                'compare_at_price' => $product->compare_at_price ? (float) $product->compare_at_price : null,
+                'image' => $product->images->first()?->image_path,
+            ]);
+
+        return response()->json(['results' => $results]);
+    }
     public function show(Request $request, Product $product): Response
     {
         abort_unless($product->is_active, 404);

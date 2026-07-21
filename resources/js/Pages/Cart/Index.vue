@@ -1,7 +1,7 @@
 <script setup>
 import { Head, Link, router } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
-import { XMarkIcon, PlusIcon, MinusIcon, ArrowRightIcon } from "@heroicons/vue/24/outline";
+import { XMarkIcon, PlusIcon, MinusIcon, ArrowRightIcon, ShoppingBagIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps({
     items: {
@@ -51,21 +51,21 @@ function removeItem(itemId) {
     <MainLayout>
         <Head title="Your Shopping Bag | Coco Craft" />
 
-        <div class="bg-white py-12 sm:py-20 text-godiva-charcoal">
+        <div class="bg-white py-12 sm:py-20 text-cocov-text">
             <main class="mx-auto max-w-screen-2xl px-6">
                 <div class="flex items-baseline justify-between border-b border-gray-100 pb-10">
-                    <h1 class="font-serif text-4xl italic tracking-tight">Your Shopping Bag</h1>
+                    <h1 class="font-heading text-4xl uppercase tracking-tight">Your Shopping Bag</h1>
                     <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400">{{ items.length }} Items</p>
                 </div>
 
                 <div v-if="!props.items.length" class="mt-20 flex flex-col items-center justify-center text-center">
-                    <div class="h-24 w-24 rounded-full bg-godiva-pink/20 flex items-center justify-center mb-6">
-                        <ShoppingBagIcon class="h-10 w-10 text-godiva-gold" />
+                    <div class="h-24 w-24 rounded-full bg-cocov-offer/20 flex items-center justify-center mb-6">
+                        <ShoppingBagIcon class="h-10 w-10 text-cocov-gold" />
                     </div>
-                    <p class="font-serif text-2xl italic">Your bag is currently empty.</p>
+                    <p class="font-heading text-2xl uppercase">Your bag is currently empty.</p>
                     <Link
                         :href="route('home')"
-                        class="mt-8 inline-block bg-godiva-charcoal px-12 py-4 text-[11px] font-bold uppercase tracking-widest text-white transition hover:bg-black"
+                        class="mt-8 inline-block rounded-[3px] bg-cocov-gold px-12 py-4 text-[11px] font-bold uppercase tracking-widest text-white transition hover:bg-[#e0851a]"
                     >
                         Continue Shopping
                     </Link>
@@ -90,12 +90,12 @@ function removeItem(itemId) {
                             <div class="flex flex-1 flex-col justify-between">
                                 <div class="flex items-start justify-between gap-4">
                                     <div>
-                                        <h2 class="font-serif text-xl tracking-tight uppercase">{{ item.name }}</h2>
+                                        <h2 class="font-heading text-xl tracking-tight uppercase">{{ item.name }}</h2>
                                         <p class="mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Artisan Collection</p>
                                     </div>
                                     <button
                                         type="button"
-                                        class="group text-gray-400 hover:text-godiva-gold transition"
+                                        class="group text-gray-400 hover:text-cocov-gold transition"
                                         @click="removeItem(item.id)"
                                     >
                                         <XMarkIcon class="h-5 w-5" />
@@ -105,18 +105,18 @@ function removeItem(itemId) {
                                 <div class="mt-8 flex flex-wrap items-center justify-between gap-6">
                                     <!-- Quantity Selector -->
                                     <div class="flex h-10 w-32 items-center justify-between border border-gray-200 px-3">
-                                        <button @click="decrement(item)" class="text-gray-400 hover:text-godiva-gold">
+                                        <button @click="decrement(item)" class="text-gray-400 hover:text-cocov-gold">
                                             <MinusIcon class="h-3 w-3" />
                                         </button>
                                         <span class="text-xs font-bold">{{ item.quantity }}</span>
-                                        <button @click="increment(item)" class="text-gray-400 hover:text-godiva-gold">
+                                        <button @click="increment(item)" class="text-gray-400 hover:text-cocov-gold">
                                             <PlusIcon class="h-3 w-3" />
                                         </button>
                                     </div>
 
                                     <div class="flex items-baseline gap-6 text-right">
                                         <p class="text-xs text-gray-400 tracking-widest">{{ formatMoney(item.price) }} / ea</p>
-                                        <p class="font-serif text-xl">{{ formatMoney(item.line_total) }}</p>
+                                        <p class="font-heading text-xl">{{ formatMoney(item.line_total) }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -138,13 +138,13 @@ function removeItem(itemId) {
                                 </div>
                                 <div class="pt-6 border-t border-gray-200 flex items-center justify-between text-base">
                                     <span>Total</span>
-                                    <span class="font-serif text-2xl italic">{{ formatMoney(props.subtotal) }}</span>
+                                    <span class="font-heading text-2xl">{{ formatMoney(props.subtotal) }}</span>
                                 </div>
                             </div>
 
                             <Link
                                 :href="route('checkout.index')"
-                                class="mt-10 flex w-full items-center justify-center gap-3 bg-godiva-charcoal py-4 text-[11px] font-bold uppercase tracking-widest text-white transition hover:bg-black"
+                                class="mt-10 flex w-full items-center justify-center gap-3 rounded-[3px] bg-cocov-gold py-4 text-[11px] font-bold uppercase tracking-widest text-white transition hover:bg-[#e0851a]"
                             >
                                 Checkout Securely
                                 <ArrowRightIcon class="h-4 w-4" />
@@ -156,13 +156,13 @@ function removeItem(itemId) {
                         </div>
 
                         <!-- Mini Trust Section -->
-                        <div class="grid grid-cols-1 gap-4 text-[9px] font-bold uppercase tracking-widest text-godiva-charcoal/40">
+                        <div class="grid grid-cols-1 gap-4 text-[9px] font-bold uppercase tracking-widest text-cocov-text/40">
                              <div class="flex items-center gap-3 bg-white border border-gray-100 p-4">
-                                <div class="h-2 w-2 rounded-full bg-godiva-gold"></div>
+                                <div class="h-2 w-2 rounded-full bg-cocov-gold"></div>
                                 Secure Encryption
                              </div>
                              <div class="flex items-center gap-3 bg-white border border-gray-100 p-4">
-                                <div class="h-2 w-2 rounded-full bg-godiva-gold"></div>
+                                <div class="h-2 w-2 rounded-full bg-cocov-gold"></div>
                                 100% Satisfaction Guarantee
                              </div>
                         </div>

@@ -1,9 +1,9 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import MainLayout from '@/Layouts/MainLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
     mustVerifyEmail: {
@@ -16,22 +16,24 @@ defineProps({
 </script>
 
 <template>
-    <Head title="Profile" />
+    <MainLayout>
+        <Head title="My Profile" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
-            >
-                Profile
-            </h2>
-        </template>
+        <div class="bg-white">
+            <section class="border-b border-[#eee4d8] bg-[#fcf8f3] py-14">
+                <div class="mx-auto max-w-screen-2xl px-6">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-cocov-gold">My Account</p>
+                    <div class="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                        <h1 class="font-heading text-5xl uppercase tracking-tight text-cocov-text">My Profile</h1>
+                        <Link :href="route('customer.dashboard')" class="inline-flex rounded-[3px] border border-cocov-text/20 px-8 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-cocov-text transition hover:border-cocov-gold hover:text-cocov-gold">
+                            Back to Dashboard
+                        </Link>
+                    </div>
+                </div>
+            </section>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-screen-2xl space-y-6 sm:px-6 lg:px-8">
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
+            <main class="mx-auto max-w-3xl px-6 py-12 space-y-8">
+                <div class="border border-gray-100 p-6 sm:p-8">
                     <UpdateProfileInformationForm
                         :must-verify-email="mustVerifyEmail"
                         :status="status"
@@ -39,18 +41,14 @@ defineProps({
                     />
                 </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
+                <div class="border border-gray-100 p-6 sm:p-8">
                     <UpdatePasswordForm class="max-w-xl" />
                 </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
+                <div class="border border-gray-100 p-6 sm:p-8">
                     <DeleteUserForm class="max-w-xl" />
                 </div>
-            </div>
+            </main>
         </div>
-    </AuthenticatedLayout>
+    </MainLayout>
 </template>

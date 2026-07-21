@@ -65,11 +65,11 @@ function decrement() {
         <div class="bg-white">
             <!-- Breadcrumbs -->
             <nav class="mx-auto max-w-screen-2xl px-6 py-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                <Link href="/" class="hover:text-godiva-gold">Home</Link>
+                <Link href="/" class="hover:text-cocov-gold">Home</Link>
                 <ChevronRightIcon class="h-3 w-3" />
-                <span class="text-godiva-charcoal">{{ product.category || 'Chocolate' }}</span>
+                <span class="text-cocov-text">{{ product.category || 'Chocolate' }}</span>
                 <ChevronRightIcon class="h-3 w-3" />
-                <span class="text-godiva-gold">{{ product.name }}</span>
+                <span class="text-cocov-gold">{{ product.name }}</span>
             </nav>
 
             <main class="mx-auto max-w-screen-2xl px-6 py-12">
@@ -85,7 +85,7 @@ function decrement() {
                                 :key="image"
                                 type="button"
                                 class="aspect-square border flex items-center justify-center p-2 rounded-sm transition"
-                                :class="selectedImage === image ? 'border-godiva-gold' : 'border-gray-100'"
+                                :class="selectedImage === image ? 'border-cocov-gold' : 'border-gray-100'"
                                 @click="selectedImage = image"
                             >
                                 <img :src="image" :alt="product.name" class="h-full w-full object-contain" />
@@ -95,27 +95,27 @@ function decrement() {
 
                     <!-- Product Details -->
                     <section class="flex flex-col">
-                        <p class="text-[11px] font-bold uppercase tracking-[0.3em] text-godiva-gold">{{ product.category || "Signature Collection" }}</p>
-                        <h1 class="mt-4 font-serif text-4xl lg:text-5xl italic tracking-tight text-godiva-charcoal">{{ product.name }}</h1>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.3em] text-cocov-gold">{{ product.category || "Signature Collection" }}</p>
+                        <h1 class="mt-4 font-heading text-4xl uppercase tracking-tight text-cocov-text lg:text-5xl">{{ product.name }}</h1>
                         
                         <div class="mt-8 flex items-baseline gap-4 border-b border-gray-100 pb-8">
-                            <p class="text-3xl font-serif text-godiva-charcoal">{{ formatMoney(price) }}</p>
+                            <p class="text-3xl font-heading text-cocov-text">{{ formatMoney(price) }}</p>
                             <p v-if="comparePrice > price" class="text-lg text-gray-400 line-through tracking-wider">{{ formatMoney(comparePrice) }}</p>
                         </div>
 
                         <div class="mt-8 space-y-6">
                             <p class="text-sm leading-8 text-gray-600 tracking-wide">{{ product.description }}</p>
-                            <div v-if="product.is_bundle && product.bundle_note" class="border-l-2 border-godiva-gold bg-godiva-cream/30 px-5 py-4 text-sm leading-7 text-godiva-charcoal">
+                            <div v-if="product.is_bundle && product.bundle_note" class="border-l-2 border-cocov-gold bg-cocov-card/30 px-5 py-4 text-sm leading-7 text-cocov-text">
                                 {{ product.bundle_note }}
                             </div>
                             <div v-if="product.is_bundle && product.bundle_items?.length" class="border border-gray-100 p-5">
-                                <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-godiva-gold">Included in this bundle</p>
+                                <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-cocov-gold">Included in this bundle</p>
                                 <div class="space-y-3">
                                     <Link
                                         v-for="item in product.bundle_items"
                                         :key="item.id"
                                         :href="route('products.show', item.slug)"
-                                        class="flex items-center gap-4 transition hover:text-godiva-gold"
+                                        class="flex items-center gap-4 transition hover:text-cocov-gold"
                                     >
                                         <img :src="item.image || '/images/godiva/product_default.png'" :alt="item.name" class="h-12 w-12 object-contain bg-white">
                                         <div class="min-w-0 flex-1">
@@ -137,17 +137,17 @@ function decrement() {
                         <!-- Add to Cart Controls -->
                         <div class="mt-12 flex flex-col sm:flex-row items-center gap-4">
                             <div class="flex h-12 w-full sm:w-32 items-center justify-between border border-gray-200 px-4">
-                                <button @click="decrement" class="text-gray-500 hover:text-godiva-gold">
+                                <button @click="decrement" class="text-gray-500 hover:text-cocov-gold">
                                     <MinusIcon class="h-4 w-4" />
                                 </button>
                                 <span class="text-sm font-bold">{{ quantity }}</span>
-                                <button @click="increment" class="text-gray-500 hover:text-godiva-gold">
+                                <button @click="increment" class="text-gray-500 hover:text-cocov-gold">
                                     <PlusIcon class="h-4 w-4" />
                                 </button>
                             </div>
                             <button
                                 type="button"
-                                class="h-12 w-full flex-1 bg-godiva-charcoal text-[11px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black disabled:bg-gray-300"
+                                class="h-12 w-full flex-1 border border-cocov-gold text-[11px] font-bold uppercase tracking-[0.2em] text-cocov-gold transition hover:bg-cocov-gold hover:text-white disabled:border-gray-300 disabled:text-gray-300"
                                 :disabled="product.stock <= 0"
                                 @click="addToCart"
                             >
@@ -155,7 +155,7 @@ function decrement() {
                             </button>
                             <button
                                 type="button"
-                                class="h-12 w-full flex-1 border border-godiva-gold bg-godiva-gold text-[11px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-godiva-gold-dark disabled:border-gray-300 disabled:bg-gray-300"
+                                class="h-12 w-full flex-1 border border-cocov-gold bg-cocov-gold text-[11px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-[#e0851a] disabled:border-gray-300 disabled:bg-gray-300"
                                 :disabled="product.stock <= 0 || buyingNow"
                                 @click="buyNow"
                             >
@@ -173,13 +173,13 @@ function decrement() {
                         </div>
 
                         <!-- Brand Promises -->
-                        <div class="mt-12 grid grid-cols-2 gap-6 border-t border-gray-100 pt-10 text-[10px] font-bold uppercase tracking-widest text-godiva-charcoal/60">
+                        <div class="mt-12 grid grid-cols-2 gap-6 border-t border-gray-100 pt-10 text-[10px] font-bold uppercase tracking-widest text-cocov-text/60">
                             <div class="flex items-center gap-3">
-                                <div class="h-1 w-1 rounded-full bg-godiva-gold"></div>
+                                <div class="h-1 w-1 rounded-full bg-cocov-gold"></div>
                                 Belgian Heritage
                             </div>
                             <div class="flex items-center gap-3">
-                                <div class="h-1 w-1 rounded-full bg-godiva-gold"></div>
+                                <div class="h-1 w-1 rounded-full bg-cocov-gold"></div>
                                 Premium Ingredients
                             </div>
                         </div>
@@ -188,17 +188,17 @@ function decrement() {
 
                 <!-- Related Products -->
                 <section v-if="relatedProducts.length" class="mt-24 border-t border-gray-100 pt-20">
-                    <h2 class="font-serif text-3xl italic text-center mb-12">You may also like</h2>
+                    <h2 class="mb-12 text-center font-heading text-3xl uppercase">You may also like</h2>
                     <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                         <article v-for="item in relatedProducts" :key="item.id" class="group relative flex flex-col bg-white">
                             <div class="relative aspect-square overflow-hidden bg-white p-4">
                                 <img :src="item.image || '/images/godiva/product_default.png'" :alt="item.name" class="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
                             </div>
                             <div class="flex flex-1 flex-col p-6 text-center">
-                                <h3 class="font-serif text-lg tracking-tight uppercase">
-                                    <Link :href="route('products.show', item.slug)" class="hover:text-godiva-gold transition">{{ item.name }}</Link>
+                                <h3 class="font-heading text-lg tracking-tight uppercase">
+                                    <Link :href="route('products.show', item.slug)" class="hover:text-cocov-gold transition">{{ item.name }}</Link>
                                 </h3>
-                                <p class="mt-4 font-serif text-xl">{{ formatMoney(item.price) }}</p>
+                                <p class="mt-4 font-heading text-xl">{{ formatMoney(item.price) }}</p>
                             </div>
                         </article>
                     </div>
