@@ -10,6 +10,7 @@ const props = defineProps({
 
 const columns = [
     { key: 'index', label: '#', sortable: true, width: '60px' },
+    { key: 'image', label: 'Image', sortable: false, width: '90px' },
     { key: 'customer_name', label: 'Customer', sortable: true },
     { key: 'quote', label: 'Quote', sortable: false },
     { key: 'sort_order', label: 'Order', sortable: true, width: '90px' },
@@ -20,11 +21,13 @@ const columns = [
 const showModal = ref(false);
 const editMode = ref(false);
 const currentId = ref(null);
+const imagePreview = ref(null);
 
 const form = useForm({
     customer_name: '',
     location: '',
     quote: '',
+    image: null,
     rating: null,
     sort_order: 0,
     is_active: true,
@@ -33,6 +36,7 @@ const form = useForm({
 function openCreateModal() {
     editMode.value = false;
     currentId.value = null;
+    imagePreview.value = null;
     form.clearErrors();
     form.reset();
     showModal.value = true;
@@ -41,6 +45,7 @@ function openCreateModal() {
 function openEditModal(testimonial) {
     editMode.value = true;
     currentId.value = testimonial.id;
+    imagePreview.value = testimonial.image;
     form.clearErrors();
     form.customer_name = testimonial.customer_name;
     form.location = testimonial.location;
@@ -48,21 +53,29 @@ function openEditModal(testimonial) {
     form.rating = testimonial.rating;
     form.sort_order = testimonial.sort_order;
     form.is_active = !!testimonial.is_active;
+    form.image = null; // Don't reset image in edit mode unless uploading new
     showModal.value = true;
 }
 
 function closeModal() {
     showModal.value = false;
     form.reset();
+    imagePreview.value = null;
 }
 
 function submit() {
     if (editMode.value) {
-        form.put(route('admin.testimonials.update', currentId.value), {
+        // Use POST with _method=PUT for file uploads in updates (PHP/Laravel requirement for multipart)
+        form.transform((data) => ({
+            ...data,
+            _method: 'PUT',
+        })).post(route('admin.testimonials.update', currentId.value), {
+            forceFormData: true,
             onSuccess: () => closeModal(),
         });
     } else {
         form.post(route('admin.testimonials.store'), {
+            forceFormData: true,
             onSuccess: () => closeModal(),
         });
     }
@@ -71,6 +84,18 @@ function submit() {
 function deleteTestimonial(id) {
     if (confirm('Are you sure you want to delete this testimonial?')) {
         router.delete(route('admin.testimonials.destroy', id));
+    }
+}
+
+function handleImageChange(e) {
+    const file = e.target.files[0];
+    if (file) {
+        form.image = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.value = e.target.result;
+        };
+        reader.readAsDataURL(file);
     }
 }
 </script>
@@ -102,6 +127,13 @@ function deleteTestimonial(id) {
                 >
                     <template #cell-index="{ index }">
                         <span class="text-muted">{{ index + 1 }}</span>
+                    </template>
+
+                    <template #cell-image="{ item }">
+                        <div class="p-1 rounded bg-light border d-inline-block shadow-xs">
+                            <img :src="item.image" :alt="item.customer_name" class="rounded-circle" style="height: 40px; width: 40px; object-fit: cover;" v-if="item.image">
+                            <div v-else class="bg-gray-200 rounded-circle text-[9px] text-center text-muted" style="width: 40px; height: 40px; line-height: 40px;">No img</div>
+                        </div>
                     </template>
 
                     <template #cell-customer_name="{ item }">
@@ -165,6 +197,22 @@ function deleteTestimonial(id) {
                                 <label class="text-xs font-bold text-muted text-uppercase tracking-wider">Quote</label>
                                 <textarea v-model="form.quote" class="form-control" rows="4" placeholder="What did the guest say?" required></textarea>
                                 <div class="text-danger text-xs mt-1" v-if="form.errors.quote">{{ form.errors.quote }}</div>
+                            </div>
+                            <div class="form-group mb-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center mr-3 overflow-hidden shrink-0" style="width: 56px; height: 56px;">
+                                    <img v-if="imagePreview" :src="imagePreview" class="w-100 h-100" style="object-fit: cover;">
+                                    <i v-else class="fas fa-user opacity-20"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <label class="text-xs font-bold text-muted text-uppercase tracking-wider">Guest Photo (optional)</label>
+                                    <div class="custom-file">
+                                        <input type="file" @change="handleImageChange" class="custom-file-input" id="testimonialImage" accept="image/*">
+                                        <label class="custom-file-label text-truncate text-xs pt-2" for="testimonialImage">
+                                            {{ form.image ? form.image.name : 'No file chosen — will show blank' }}
+                                        </label>
+                                    </div>
+                                    <div class="text-danger text-xs mt-1" v-if="form.errors.image">{{ form.errors.image }}</div>
+                                </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-4 form-group mb-0">

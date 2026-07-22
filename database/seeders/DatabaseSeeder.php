@@ -301,7 +301,33 @@ class DatabaseSeeder extends Seeder {
                 'customer_name' => 'Jannatul Khatun',
                 'location'      => 'Mohammadpur, Dhaka',
                 'quote'         => "Best chocolate I've ever had!!!! It is one of the best sweet treat experiences that you will ever have. The problem is, you will never...",
+                'image'         => '/images/cococraft-v2/testi_woman.jpg',
+                'rating'        => 5,
                 'sort_order'    => 1,
+            ],
+            [
+                'customer_name' => 'Rakibul Hasan',
+                'location'      => 'Dhanmondi, Dhaka',
+                'quote'         => "Ordered a gift box for my wife's birthday and she loved every single piece. The packaging alone felt premium — will definitely order again.",
+                'image'         => null,
+                'rating'        => 5,
+                'sort_order'    => 2,
+            ],
+            [
+                'customer_name' => 'Farhana Akter',
+                'location'      => 'Uttara, Dhaka',
+                'quote'         => "The dark chocolate here is unlike anything else I've tried in the city. Rich, smooth, and not overly sweet. Delivery was fast too.",
+                'image'         => null,
+                'rating'        => 4,
+                'sort_order'    => 3,
+            ],
+            [
+                'customer_name' => 'Shakib Al Amin',
+                'location'      => 'Chittagong',
+                'quote'         => "Bought the wholesale bundle for our office event and everyone kept asking where it was from. Great quality, great price.",
+                'image'         => null,
+                'rating'        => 5,
+                'sort_order'    => 4,
             ],
         ];
 

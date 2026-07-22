@@ -84,18 +84,32 @@ const testimonialFallback = [
         quote: "Best chocolate I've ever had!!!! It is one of the best sweet treat experiences that you will ever have. The problem is, you will never...",
         customer_name: "Jannatul Khatun",
         location: "Mohammadpur, Dhaka",
+        image: null,
+        rating: 5,
     },
 ];
 const testimonialSlides = computed(() => (props.testimonials.length ? props.testimonials : testimonialFallback));
 const activeTestimonial = ref(0);
 let testimonialTimer = null;
-onMounted(() => {
+function startTestimonialTimer() {
+    if (testimonialTimer) clearInterval(testimonialTimer);
     if (testimonialSlides.value.length > 1) {
         testimonialTimer = setInterval(() => {
             activeTestimonial.value = (activeTestimonial.value + 1) % testimonialSlides.value.length;
         }, 7000);
     }
-});
+}
+function goToTestimonial(i) {
+    activeTestimonial.value = i;
+    startTestimonialTimer();
+}
+function prevTestimonial() {
+    goToTestimonial((activeTestimonial.value - 1 + testimonialSlides.value.length) % testimonialSlides.value.length);
+}
+function nextTestimonial() {
+    goToTestimonial((activeTestimonial.value + 1) % testimonialSlides.value.length);
+}
+onMounted(startTestimonialTimer);
 onUnmounted(() => {
     if (testimonialTimer) clearInterval(testimonialTimer);
 });
@@ -304,28 +318,61 @@ onUnmounted(() => {
 
         <!-- ================= TESTIMONIALS ================= -->
         <section class="relative overflow-hidden bg-[#f7f2ec]">
-            <img src="/images/cococraft-v2/testi_cocoa.png" alt="" class="pointer-events-none absolute bottom-0 left-0 hidden w-[31.5%] lg:block" />
-            <img src="/images/cococraft-v2/testi_woman.jpg" alt="Happy CocoCraft guest" class="pointer-events-none absolute bottom-0 right-0 hidden w-[25%] lg:block" />
-
             <div class="relative z-10 mx-auto max-w-[1350px] px-5 py-16 md:px-8 lg:px-[126px] md:py-24">
-                <div class="mx-auto max-w-[830px] text-center lg:mr-[440px]">
+                <div class="mx-auto max-w-[830px] text-center">
                     <p class="font-corinthia text-[46px] leading-none text-cocov-gold md:text-[50px]">Testimonials</p>
                     <h2 class="mt-1 font-heading text-3xl uppercase leading-tight text-cocov-text md:text-[48px]">What Our Guest Are Saying</h2>
-                    <svg viewBox="0 0 48 40" class="mx-auto mt-8 h-10 w-12 text-cocov-gold" fill="none" aria-hidden="true">
-                        <rect x="1.5" y="1.5" width="45" height="29" rx="8" stroke="#484747" stroke-width="2" />
-                        <path d="M14 34 8 39v-8" fill="#f7f2ec" stroke="#484747" stroke-width="2" stroke-linejoin="round" />
-                        <path d="M9 12h9v9H9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-                        <path d="M24 12h9v9h-9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-                    </svg>
-                    <Transition name="fade" mode="out-in">
-                        <div :key="activeTestimonial">
-                            <p class="mx-auto mt-6 max-w-[820px] text-[20px] font-medium leading-[36px] text-cocov-text">
-                                &ldquo;{{ testimonialSlides[activeTestimonial].quote }}&rdquo;
-                            </p>
-                            <p class="mt-8 text-[20px] font-bold uppercase leading-[32px] text-cocov-text">{{ testimonialSlides[activeTestimonial].customer_name }}</p>
-                            <p v-if="testimonialSlides[activeTestimonial].location" class="text-[16px] leading-[32px] text-cocov-text">{{ testimonialSlides[activeTestimonial].location }}</p>
-                        </div>
-                    </Transition>
+
+                    <div class="relative mt-8">
+                        <!-- prev / next arrows -->
+                        <button
+                            v-if="testimonialSlides.length > 1"
+                            type="button"
+                            aria-label="Previous testimonial"
+                            class="absolute left-0 top-10 z-20 hidden h-10 w-10 -translate-x-14 items-center justify-center rounded-full border border-cocov-text/15 bg-white text-cocov-text shadow-sm transition hover:border-cocov-gold hover:text-cocov-gold md:flex"
+                            @click="prevTestimonial"
+                        >
+                            <ChevronLeftIcon class="h-5 w-5" />
+                        </button>
+                        <button
+                            v-if="testimonialSlides.length > 1"
+                            type="button"
+                            aria-label="Next testimonial"
+                            class="absolute right-0 top-10 z-20 hidden h-10 w-10 translate-x-14 items-center justify-center rounded-full border border-cocov-text/15 bg-white text-cocov-text shadow-sm transition hover:border-cocov-gold hover:text-cocov-gold md:flex"
+                            @click="nextTestimonial"
+                        >
+                            <ChevronRightIcon class="h-5 w-5" />
+                        </button>
+
+                        <Transition name="fade" mode="out-in">
+                            <div :key="activeTestimonial" class="flex flex-col items-center">
+                                <!-- avatar: photo if provided, otherwise a blank circle -->
+                                <div class="h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-cocov-gold/40 bg-white">
+                                    <img
+                                        v-if="testimonialSlides[activeTestimonial].image"
+                                        :src="testimonialSlides[activeTestimonial].image"
+                                        :alt="testimonialSlides[activeTestimonial].customer_name"
+                                        class="h-full w-full object-cover"
+                                    />
+                                </div>
+
+                                <div v-if="testimonialSlides[activeTestimonial].rating" class="mt-4 flex gap-1 text-cocov-gold">
+                                    <svg v-for="n in 5" :key="n" viewBox="0 0 20 20" class="h-4 w-4" :fill="n <= testimonialSlides[activeTestimonial].rating ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.2">
+                                        <path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9L10 15l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z" stroke-linejoin="round" />
+                                    </svg>
+                                </div>
+
+                        
+
+                                <p class="mx-auto mt-6 max-w-[820px] text-[20px] font-medium leading-[36px] text-cocov-text">
+                                    &ldquo;{{ testimonialSlides[activeTestimonial].quote }}&rdquo;
+                                </p>
+                                <p class="mt-8 text-[20px] font-bold uppercase leading-[32px] text-cocov-text">{{ testimonialSlides[activeTestimonial].customer_name }}</p>
+                                <p v-if="testimonialSlides[activeTestimonial].location" class="text-[16px] leading-[32px] text-cocov-text">{{ testimonialSlides[activeTestimonial].location }}</p>
+                            </div>
+                        </Transition>
+                    </div>
+
                     <div v-if="testimonialSlides.length > 1" class="mt-6 flex justify-center gap-2">
                         <button
                             v-for="(t, i) in testimonialSlides"
@@ -334,14 +381,11 @@ onUnmounted(() => {
                             class="h-2 rounded-full transition-all"
                             :class="i === activeTestimonial ? 'w-6 bg-cocov-gold' : 'w-2 bg-cocov-text/20 hover:bg-cocov-text/40'"
                             :aria-label="`Show testimonial ${i + 1}`"
-                            @click="activeTestimonial = i"
+                            @click="goToTestimonial(i)"
                         ></button>
                     </div>
                 </div>
             </div>
-
-            <!-- woman on mobile / tablet -->
-            <img src="/images/cococraft-v2/testi_woman.jpg" alt="" class="mx-auto block w-full max-w-[420px] object-cover lg:hidden" />
         </section>
 
     </MainLayout>

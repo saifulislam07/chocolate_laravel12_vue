@@ -10,6 +10,7 @@ class Testimonial extends Model
         'customer_name',
         'location',
         'quote',
+        'image',
         'rating',
         'sort_order',
         'is_active',

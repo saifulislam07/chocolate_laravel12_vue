@@ -70,7 +70,7 @@ class HomeController extends Controller
         $testimonials = Testimonial::where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get(['id', 'customer_name', 'location', 'quote']);
+            ->get(['id', 'customer_name', 'location', 'quote', 'image', 'rating']);
 
         $aboutPage = Page::where('slug', 'about-us')->where('is_active', true)->first();
         // The homepage teaser already renders its own "About Cococraft" heading,
