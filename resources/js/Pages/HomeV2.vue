@@ -344,14 +344,6 @@ onUnmounted(() => {
             <img src="/images/cococraft-v2/testi_woman.jpg" alt="" class="mx-auto block w-full max-w-[420px] object-cover lg:hidden" />
         </section>
 
-        <!-- Dune transition (exact Figma band: cream -> tan waves -> brown) -->
-        <img src="/images/cococraft-v2/dune_band.jpg" alt="" aria-hidden="true" class="hidden w-full lg:block" />
-        <!-- simple dune for mobile/tablet -->
-        <svg viewBox="0 0 800 90" preserveAspectRatio="none" class="block h-12 w-full bg-[#f7f2ec] lg:hidden" aria-hidden="true">
-            <path fill="#f2c98c" d="M0,38 C130,10 260,50 400,36 C540,22 660,52 800,30 L800,90 L0,90 Z" />
-            <path fill="#6B2410" d="M0,62 C150,38 300,72 450,58 C580,46 690,70 800,52 L800,90 L0,90 Z" />
-        </svg>
-
     </MainLayout>
 </template>
 

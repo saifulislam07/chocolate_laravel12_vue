@@ -32,7 +32,7 @@ function subscribeNewsletter() {
              style="background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'><g fill='none' stroke='%23f7e6d0' stroke-width='2'><ellipse cx='40' cy='40' rx='18' ry='11' transform='rotate(-25 40 40)'/><path d='M28 44 L52 36'/><rect x='110' y='30' width='34' height='26' rx='3'/><path d='M110 43 h34 M121 30 v26 M133 30 v26'/><ellipse cx='150' cy='120' rx='16' ry='10' transform='rotate(30 150 120)'/><path d='M140 116 L160 124'/><circle cx='70' cy='130' r='4'/><circle cx='90' cy='120' r='3'/><rect x='20' y='120' width='30' height='22' rx='3' transform='rotate(-12 20 120)'/></g></svg>&quot;); background-size: 180px 180px;"></div>
 
         <div class="relative z-10">
-            <div class="mx-auto grid max-w-[1350px] gap-12 px-5 pb-14 pt-7 md:grid-cols-2 md:px-8 lg:grid-cols-4 lg:px-[126px]">
+            <div class="mx-auto grid max-w-[1350px] gap-12 px-5 pb-14 pt-7 md:grid-cols-2 md:px-8 lg:grid-cols-3 lg:px-[126px]">
                 <!-- Sign up -->
                 <div>
                     <h4 class="font-heading text-[24px] leading-[32px] text-white">Sign Up and Save</h4>
@@ -44,7 +44,7 @@ function subscribeNewsletter() {
                         <p v-if="newsletterStatus === 'error'" class="mt-3 text-[13px] text-red-200">That didn't work — check the email and try again.</p>
                     </form>
                 </div>
-                <!-- Company -->
+                <!-- Company + Useful -->
                 <div>
                     <h4 class="font-heading text-[24px] leading-[32px] text-white">Company Information</h4>
                     <div class="mt-6 flex flex-col text-[16px] leading-[37px] text-white/90">
@@ -54,10 +54,7 @@ function subscribeNewsletter() {
                         <Link :href="menuHref('terms-of-service')" class="transition hover:text-cocov-gold">Terms of Service</Link>
                         <Link :href="menuHref('wholesale')" class="transition hover:text-cocov-gold">Wholesale</Link>
                     </div>
-                </div>
-                <!-- Useful -->
-                <div>
-                    <h4 class="font-heading text-[24px] leading-[32px] text-white">Useful Links</h4>
+                    <h4 class="font-heading mt-8 text-[24px] leading-[32px] text-white">Useful Links</h4>
                     <div class="mt-6 flex flex-col text-[16px] leading-[37px] text-white/90">
                         <Link :href="route('products.index')" class="transition hover:text-cocov-gold">Products</Link>
                         <Link :href="menuHref('privacy-policy')" class="transition hover:text-cocov-gold">Privacy Policy</Link>
