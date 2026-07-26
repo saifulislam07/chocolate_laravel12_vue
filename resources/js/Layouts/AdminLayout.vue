@@ -12,15 +12,35 @@ const isNavigating = ref(false);
 let navTimer = null;
 let offNavStart = null;
 let offNavFinish = null;
-const openGroups = ref({
-    orders: true,
-    catalog: true,
-    procurement: true,
-    website: true,
-    finance: true,
-    system: true,
-});
 const page = usePage();
+
+const groupComponentPrefixes = {
+    orders: ['Admin/Sales', 'Admin/Customers', 'Admin/Returns', 'Admin/Refunds'],
+    catalog: ['Admin/Products', 'Admin/Bundles', 'Admin/Categories', 'Admin/Brands', 'Admin/Units', 'Admin/Inventory'],
+    procurement: ['Admin/Purchases', 'Admin/Suppliers'],
+    website: ['Admin/Menus', 'Admin/Pages', 'Admin/Sliders', 'Admin/Testimonials', 'Admin/ContactMessages'],
+    finance: ['Admin/Reports', 'Admin/Expenses'],
+    system: ['Admin/Settings', 'Admin/Users', 'Admin/Roles'],
+};
+
+function activeGroup() {
+    return Object.keys(groupComponentPrefixes).find((group) =>
+        groupComponentPrefixes[group].some((prefix) => page.component.startsWith(prefix))
+    );
+}
+
+const openGroups = ref({
+    orders: false,
+    catalog: false,
+    procurement: false,
+    website: false,
+    finance: false,
+    system: false,
+});
+const initiallyOpen = activeGroup();
+if (initiallyOpen) {
+    openGroups.value[initiallyOpen] = true;
+}
 const bodyClasses = ['hold-transition', 'sidebar-mini', 'layout-fixed'];
 const r = (name, params = undefined) => route(name, params, false);
 
@@ -168,14 +188,14 @@ watch(() => flash.value.error, (message) => {
                                 </Link>
                             </li>
 
-                            <li class="nav-item mt-3" v-if="can('access_pos')">
+                            <li class="nav-item mt-1" v-if="can('access_pos')">
                                 <Link :href="r('admin.pos.index')" class="nav-link bg-primary-soft" :class="{ active: $page.component === 'Admin/POS/Index' }">
                                     <i class="nav-icon fas fa-bolt text-amber-400"></i>
                                     <p class="font-semibold">Quick POS</p>
                                 </Link>
                             </li>
 
-                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4">Management</li>
+                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest">Management</li>
 
                             <li class="nav-item has-treeview" v-if="can('view_sales') || can('view_customers') || can('view_returns')" :class="{ 'menu-open': openGroups.orders }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('orders')">
@@ -354,8 +374,8 @@ watch(() => flash.value.error, (message) => {
                                 </ul>
                             </li>
 
-                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest mt-4" v-if="can('view_settings') || can('view_roles') || can('view_users')">System</li>
-                            <li class="nav-item has-treeview mb-5" v-if="can('view_settings') || can('view_roles') || can('view_users')" :class="{ 'menu-open': openGroups.system }">
+                            <li class="nav-header text-uppercase text-xs font-bold text-muted tracking-widest" v-if="can('view_settings') || can('view_roles') || can('view_users')">System</li>
+                            <li class="nav-item has-treeview" v-if="can('view_settings') || can('view_roles') || can('view_users')" :class="{ 'menu-open': openGroups.system }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('system')">
                                     <i class="nav-icon fas fa-gear text-slate-400"></i>
                                     <p>System <i class="right fas" :class="openGroups.system ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
@@ -510,9 +530,9 @@ body {
 .sidebar { padding: 0 0.75rem; }
 
 .nav-sidebar .nav-link {
-    border-radius: 12px;
-    margin-bottom: 4px;
-    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 2px;
+    padding: 0.5rem 0.9rem;
     font-size: 0.85rem;
     font-weight: 500;
     color: #94a3b8 !important;
@@ -527,13 +547,13 @@ body {
 }
 
 .nav-sidebar .nav-treeview {
-    margin: 0 0 0.6rem 0.65rem;
+    margin: 0 0 0.2rem 0.65rem;
     padding-left: 0.6rem;
     border-left: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .nav-sidebar .nav-treeview .nav-link {
-    padding: 0.55rem 0.75rem;
+    padding: 0.4rem 0.75rem;
     font-size: 0.8rem;
 }
 
@@ -559,7 +579,7 @@ body {
 .nav-header {
     color: #64748b !important;
     font-size: 0.7rem !important;
-    padding: 1.75rem 1rem 0.75rem !important;
+    padding: 1.1rem 1rem 0.5rem !important;
     letter-spacing: 0.1rem;
 }
 
