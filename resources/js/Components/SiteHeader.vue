@@ -114,7 +114,7 @@ const isActive = (url) => {
                 <button class="text-cocov-text md:hidden" aria-label="Menu" @click="isMobileMenuOpen = true">
                     <Bars3Icon class="h-7 w-7" />
                 </button>
-                <nav class="hidden items-center gap-6 font-heading text-[17px] font-normal uppercase leading-none md:flex">
+                <nav class="hidden items-center gap-10 font-heading text-[17px] font-normal uppercase leading-none md:flex">
                     <div v-for="m in leftMenu" :key="m.id" class="group relative">
                         <component
                             :is="menuHref(m.url).startsWith('http') ? 'a' : Link"
@@ -149,8 +149,8 @@ const isActive = (url) => {
             </Link>
 
             <!-- Right nav + icons -->
-            <div class="flex items-center justify-end gap-6">
-                <nav class="hidden items-center gap-6 font-heading text-[17px] font-normal uppercase leading-none lg:flex">
+            <div class="flex items-center justify-end gap-8">
+                <nav class="hidden items-center gap-10 font-heading text-[17px] font-normal uppercase leading-none lg:flex">
                     <div v-for="m in rightMenu" :key="m.id" class="group relative">
                         <component
                             :is="menuHref(m.url).startsWith('http') ? 'a' : Link"
