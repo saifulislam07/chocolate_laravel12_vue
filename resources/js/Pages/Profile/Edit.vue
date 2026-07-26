@@ -21,7 +21,7 @@ defineProps({
 
         <div class="bg-white">
             <section class="border-b border-[#eee4d8] bg-[#fcf8f3] py-14">
-                <div class="mx-auto max-w-screen-2xl px-6">
+                <div class="mx-auto max-w-full px-6">
                     <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-cocov-gold">My Account</p>
                     <div class="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                         <h1 class="font-heading text-5xl uppercase tracking-tight text-cocov-text">My Profile</h1>
@@ -32,7 +32,7 @@ defineProps({
                 </div>
             </section>
 
-            <main class="mx-auto max-w-3xl px-6 py-12 space-y-8">
+            <main class="mx-auto max-w-full px-6 py-12 space-y-8">
                 <div class="border border-gray-100 p-6 sm:p-8">
                     <UpdateProfileInformationForm
                         :must-verify-email="mustVerifyEmail"

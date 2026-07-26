@@ -20,7 +20,7 @@ function formatMoney(value) {
     <Head title="Order Confirmed" />
 
     <div class="min-h-screen bg-white font-body text-cocov-text antialiased">
-        <main class="mx-auto max-w-3xl px-6 py-14">
+        <main class="mx-auto max-w-full px-6 py-14">
             <div class="rounded-[3px] border border-cocov-line bg-white p-8 text-center">
                 <p class="text-xs uppercase tracking-[0.28em] text-cocov-gold">Thank You</p>
                 <h1 class="mt-3 font-heading text-3xl uppercase text-cocov-text">Order Confirmed</h1>

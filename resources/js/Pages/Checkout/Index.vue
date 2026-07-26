@@ -49,7 +49,7 @@ function placeOrder() {
     <Head title="Checkout" />
     <div class="min-h-screen bg-white font-body text-cocov-text antialiased">
         <header class="border-b border-cocov-line bg-cocov-brown-dark text-white">
-            <div class="mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-5">
+            <div class="mx-auto flex max-w-full items-center justify-between px-6 py-5">
                 <Link :href="route('home')" class="flex items-center gap-3">
                     <img src="/images/cococraft-v2/logo.png" alt="CocoCraft" class="h-10 w-10 rounded-full bg-white object-contain p-1" />
                     <span class="font-heading text-lg uppercase tracking-[0.28em]">CocoCraft</span>
@@ -58,7 +58,7 @@ function placeOrder() {
             </div>
         </header>
 
-        <main class="mx-auto grid max-w-screen-2xl gap-8 px-6 py-10 lg:grid-cols-3">
+        <main class="mx-auto grid max-w-full gap-8 px-6 py-10 lg:grid-cols-3">
             <section class="lg:col-span-2 rounded-[3px] border border-cocov-line bg-white p-6">
                 <h1 class="font-heading text-2xl uppercase text-cocov-text">Shipping &amp; Payment</h1>
                 <p class="mt-1 text-xs uppercase tracking-widest text-cocov-gold">Just your phone &amp; address to place an order &mdash; everything else is optional.</p>

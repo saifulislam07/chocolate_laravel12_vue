@@ -276,7 +276,7 @@ watch(() => flash.value.error, (message) => {
                                 </ul>
                             </li>
 
-                            <li class="nav-item has-treeview" v-if="can('view_menus') || can('view_pages') || can('view_sliders') || can('view_testimonials')" :class="{ 'menu-open': openGroups.website }">
+                            <li class="nav-item has-treeview" v-if="can('view_menus') || can('view_pages') || can('view_sliders') || can('view_testimonials') || can('view_contact_messages')" :class="{ 'menu-open': openGroups.website }">
                                 <button type="button" class="nav-link nav-group-toggle" @click="toggleGroup('website')">
                                     <i class="nav-icon fas fa-store text-pink-400"></i>
                                     <p>Website <i class="right fas" :class="openGroups.website ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
@@ -304,6 +304,12 @@ watch(() => flash.value.error, (message) => {
                                         <Link :href="r('admin.testimonials.index')" class="nav-link" :class="{ active: $page.component === 'Admin/Testimonials/Index' }">
                                             <i class="nav-icon fas fa-comment-dots text-teal-500"></i>
                                             <p>Testimonials</p>
+                                        </Link>
+                                    </li>
+                                    <li class="nav-item" v-if="can('view_contact_messages')">
+                                        <Link :href="r('admin.contact-messages.index')" class="nav-link" :class="{ active: $page.component === 'Admin/ContactMessages/Index' }">
+                                            <i class="nav-icon fas fa-envelope text-cyan-500"></i>
+                                            <p>Contact Messages</p>
                                         </Link>
                                     </li>
                                 </ul>

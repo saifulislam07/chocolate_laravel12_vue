@@ -89,7 +89,7 @@ const staticLeft = [
 const staticRight = [
     { id: "r1", name: "Offers", url: "/shop" },
     { id: "r2", name: "Gifting", url: "/shop" },
-    { id: "r3", name: "Contact", url: "contact-us" },
+    { id: "r3", name: "Contact", url: "/contact-us" },
 ];
 const mainMenu = computed(() => page.props.mainMenu || []);
 const leftMenu = computed(() =>
@@ -108,7 +108,7 @@ const isActive = (url) => {
 <template>
     <!-- ================= HEADER ================= -->
     <header class="sticky top-0 z-50 bg-white">
-        <div class="relative mx-auto grid h-[70px] max-w-[1600px] grid-cols-[1fr_auto_1fr] items-center px-5 md:h-[110px] md:px-8 lg:px-[126px]">
+        <div class="relative mx-auto grid h-[70px] max-w-full grid-cols-[1fr_auto_1fr] items-center px-5 md:h-[110px] md:px-8 lg:px-[126px]">
             <!-- Left nav -->
             <div class="flex items-center gap-8">
                 <button class="text-cocov-text md:hidden" aria-label="Menu" @click="isMobileMenuOpen = true">
@@ -143,7 +143,7 @@ const isActive = (url) => {
 
             <!-- Center logo (protrudes over banner) -->
             <Link href="/" class="relative z-10 flex justify-center self-stretch">
-                <span class="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] sm:h-24 sm:w-24 md:h-[176px] md:w-[176px]">
+                <span class="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white sm:h-24 sm:w-24 md:h-[176px] md:w-[176px]">
                     <img :src="settings.logo || '/images/cococraft-v2/logo.png'" :alt="settings.site_name || 'CocoCraft'" class="h-auto w-12 object-contain sm:w-14 md:w-[120px]" />
                 </span>
             </Link>
@@ -214,7 +214,7 @@ const isActive = (url) => {
             leave-to-class="opacity-0 -translate-y-2"
         >
             <div v-if="isSearchOpen" class="absolute inset-x-0 top-full z-50 border-b border-cocov-line bg-white shadow-2xl">
-                <div class="mx-auto max-w-[1600px] px-5 py-6 md:px-8 lg:px-[126px]">
+                <div class="mx-auto max-w-full px-5 py-6 md:px-8 lg:px-[126px]">
                     <div class="flex items-center gap-4">
                         <MagnifyingGlassIcon class="h-6 w-6 shrink-0 text-cocov-gold" />
                         <input

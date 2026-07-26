@@ -12,7 +12,7 @@ defineProps({
         <Head :title="page.title" />
 
         <header class="border-b border-gray-100 bg-cocov-card px-6 py-20">
-            <div class="mx-auto max-w-4xl text-center">
+            <div class="mx-auto max-w-full text-center">
                 <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-cocov-gold">Coco Craft</p>
                 <h1 class="mt-5 font-heading text-5xl uppercase leading-tight text-cocov-text md:text-6xl">
                     {{ page.title }}
@@ -21,7 +21,7 @@ defineProps({
             </div>
         </header>
 
-        <main class="mx-auto max-w-4xl px-6 py-16 md:py-20">
+        <main class="mx-auto max-w-full px-6 py-16 md:py-20">
             <article class="page-content text-base leading-8 text-gray-700">
                 <div v-html="page.content"></div>
             </article>

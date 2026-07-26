@@ -25,6 +25,8 @@ Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.s
 Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
 Route::get('/payment/bkash/callback', [CheckoutController::class, 'bkashCallback'])->name('payment.bkash.callback');
 Route::post('/newsletter/subscribe', [\App\Http\Controllers\NewsletterController::class, 'store'])->name('newsletter.subscribe');
+Route::get('/contact-us', [\App\Http\Controllers\ContactController::class, 'index'])->name('contact.index');
+Route::post('/contact-us', [\App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
 
 Route::middleware('auth')->group(function () {
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
@@ -90,6 +92,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('/admin/customers', \App\Http\Controllers\Admin\CustomerController::class)->names('admin.customers')->middleware('permission:view_customers');
     Route::get('/admin/settings', [\App\Http\Controllers\Admin\WebSettingController::class, 'index'])->name('admin.settings.index')->middleware('permission:view_settings');
     Route::post('/admin/settings', [\App\Http\Controllers\Admin\WebSettingController::class, 'update'])->name('admin.settings.update')->middleware('permission:edit_settings');
+    Route::get('/admin/contact-messages', [\App\Http\Controllers\Admin\ContactMessageController::class, 'index'])->name('admin.contact-messages.index')->middleware('permission:view_contact_messages');
+    Route::patch('/admin/contact-messages/{contactMessage}/read', [\App\Http\Controllers\Admin\ContactMessageController::class, 'markRead'])->name('admin.contact-messages.read')->middleware('permission:view_contact_messages');
+    Route::delete('/admin/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])->name('admin.contact-messages.destroy')->middleware('permission:delete_contact_messages');
 
     // POS Routes
     Route::get('/admin/pos', [\App\Http\Controllers\Admin\POSController::class, 'index'])->name('admin.pos.index')->middleware('permission:access_pos');

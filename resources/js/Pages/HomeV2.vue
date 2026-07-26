@@ -128,7 +128,7 @@ onUnmounted(() => {
                 >
                     <img :src="slide.image || '/images/cococraft-v2/banner.jpg'" :alt="slide.subtitle || slide.title || (settings.site_name || 'CocoCraft') + ' — A Bite of Love'" class="h-full w-full object-cover" />
                     <div v-if="slide.title || slide.description" class="absolute inset-0 flex items-end bg-gradient-to-t from-black/65 via-black/10 to-transparent">
-                        <div class="mx-auto w-full max-w-[1350px] px-5 pb-10 md:px-8 md:pb-16 lg:px-[126px]">
+                        <div class="mx-auto w-full max-w-full px-5 pb-10 md:px-8 md:pb-16 lg:px-[126px]">
                             <div class="max-w-lg text-white">
                                 <h1 v-if="slide.title" class="font-heading text-4xl uppercase leading-[1.05] md:text-6xl" v-html="slide.title"></h1>
                                 <p v-if="slide.description" class="mt-4 max-w-md text-sm leading-relaxed text-white/85">{{ slide.description }}</p>
@@ -158,7 +158,7 @@ onUnmounted(() => {
 
         <!-- ================= OFFER BAR (flush under banner) ================= -->
         <section class="w-full px-5 md:px-8 lg:px-[126px]">
-            <div class="mx-auto flex max-w-[1350px] flex-col divide-y divide-cocov-muted/50 bg-cocov-offer py-6 md:flex-row md:items-center md:divide-x md:divide-y-0 md:py-0">
+            <div class="mx-auto flex max-w-full flex-col divide-y divide-cocov-muted/50 bg-cocov-offer py-6 md:flex-row md:items-center md:divide-x md:divide-y-0 md:py-0">
                 <div v-for="(o, i) in [
                     { icon: '/images/cococraft-v2/icon_delivery.png', title: 'FREE DELIVERY', sub: 'Over 3,000 taka order' },
                     { icon: '/images/cococraft-v2/icon_collect.png', title: 'COLLECT YOUR CHOCOLATE', sub: 'Cococraft' },
@@ -175,7 +175,7 @@ onUnmounted(() => {
 
         <!-- ================= SHOP BY COLLECTION ================= -->
         <section class="px-5 py-16 md:px-8 lg:px-[126px] md:py-24">
-            <div class="mx-auto max-w-[1350px]">
+            <div class="mx-auto max-w-full">
                 <div class="mb-12 text-center">
                     <p class="font-corinthia text-[46px] lowercase leading-none text-cocov-gold md:text-[50px]">world of cococraft</p>
                     <h2 class="mt-1 font-heading text-3xl uppercase leading-tight text-cocov-text md:text-[48px]">Shop by Collection</h2>
@@ -201,7 +201,7 @@ onUnmounted(() => {
 
         <!-- ================= SIGNATURE FEATURED ================= -->
         <section v-if="featuredItems.length" class="px-5 py-16 md:px-8 lg:px-[126px] md:py-20">
-            <div class="mx-auto max-w-[1350px]">
+            <div class="mx-auto max-w-full">
                 <div class="mb-12 text-center">
                     <p class="font-corinthia text-[46px] lowercase leading-none text-cocov-gold md:text-[50px]">great cococraft taste</p>
                     <h2 class="mt-1 font-heading text-3xl uppercase leading-tight text-cocov-text md:text-[48px]">Signature Featured</h2>
@@ -254,7 +254,7 @@ onUnmounted(() => {
 
         <!-- ================= NEW ARRIVALS ================= -->
         <section v-if="newArrivals.length" class="px-5 py-16 md:px-8 lg:px-[126px] md:py-20">
-            <div class="mx-auto max-w-[1350px]">
+            <div class="mx-auto max-w-full">
                 <div class="mb-12 text-center">
                     <p class="font-corinthia text-[46px] lowercase leading-none text-cocov-gold md:text-[50px]">pure nature, bold innovation</p>
                     <h2 class="mt-1 font-heading text-3xl uppercase leading-tight text-cocov-text md:text-[48px]">New Arrivals</h2>
@@ -292,7 +292,7 @@ onUnmounted(() => {
 
         <!-- ================= ABOUT ================= -->
         <section class="px-5 py-16 md:px-8 lg:px-[126px] md:py-20">
-            <div class="mx-auto grid max-w-[1350px] gap-12 md:grid-cols-[660px_1fr] md:items-start md:gap-16">
+            <div class="mx-auto grid max-w-full gap-12 md:grid-cols-[660px_1fr] md:items-start md:gap-16">
                 <div>
                     <p class="text-center font-corinthia text-[46px] lowercase leading-none text-cocov-gold md:text-left md:text-[50px]">the story behind</p>
                     <h2 class="mt-1 text-center font-heading text-3xl uppercase leading-tight text-cocov-text md:text-left md:text-[48px]">About Cococraft</h2>
@@ -318,7 +318,7 @@ onUnmounted(() => {
 
         <!-- ================= TESTIMONIALS ================= -->
         <section class="relative overflow-hidden bg-[#f7f2ec]">
-            <div class="relative z-10 mx-auto max-w-[1350px] px-5 py-16 md:px-8 lg:px-[126px] md:py-24">
+            <div class="relative z-10 mx-auto max-w-full px-5 py-16 md:px-8 lg:px-[126px] md:py-24">
                 <div class="mx-auto max-w-[830px] text-center">
                     <p class="font-corinthia text-[46px] leading-none text-cocov-gold md:text-[50px]">Testimonials</p>
                     <h2 class="mt-1 font-heading text-3xl uppercase leading-tight text-cocov-text md:text-[48px]">What Our Guest Are Saying</h2>

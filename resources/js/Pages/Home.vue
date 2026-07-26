@@ -80,7 +80,7 @@ const testimonial = {
                         <img :src="slider.image" :alt="slider.subtitle || 'Coco Craft'" class="absolute inset-0 h-full w-full object-cover" />
                         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
 
-                        <div class="relative mx-auto flex h-full max-w-screen-2xl items-end px-6 pb-16 md:pb-24">
+                        <div class="relative mx-auto flex h-full max-w-full items-end px-6 pb-16 md:pb-24">
                             <div class="max-w-lg text-white">
                                 <h1 class="font-sans text-5xl font-bold uppercase leading-[1.05] tracking-tight md:text-6xl" v-html="slider.title"></h1>
                                 <p v-if="slider.description" class="mt-6 max-w-md text-sm leading-loose tracking-wide text-white/85">{{ slider.description }}</p>
@@ -99,7 +99,7 @@ const testimonial = {
                 </SwiperSlide>
 
                 <div class="pointer-events-none absolute inset-x-0 bottom-0 z-30 pb-6">
-                    <div class="mx-auto flex max-w-screen-2xl items-center justify-end gap-3 px-6">
+                    <div class="mx-auto flex max-w-full items-center justify-end gap-3 px-6">
                         <span class="pointer-events-auto mr-auto font-serif text-sm tabular-nums text-white/80">
                             {{ String(activeSlideIndex + 1).padStart(2, '0') }} / {{ String(sliders.length).padStart(2, '0') }}
                         </span>
@@ -114,7 +114,7 @@ const testimonial = {
             </Swiper>
 
             <!-- Feature strip -->
-            <div class="relative z-10 mx-auto -mt-8 max-w-5xl px-6 md:-mt-10">
+            <div class="relative z-10 mx-auto -mt-8 max-w-full px-6 md:-mt-10">
                 <div class="grid grid-cols-1 divide-y divide-godiva-gold/25 border border-godiva-gold/25 bg-godiva-cream shadow-xl sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:bg-godiva-prefooter">
                     <div v-for="feature in features" :key="feature.title" class="flex items-center justify-center gap-4 px-6 py-6">
                         <component :is="feature.icon" class="h-8 w-8 shrink-0 text-godiva-gold" />
@@ -129,7 +129,7 @@ const testimonial = {
 
         <!-- Shop by Collection -->
         <section class="py-20 md:py-28">
-            <div class="mx-auto max-w-screen-2xl px-6">
+            <div class="mx-auto max-w-full px-6">
                 <div class="mb-14 text-center">
                     <p class="font-script text-2xl text-godiva-gold">world of cococraft</p>
                     <h2 class="mt-2 font-serif text-4xl font-semibold text-godiva-charcoal dark:text-godiva-cream">Shop by Collection</h2>
@@ -160,7 +160,7 @@ const testimonial = {
 
         <!-- Signature Featured -->
         <section v-if="featuredItems.length" class="bg-godiva-cream/40 py-20 md:py-28 dark:bg-white/5">
-            <div class="mx-auto max-w-screen-2xl px-6">
+            <div class="mx-auto max-w-full px-6">
                 <div class="mb-14 text-center">
                     <p class="font-script text-2xl text-godiva-gold">great cococraft taste</p>
                     <h2 class="mt-2 font-serif text-4xl font-semibold text-godiva-charcoal dark:text-godiva-cream">Signature Featured</h2>
@@ -187,7 +187,7 @@ const testimonial = {
 
         <!-- New Arrivals -->
         <section v-if="newArrivals.length" class="py-20 md:py-28">
-            <div class="mx-auto max-w-screen-2xl px-6">
+            <div class="mx-auto max-w-full px-6">
                 <div class="mb-14 text-center">
                     <p class="font-script text-2xl text-godiva-gold">pure nature, bold innovation</p>
                     <h2 class="mt-2 font-serif text-4xl font-semibold text-godiva-charcoal dark:text-godiva-cream">New Arrivals</h2>
@@ -228,7 +228,7 @@ const testimonial = {
 
         <!-- About Cococraft -->
         <section class="py-20 md:py-28">
-            <div class="mx-auto grid max-w-screen-2xl gap-14 px-6 md:grid-cols-2 md:items-center md:gap-20">
+            <div class="mx-auto grid max-w-full gap-14 px-6 md:grid-cols-2 md:items-center md:gap-20">
                 <div>
                     <p class="font-script text-2xl text-godiva-gold">the story behind</p>
                     <h2 class="mt-2 font-serif text-4xl font-semibold text-godiva-charcoal dark:text-godiva-cream">About Cococraft</h2>
@@ -267,7 +267,7 @@ const testimonial = {
                 <path d="M70 150 C100 140 120 110 115 70" />
             </svg>
 
-            <div class="mx-auto grid max-w-screen-2xl items-center gap-12 px-6 md:grid-cols-[1.2fr_1fr]">
+            <div class="mx-auto grid max-w-full items-center gap-12 px-6 md:grid-cols-[1.2fr_1fr]">
                 <div class="text-center md:text-left">
                     <p class="font-script text-2xl text-godiva-gold">Testimonials</p>
                     <h2 class="mt-2 font-serif text-4xl font-semibold text-godiva-charcoal">What Our Guest Are Saying</h2>

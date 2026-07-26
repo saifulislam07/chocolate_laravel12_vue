@@ -33,7 +33,7 @@ const page = copy[props.status] || copy[500];
     <Head :title="`${status} | Coco Craft`" />
 
     <main class="min-h-screen bg-[#fcf8f3] text-cocov-text">
-        <div class="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-16">
+        <div class="mx-auto flex min-h-screen max-w-full items-center px-6 py-16">
             <div class="grid w-full gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
                 <section>
                     <Link href="/" class="inline-flex items-center gap-3">

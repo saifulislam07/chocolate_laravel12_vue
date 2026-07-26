@@ -10,15 +10,15 @@ const settings = computed(() => page.props.webSettings || {});
 <template>
     <!-- ================= FOOTER ================= -->
     <footer class="bg-cocov-brown text-white">
-        <div class="mx-auto flex max-w-[1350px] flex-col items-center gap-6 px-5 py-10 text-center md:flex-row md:justify-between md:px-8 md:text-left lg:px-[126px]">
-            <img :src="settings.footer_logo || '/images/cococraft-logo-light.svg'" alt="" class="h-10 w-auto" />
+        <div class="mx-auto flex max-w-full flex-col items-center gap-6 px-5 py-10 text-center md:flex-row md:justify-between md:px-8 md:text-left lg:px-[126px]">
+            <img :src="settings.footer_logo || '/images/cococraft-logo-light.svg'" alt="" class="h-16 w-auto" />
 
             <nav class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[15px] text-white/90">
                 <Link :href="menuHref('about-us')" class="transition hover:text-cocov-gold">About Us</Link>
                 <Link :href="route('products.index')" class="transition hover:text-cocov-gold">Products</Link>
                 <Link :href="menuHref('privacy-policy')" class="transition hover:text-cocov-gold">Privacy Policy</Link>
                 <Link :href="menuHref('terms-of-service')" class="transition hover:text-cocov-gold">Terms of Service</Link>
-                <a :href="`mailto:${settings.email || 'info@cococraft.com.bd'}`" class="transition hover:text-cocov-gold">Contact</a>
+                <Link :href="route('contact.index')" class="transition hover:text-cocov-gold">Contact</Link>
             </nav>
 
             <div class="flex items-center gap-5 text-white">

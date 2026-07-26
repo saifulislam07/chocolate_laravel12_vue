@@ -16,7 +16,7 @@ defineProps({
             <img src="/images/godiva/seasonal.png" alt="Chocolate collection" class="absolute right-[-10%] top-1/2 hidden h-[88vh] -translate-y-1/2 object-contain opacity-25 lg:block" />
             <div class="absolute inset-0 bg-gradient-to-r from-[#1c1c1c] via-[#1c1c1c]/95 to-[#1c1c1c]/50"></div>
 
-            <div class="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center px-6 py-16">
+            <div class="relative z-10 mx-auto flex min-h-screen max-w-full items-center px-6 py-16">
                 <section class="max-w-2xl">
                     <Link href="/admin/login" class="inline-flex items-center gap-3">
                         <img src="/images/cococraft-logo.svg" alt="Coco Craft" class="h-14 w-14 object-contain" />

@@ -35,6 +35,7 @@ class PermissionSeeder extends Seeder
             'reports',
             'inventory',
             'returns',
+            'contact_messages',
         ];
 
         $actions = ['view', 'create', 'edit', 'delete'];
@@ -70,7 +71,7 @@ class PermissionSeeder extends Seeder
             'Manager' => [
                 'products', 'bundles', 'categories', 'brands', 'units', 'suppliers',
                 'purchases', 'sales', 'expenses', 'expense_categories', 'sliders', 'testimonials',
-                'menus', 'pages', 'customers', 'reports', 'inventory', 'returns',
+                'menus', 'pages', 'customers', 'reports', 'inventory', 'returns', 'contact_messages',
             ],
             'Seller' => [
                 'products' => ['view', 'create', 'edit'],
