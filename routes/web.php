@@ -26,6 +26,7 @@ Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])-
 Route::get('/payment/bkash/callback', [CheckoutController::class, 'bkashCallback'])->name('payment.bkash.callback');
 Route::post('/newsletter/subscribe', [\App\Http\Controllers\NewsletterController::class, 'store'])->name('newsletter.subscribe');
 Route::get('/contact-us', [\App\Http\Controllers\ContactController::class, 'index'])->name('contact.index');
+Route::get('/p/contact-us', [\App\Http\Controllers\ContactController::class, 'index'])->name('contact.index');
 Route::post('/contact-us', [\App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
 
 Route::middleware('auth')->group(function () {
@@ -33,7 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 });
 
-Route::get('/dashboard', fn () => redirect()->route('customer.dashboard'))
+Route::get('/dashboard', fn() => redirect()->route('customer.dashboard'))
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -41,13 +42,13 @@ Route::get('/customer/dashboard', function () {
     $user = request()->user();
 
     return Inertia::render('Customer/Dashboard', [
-        'stats' => [
-            'orders_count' => \App\Models\Order::where('user_id', $user->id)->count(),
+        'stats'         => [
+            'orders_count'   => \App\Models\Order::where('user_id', $user->id)->count(),
             'wishlist_count' => \App\Models\Wishlist::where('user_id', $user->id)->count(),
-            'cart_count' => \App\Models\Cart::where('user_id', $user->id)->withCount('items')->first()?->items_count ?? 0,
-            'total_spent' => (float) \App\Models\Order::where('user_id', $user->id)->sum('total'),
+            'cart_count'     => \App\Models\Cart::where('user_id', $user->id)->withCount('items')->first()?->items_count ?? 0,
+            'total_spent'    => (float) \App\Models\Order::where('user_id', $user->id)->sum('total'),
         ],
-        'recentOrders' => \App\Models\Order::with('items')
+        'recentOrders'  => \App\Models\Order::with('items')
             ->where('user_id', $user->id)
             ->latest()
             ->take(5)
@@ -60,7 +61,7 @@ Route::get('/customer/dashboard', function () {
     ]);
 })->middleware(['auth', 'verified'])->name('customer.dashboard');
 
-Route::get('/admin/dashboar', fn () => redirect()->route('admin.dashboard'))
+Route::get('/admin/dashboar', fn() => redirect()->route('admin.dashboard'))
     ->middleware(['auth', 'verified']);
 
 Route::get('/admin/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])
@@ -158,4 +159,4 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:view_returns');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
