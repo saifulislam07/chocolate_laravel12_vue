@@ -312,11 +312,13 @@ watch(
                                     >
                                         <HeartIcon class="h-4 w-4" :class="{ 'fill-current': product.is_wishlisted }" />
                                     </button>
-                                    <img
-                                        :src="product.images?.[0]?.image_path || fallbackImage"
-                                        :alt="product.name"
-                                        class="h-full w-full object-contain transition duration-500 group-hover:scale-105"
-                                    />
+                                    <Link :href="route('products.show', product.slug)" class="block h-full w-full">
+                                        <img
+                                            :src="product.images?.[0]?.image_path || fallbackImage"
+                                            :alt="product.name"
+                                            class="h-full w-full object-contain transition duration-500 group-hover:scale-105"
+                                        />
+                                    </Link>
                                     <div class="absolute inset-x-0 bottom-4 flex translate-y-4 justify-center px-4 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
                                         <button type="button" class="w-full bg-cocov-gold py-3 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-[#e0851a]" @click="addToCart(product.id)">
                                             Add to Bag
