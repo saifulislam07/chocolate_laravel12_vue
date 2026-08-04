@@ -462,6 +462,89 @@ body {
     min-height: 100vh;
 }
 
+/* ---- Printing an invoice ----
+   Pages mark their printable block with id="invoice-print-area". These rules live here
+   (unscoped) on purpose: a `<style scoped>` block cannot hide the sidebar/navbar, because
+   Vue rewrites `body *` to `body *[data-v-x]`, which never matches another component's
+   elements. That left the whole admin chrome printing on top of the invoice. */
+@media print {
+    body,
+    html {
+        background: #fff !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .main-sidebar,
+    .main-header,
+    .main-footer,
+    .admin-loading-overlay,
+    .d-print-none {
+        display: none !important;
+    }
+
+    .wrapper,
+    .content-wrapper,
+    .sidebar-collapse .content-wrapper {
+        margin-left: 0 !important;
+        min-height: 0 !important;
+        background: #fff !important;
+    }
+
+    /* The POS invoice sits inside a Bootstrap modal; flatten it so the whole
+       receipt flows onto the page instead of being clipped by the fixed overlay. */
+    .modal,
+    .modal-dialog,
+    .modal-content {
+        position: static !important;
+        display: block !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        overflow: visible !important;
+    }
+
+    #invoice-print-area {
+        position: static !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        visibility: visible !important;
+    }
+
+    #invoice-print-area * {
+        visibility: visible !important;
+    }
+
+    /* Keep tables from splitting a row across two sheets. */
+    #invoice-print-area tr,
+    #invoice-print-area address,
+    #invoice-print-area table {
+        page-break-inside: avoid;
+    }
+
+    /* AdminLayout rounds and shadows every card; flat looks right on paper. */
+    #invoice-print-area .card,
+    #invoice-print-area .bg-light {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    a[href]::after {
+        content: none !important;
+    }
+}
+
+@page {
+    margin: 12mm;
+}
+
 .main-sidebar {
     bottom: 0;
     left: 0;

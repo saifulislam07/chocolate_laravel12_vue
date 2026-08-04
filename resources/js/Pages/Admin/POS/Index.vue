@@ -1,7 +1,10 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+
+// Shop details for the receipt header come from Settings, not hardcoded text.
+const shop = computed(() => usePage().props.webSettings || {});
 
 const props = defineProps({
     products: Array,
@@ -365,11 +368,18 @@ const printInvoice = () => {
                         </button>
                     </div>
                     <div class="modal-body p-4" id="invoice-print-area">
-                        <div class="text-center mb-4 border-bottom pb-3">
-                            <h2 class="font-weight-bold mb-1">SWEET CHOCOLATE</h2>
-                            <p class="mb-0">123 Super Market, Dhaka</p>
-                            <p>Phone: 01700-000000</p>
-                            <h4 class="mt-2 text-uppercase font-weight-bold">Invoice</h4>
+                        <div class="row border-bottom pb-3 mb-4">
+                            <div class="col-7">
+                                <img v-if="shop.logo" :src="shop.logo" alt="" class="invoice-logo mb-2">
+                                <h2 class="font-weight-bold mb-1">{{ shop.site_name || 'Invoice' }}</h2>
+                                <p class="mb-0 small" v-if="shop.address">{{ shop.address }}</p>
+                                <p class="mb-0 small" v-if="shop.phone">Phone: {{ shop.phone }}</p>
+                            </div>
+                            <div class="col-5 text-right">
+                                <h4 class="text-uppercase font-weight-bold mb-2">Invoice</h4>
+                                <p class="mb-1"><strong>#{{ printInvoiceData?.invoice_no }}</strong></p>
+                                <p class="mb-0 small">{{ new Date().toLocaleDateString() }}</p>
+                            </div>
                         </div>
                         <div class="row mb-4">
                             <div class="col-6">
@@ -378,9 +388,8 @@ const printInvoice = () => {
                                 Phone: {{ printInvoiceData?.customer_phone || 'N/A' }}
                             </div>
                             <div class="col-6 text-right">
-                                <strong>Invoice No:</strong> {{ printInvoiceData?.invoice_no }}<br>
-                                <strong>Date:</strong> {{ new Date().toLocaleDateString() }}<br>
-                                <strong>Payment Method:</strong> <span class="text-uppercase">{{ printInvoiceData?.payment_method }}</span>
+                                <strong>Payment Method:</strong><br>
+                                <span class="text-uppercase">{{ printInvoiceData?.payment_method }}</span>
                             </div>
                         </div>
                         <table class="table table-bordered table-sm">
@@ -522,18 +531,11 @@ const printInvoice = () => {
     transform: translateY(-5px);
     box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
 }
-@media print {
-    body * {
-        visibility: hidden;
-    }
-    #invoice-print-area, #invoice-print-area * {
-        visibility: visible;
-    }
-    #invoice-print-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
+.invoice-logo {
+    max-height: 55px;
+    max-width: 180px;
+    object-fit: contain;
 }
+
+/* Print rules live unscoped in AdminLayout: a scoped `body *` cannot reach the sidebar. */
 </style>

@@ -1,8 +1,11 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
 import axios from 'axios';
+
+// Shop details for the invoice header come from Settings, not hardcoded text.
+const shop = computed(() => usePage().props.webSettings || {});
 
 const props = defineProps({
     sale: Object,
@@ -199,14 +202,21 @@ const getSourceContext = (source) => {
                         <!-- Main content -->
                         <div class="invoice p-3 mb-3 border bg-white" id="invoice-print-area">
                             <!-- title row -->
-                            <div class="row">
-                                <div class="col-12 text-center border-bottom pb-4 mb-4">
-                                    <h2 class="font-weight-bold mb-1">
-                                        <i class="fas fa-cookie-bite mr-2 text-primary"></i>SWEET CHOCOLATE
-                                    </h2>
-                                    <p class="mb-0 text-muted">Complete Software Solutions Demo</p>
-                                    <p class="text-muted">123 Super Market, Dhaka | Phone: 01700-000000</p>
-                                    <h3 class="mt-3 text-uppercase font-weight-bold text-gray-dark">Invoice</h3>
+                            <div class="row border-bottom pb-4 mb-4">
+                                <div class="col-7">
+                                    <img v-if="shop.logo" :src="shop.logo" alt="" class="invoice-logo mb-2">
+                                    <h2 class="font-weight-bold mb-1">{{ shop.site_name || 'Invoice' }}</h2>
+                                    <p class="mb-0 text-muted" v-if="shop.address">{{ shop.address }}</p>
+                                    <p class="text-muted mb-0">
+                                        <span v-if="shop.phone">Phone: {{ shop.phone }}</span>
+                                        <span v-if="shop.phone && shop.email"> | </span>
+                                        <span v-if="shop.email">{{ shop.email }}</span>
+                                    </p>
+                                </div>
+                                <div class="col-5 text-right">
+                                    <h3 class="text-uppercase font-weight-bold text-gray-dark mb-2">Invoice</h3>
+                                    <p class="mb-1"><b class="h5 text-info">#{{ sale.order_number }}</b></p>
+                                    <p class="mb-0 text-muted">{{ new Date(sale.created_at).toLocaleString() }}</p>
                                 </div>
                             </div>
                             
@@ -240,10 +250,11 @@ const getSourceContext = (source) => {
                                 </div>
                                 
                                 <div class="col-sm-4 invoice-col text-sm-right">
-                                    <b class="h5 text-info">Invoice #{{ sale.order_number }}</b><br><br>
-                                    <b>Date:</b> {{ new Date(sale.created_at).toLocaleString() }}<br>
-                                    <b>Payment Method:</b> <span class="text-uppercase">{{ sale.payment_method }}</span><br>
-                                    <b>Payment Status:</b> <span class="text-uppercase text-bold" :class="sale.payment_status === 'paid' ? 'text-success' : 'text-danger'">{{ sale.payment_status }}</span>
+                                    <span class="text-muted text-sm text-uppercase">Payment</span>
+                                    <address class="mt-1">
+                                        <strong>Method:</strong> <span class="text-uppercase">{{ sale.payment_method }}</span><br>
+                                        <strong>Status:</strong> <span class="text-uppercase text-bold" :class="sale.payment_status === 'paid' ? 'text-success' : 'text-danger'">{{ sale.payment_status }}</span>
+                                    </address>
                                 </div>
                             </div>
                             
@@ -334,22 +345,11 @@ const getSourceContext = (source) => {
     </AdminLayout>
 </template>
 
+<!-- Print rules live unscoped in AdminLayout: a scoped `body *` cannot reach the sidebar. -->
 <style scoped>
-@media print {
-    body * {
-        visibility: hidden;
-    }
-    #invoice-print-area, #invoice-print-area * {
-        visibility: visible;
-    }
-    #invoice-print-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 20px;
-        border: none !important;
-    }
+.invoice-logo {
+    max-height: 60px;
+    max-width: 200px;
+    object-fit: contain;
 }
 </style>
