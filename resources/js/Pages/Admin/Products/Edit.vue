@@ -1,6 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -46,11 +46,34 @@ const handleFileChange = (e) => {
     });
 };
 
-const deleteExistingImage = (imageId) => {
-    if(confirm('Are you sure you want to delete this image?')){
-        // In a real app, you'd call an API to delete the image from storage
-        // For now, let's keep it simple or implement a delete route
-    }
+const imageToDelete = ref(null);
+const deletingImage = ref(false);
+
+const confirmDeleteImage = (img) => {
+    imageToDelete.value = img;
+};
+
+const closeDeleteModal = () => {
+    if (!deletingImage.value) imageToDelete.value = null;
+};
+
+const deleteExistingImage = () => {
+    if (!imageToDelete.value) return;
+
+    deletingImage.value = true;
+    router.delete(route('admin.products.images.destroy', [props.product.id, imageToDelete.value.id]), {
+        preserveScroll: true,
+        onFinish: () => {
+            deletingImage.value = false;
+            imageToDelete.value = null;
+        },
+    });
+};
+
+const setPrimaryImage = (imageId) => {
+    router.patch(route('admin.products.images.primary', [props.product.id, imageId]), {}, {
+        preserveScroll: true,
+    });
 };
 
 const submit = () => {
@@ -134,10 +157,16 @@ const submit = () => {
                                     <div v-if="product.images && product.images.length > 0" class="row mb-4">
                                         <div class="col-12 mb-2"><strong class="text-muted">Currently Active Images:</strong></div>
                                         <div class="col-md-3 col-sm-4 col-6 mb-3" v-for="img in product.images" :key="img.id">
-                                            <div class="position-relative border bg-white p-1 shadow-sm rounded">
+                                            <div class="gallery-tile position-relative border bg-white p-1 shadow-sm rounded">
                                                 <img :src="img.image_path" class="img-fluid rounded" style="height: 120px; width: 100%; object-fit: contain;">
                                                 <span v-if="img.is_primary" class="badge badge-success position-absolute" style="top: 5px; left: 5px;">Main</span>
-                                                <!-- Add delete button for images if required -->
+                                                <button type="button" class="btn btn-danger tile-delete position-absolute" style="top: 5px; right: 5px;" title="Delete image" @click="confirmDeleteImage(img)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                                <button v-if="!img.is_primary" type="button" class="btn btn-outline-success btn-block tile-primary mt-1" @click="setPrimaryImage(img.id)">
+                                                    <i class="fas fa-star mr-1"></i> Set as Main
+                                                </button>
+                                                <div v-else class="tile-primary-spacer mt-1">Current main image</div>
                                             </div>
                                         </div>
                                     </div>
@@ -234,5 +263,132 @@ const submit = () => {
                 </form>
             </div>
         </section>
+
+        <!-- Delete Image Confirmation -->
+        <Transition name="confirm-fade">
+            <div v-if="imageToDelete" class="modal d-block confirm-backdrop" tabindex="-1" role="dialog" @click.self="closeDeleteModal">
+                <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+                    <div class="modal-content border-0 shadow-lg confirm-card">
+                        <div class="modal-body text-center px-4 pt-4 pb-3">
+                            <div class="confirm-icon mb-3">
+                                <i class="fas fa-trash-alt"></i>
+                            </div>
+
+                            <h5 class="font-weight-bold mb-1">Delete this image?</h5>
+                            <p class="text-muted small mb-3">
+                                It will be permanently removed from
+                                <strong class="text-dark">{{ product.name }}</strong>.
+                                This can't be undone.
+                            </p>
+
+                            <div class="confirm-thumb mx-auto mb-2">
+                                <img :src="imageToDelete.image_path" alt="">
+                            </div>
+                            <span v-if="imageToDelete.is_primary" class="badge badge-warning">
+                                <i class="fas fa-star mr-1"></i> Main image
+                            </span>
+                            <p v-if="imageToDelete.is_primary" class="text-muted small mt-2 mb-0">
+                                The next image in the gallery will become the main one.
+                            </p>
+                        </div>
+                        <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                            <button type="button" class="btn btn-light border flex-fill" :disabled="deletingImage" @click="closeDeleteModal">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-danger flex-fill shadow-sm" :disabled="deletingImage" @click="deleteExistingImage">
+                                <i class="fas mr-1" :class="deletingImage ? 'fa-spinner fa-spin' : 'fa-trash-alt'"></i>
+                                {{ deletingImage ? 'Deleting...' : 'Delete' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Transition>
     </AdminLayout>
 </template>
+
+<style scoped>
+/* AdminLayout sets a global `.btn { padding: .6rem 1.5rem; border-radius: 10px }` with
+   !important, which blows up these tiny tile controls, so they get their own sizing. */
+.tile-delete {
+    padding: 0.15rem 0.42rem !important;
+    font-size: 0.72rem !important;
+    line-height: 1.4 !important;
+    border-radius: 6px !important;
+    z-index: 2;
+}
+
+.tile-primary {
+    padding: 0.22rem 0.5rem !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+}
+
+/* Keeps the main-image tile the same height as the ones carrying a button. */
+.tile-primary-spacer {
+    padding: 0.22rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    color: #adb5bd;
+    border: 1px solid transparent;
+}
+
+.confirm-backdrop {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+}
+
+.confirm-card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.confirm-icon {
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: #fdecea;
+    color: #dc3545;
+    font-size: 24px;
+}
+
+.confirm-thumb {
+    width: 110px;
+    height: 110px;
+    padding: 4px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.confirm-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.confirm-fade-enter-active,
+.confirm-fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.confirm-fade-enter-active .confirm-card,
+.confirm-fade-leave-active .confirm-card {
+    transition: transform 0.2s ease;
+}
+
+.confirm-fade-enter-from,
+.confirm-fade-leave-to {
+    opacity: 0;
+}
+
+.confirm-fade-enter-from .confirm-card,
+.confirm-fade-leave-to .confirm-card {
+    transform: scale(0.94);
+}
+</style>

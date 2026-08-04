@@ -80,6 +80,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('/admin/suppliers', \App\Http\Controllers\Admin\SupplierController::class)->names('admin.suppliers')->middleware('permission:view_suppliers');
     Route::resource('/admin/categories', \App\Http\Controllers\Admin\CategoryController::class)->names('admin.categories')->middleware('permission:view_categories');
     Route::resource('/admin/products', \App\Http\Controllers\Admin\ProductController::class)->names('admin.products')->middleware('permission:view_products');
+    Route::delete('/admin/products/{product}/images/{image}', [\App\Http\Controllers\Admin\ProductController::class, 'destroyImage'])->name('admin.products.images.destroy')->middleware('permission:view_products');
+    Route::patch('/admin/products/{product}/images/{image}/primary', [\App\Http\Controllers\Admin\ProductController::class, 'setPrimaryImage'])->name('admin.products.images.primary')->middleware('permission:view_products');
     Route::resource('/admin/bundles', \App\Http\Controllers\Admin\BundleController::class)->except(['show'])->names('admin.bundles')->middleware('permission:view_bundles');
     Route::resource('/admin/brands', \App\Http\Controllers\Admin\BrandController::class)->names('admin.brands')->middleware('permission:view_brands');
     Route::resource('/admin/units', \App\Http\Controllers\Admin\UnitController::class)->names('admin.units')->middleware('permission:view_units');
@@ -91,6 +93,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('/admin/users', \App\Http\Controllers\Admin\UserController::class)->except(['create', 'show', 'edit'])->names('admin.users')->middleware('permission:view_users');
     Route::resource('/admin/menus', \App\Http\Controllers\Admin\MenuController::class)->names('admin.menus')->middleware('permission:view_menus');
     Route::resource('/admin/customers', \App\Http\Controllers\Admin\CustomerController::class)->names('admin.customers')->middleware('permission:view_customers');
+    Route::get('/admin/shipping', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'index'])->name('admin.shipping.index')->middleware('permission:view_settings');
+    Route::post('/admin/shipping', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'update'])->name('admin.shipping.update')->middleware('permission:edit_settings');
+    Route::post('/admin/shipping/areas', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'storeArea'])->name('admin.shipping.areas.store')->middleware('permission:edit_settings');
     Route::get('/admin/settings', [\App\Http\Controllers\Admin\WebSettingController::class, 'index'])->name('admin.settings.index')->middleware('permission:view_settings');
     Route::post('/admin/settings', [\App\Http\Controllers\Admin\WebSettingController::class, 'update'])->name('admin.settings.update')->middleware('permission:edit_settings');
     Route::get('/admin/contact-messages', [\App\Http\Controllers\Admin\ContactMessageController::class, 'index'])->name('admin.contact-messages.index')->middleware('permission:view_contact_messages');

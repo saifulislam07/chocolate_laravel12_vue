@@ -387,6 +387,12 @@ watch(() => flash.value.error, (message) => {
                                             <p>Settings</p>
                                         </Link>
                                     </li>
+                                    <li class="nav-item" v-if="can('view_settings')">
+                                        <Link :href="r('admin.shipping.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Shipping') }">
+                                            <i class="nav-icon fas fa-truck text-amber-500"></i>
+                                            <p>Shipping Charges</p>
+                                        </Link>
+                                    </li>
                                     <li class="nav-item" v-if="can('view_users')">
                                         <Link :href="r('admin.users.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Users') }">
                                             <i class="nav-icon fas fa-users text-sky-500"></i>

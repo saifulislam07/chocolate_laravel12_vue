@@ -12,6 +12,10 @@ const props = defineProps({
         type: Number,
         default: 0,
     },
+    freeShippingThreshold: {
+        type: Number,
+        default: null,
+    },
 });
 
 const moneyFormatter = new Intl.NumberFormat("en-BD", {
@@ -150,8 +154,8 @@ function removeItem(itemId) {
                                 <ArrowRightIcon class="h-4 w-4" />
                             </Link>
 
-                            <p class="mt-6 text-[9px] text-center text-gray-400 uppercase tracking-widest">
-                                Free shipping on orders over $60
+                            <p v-if="props.freeShippingThreshold" class="mt-6 text-[9px] text-center text-gray-400 uppercase tracking-widest">
+                                Free shipping on orders over {{ formatMoney(props.freeShippingThreshold) }}
                             </p>
                         </div>
 

@@ -7,6 +7,10 @@ const props = defineProps({
     summary: { type: Object, required: true },
     paymentGateways: { type: Object, default: () => ({}) },
     divisions: { type: Array, default: () => [] },
+    shippingConfig: {
+        type: Object,
+        default: () => ({ default_charge: 0, free_threshold: null, charges: {} }),
+    },
 });
 
 const form = useForm({
@@ -29,6 +33,25 @@ const districtOptions = computed(() => {
 function onDivisionChange() {
     form.district_id = "";
 }
+
+// Mirrors App\Services\ShippingCalculator so the total shown matches what the server charges.
+const freeShipping = computed(() => {
+    const threshold = props.shippingConfig.free_threshold;
+    return threshold !== null && Number(props.summary.subtotal) >= Number(threshold);
+});
+
+const shipping = computed(() => {
+    if (freeShipping.value) return 0;
+
+    const areaCharge = props.shippingConfig.charges?.[form.district_id];
+    return Number(areaCharge ?? props.shippingConfig.default_charge ?? 0);
+});
+
+const total = computed(() => Number(props.summary.subtotal) + shipping.value + Number(props.summary.tax));
+
+const selectedDistrictName = computed(
+    () => districtOptions.value.find((d) => String(d.id) === String(form.district_id))?.name || "",
+);
 
 const moneyFormatter = new Intl.NumberFormat("en-BD", {
     style: "currency",
@@ -120,9 +143,20 @@ function placeOrder() {
                 </div>
                 <div class="mt-5 space-y-2 border-t border-cocov-line pt-4 text-sm">
                     <div class="flex justify-between"><span>Subtotal</span><span>{{ formatMoney(summary.subtotal) }}</span></div>
-                    <div class="flex justify-between"><span>Shipping</span><span>{{ formatMoney(summary.shipping) }}</span></div>
+                    <div class="flex justify-between">
+                        <span>
+                            Shipping
+                            <span v-if="selectedDistrictName" class="block text-[10px] uppercase tracking-widest text-cocov-gold">{{ selectedDistrictName }}</span>
+                            <span v-else class="block text-[10px] uppercase tracking-widest text-gray-400">Select your area</span>
+                        </span>
+                        <span v-if="freeShipping" class="font-semibold uppercase tracking-widest text-green-600">Free</span>
+                        <span v-else>{{ formatMoney(shipping) }}</span>
+                    </div>
                     <div class="flex justify-between"><span>Tax</span><span>{{ formatMoney(summary.tax) }}</span></div>
-                    <div class="flex justify-between font-heading text-base text-cocov-text"><span>Total</span><span>{{ formatMoney(summary.total) }}</span></div>
+                    <div class="flex justify-between font-heading text-base text-cocov-text"><span>Total</span><span>{{ formatMoney(total) }}</span></div>
+                    <p v-if="!freeShipping && shippingConfig.free_threshold" class="pt-1 text-[10px] uppercase tracking-widest text-cocov-gold">
+                        Add {{ formatMoney(shippingConfig.free_threshold - summary.subtotal) }} more for free delivery
+                    </p>
                 </div>
             </aside>
         </main>

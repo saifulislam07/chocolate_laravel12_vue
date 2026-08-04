@@ -7,7 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class District extends Model
 {
-    protected $fillable = ['division_id', 'name'];
+    protected $fillable = ['division_id', 'name', 'shipping_charge'];
+
+    protected function casts(): array
+    {
+        return [
+            'shipping_charge' => 'decimal:2',
+        ];
+    }
 
     public function division(): BelongsTo
     {

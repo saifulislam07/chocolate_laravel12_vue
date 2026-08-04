@@ -36,6 +36,7 @@ class CartController extends Controller
         return Inertia::render('Cart/Index', [
             'items' => $items,
             'subtotal' => $items->sum('line_total'),
+            'freeShippingThreshold' => app(\App\Services\ShippingCalculator::class)->freeShippingThreshold(),
         ]);
     }
 

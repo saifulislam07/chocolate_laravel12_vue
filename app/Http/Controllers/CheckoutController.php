@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\PaymentTransaction;
 use App\Models\WebSetting;
 use App\Services\InventoryService;
+use App\Services\ShippingCalculator;
 use App\Services\Payments\BkashPaymentService;
 use App\Services\Payments\NagadPaymentService;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +22,10 @@ use Inertia\Response;
 
 class CheckoutController extends Controller
 {
+    public function __construct(private readonly ShippingCalculator $shipping)
+    {
+    }
+
     public function index(Request $request): Response|RedirectResponse
     {
         $cart = $this->resolveCart($request);
@@ -45,7 +50,8 @@ class CheckoutController extends Controller
         })->values();
 
         $subtotal = $items->sum('line_total');
-        $shipping = $subtotal >= 80 ? 0 : 8;
+        // No area picked yet, so quote the default rate; the page re-prices live on selection.
+        $shipping = $this->shipping->charge($subtotal);
         $tax = round($subtotal * 0.05, 2);
         $total = $subtotal + $shipping + $tax;
 
@@ -53,10 +59,11 @@ class CheckoutController extends Controller
             'items' => $items,
             'summary' => [
                 'subtotal' => $subtotal,
-            'shipping' => $shipping,
+                'shipping' => $shipping,
                 'tax' => $tax,
                 'total' => $total,
             ],
+            'shippingConfig' => $this->shipping->frontendConfig(),
             'paymentGateways' => $this->paymentGatewayOptions(),
             'divisions' => Division::with('districts:id,division_id,name')->get(['id', 'name']),
         ]);
@@ -95,7 +102,7 @@ class CheckoutController extends Controller
         }
 
         $subtotal = $cart->items->sum(fn ($item) => (float) $item->product->price * (int) $item->quantity);
-        $shipping = $subtotal >= 80 ? 0 : 8;
+        $shipping = $this->shipping->charge($subtotal, $payload['district_id']);
         $tax = round($subtotal * 0.05, 2);
         $total = $subtotal + $shipping + $tax;
 

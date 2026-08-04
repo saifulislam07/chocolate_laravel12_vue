@@ -139,6 +139,33 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
     }
 
+    public function destroyImage(Product $product, ProductImage $image)
+    {
+        abort_if($image->product_id !== $product->id, 404);
+
+        $wasPrimary = $image->is_primary;
+
+        Storage::disk('uploads')->delete(str_replace('/uploads/', '', $image->image_path));
+        $image->delete();
+
+        // Never leave the gallery without a main image.
+        if ($wasPrimary) {
+            $product->images()->oldest('id')->first()?->update(['is_primary' => true]);
+        }
+
+        return redirect()->back()->with('success', 'Image deleted successfully.');
+    }
+
+    public function setPrimaryImage(Product $product, ProductImage $image)
+    {
+        abort_if($image->product_id !== $product->id, 404);
+
+        $product->images()->update(['is_primary' => false]);
+        $image->update(['is_primary' => true]);
+
+        return redirect()->back()->with('success', 'Main image updated.');
+    }
+
     public function destroy(Product $product)
     {
         foreach ($product->images as $image) {

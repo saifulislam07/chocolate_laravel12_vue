@@ -8,6 +8,7 @@ class WebSetting extends Model
 {
     protected $fillable = [
         'site_name', 'logo', 'footer_logo', 'favicon', 'email', 'phone', 'address',
+        'default_shipping_charge', 'free_shipping_threshold',
         'maintenance_mode', 'maintenance_title', 'maintenance_message',
         'facebook_url', 'instagram_url', 'youtube_url', 'whatsapp_url', 'tiktok_url', 'linkedin_url', 'pinterest_url',
         'meta_pixel_enabled', 'meta_pixel_id',
