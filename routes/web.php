@@ -96,6 +96,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/shipping', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'index'])->name('admin.shipping.index')->middleware('permission:view_settings');
     Route::post('/admin/shipping', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'update'])->name('admin.shipping.update')->middleware('permission:edit_settings');
     Route::post('/admin/shipping/areas', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'storeArea'])->name('admin.shipping.areas.store')->middleware('permission:edit_settings');
+    Route::patch('/admin/shipping/areas/{district}', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'updateArea'])->name('admin.shipping.areas.update')->middleware('permission:edit_settings');
+    Route::delete('/admin/shipping/areas/{district}', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'destroyArea'])->name('admin.shipping.areas.destroy')->middleware('permission:edit_settings');
     Route::get('/admin/settings', [\App\Http\Controllers\Admin\WebSettingController::class, 'index'])->name('admin.settings.index')->middleware('permission:view_settings');
     Route::post('/admin/settings', [\App\Http\Controllers\Admin\WebSettingController::class, 'update'])->name('admin.settings.update')->middleware('permission:edit_settings');
     Route::get('/admin/contact-messages', [\App\Http\Controllers\Admin\ContactMessageController::class, 'index'])->name('admin.contact-messages.index')->middleware('permission:view_contact_messages');

@@ -24,7 +24,7 @@ class ShippingChargeController extends Controller
                     ? (float) $settings->free_shipping_threshold
                     : null,
             ],
-            'divisions' => Division::with(['districts' => fn ($query) => $query->orderBy('name')])
+            'divisions' => Division::with(['districts' => fn ($query) => $query->withCount('orders')->orderBy('name')])
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Division $division): array => [
@@ -36,6 +36,8 @@ class ShippingChargeController extends Controller
                         'shipping_charge' => $district->shipping_charge !== null
                             ? (float) $district->shipping_charge
                             : null,
+                        // Areas carrying orders are locked against rename/removal.
+                        'orders_count' => $district->orders_count,
                     ])->values(),
                 ]),
         ]);
@@ -109,5 +111,58 @@ class ShippingChargeController extends Controller
         ]);
 
         return redirect()->back()->with('success', "{$name} added under {$division->name}.");
+    }
+
+    public function updateArea(Request $request, District $district)
+    {
+        $this->guardAreaInUse($district);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ], [
+            'name.required' => 'Give the area a name.',
+        ]);
+
+        $name = trim($validated['name']);
+
+        $exists = District::where('division_id', $district->division_id)
+            ->whereKeyNot($district->getKey())
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'name' => "\"{$name}\" already exists under this division.",
+            ]);
+        }
+
+        $district->update(['name' => $name]);
+
+        return redirect()->back()->with('success', 'Area renamed successfully.');
+    }
+
+    public function destroyArea(District $district)
+    {
+        $this->guardAreaInUse($district);
+
+        $name = $district->name;
+        $district->delete();
+
+        return redirect()->back()->with('success', "{$name} removed.");
+    }
+
+    /**
+     * An area referenced by an order is frozen: renaming would rewrite history and
+     * deleting would blank the district on those orders (the FK is nullOnDelete).
+     */
+    private function guardAreaInUse(District $district): void
+    {
+        $orderCount = $district->orders()->count();
+
+        if ($orderCount > 0) {
+            throw ValidationException::withMessages([
+                'name' => "\"{$district->name}\" is used by {$orderCount} order(s), so it can't be renamed or removed.",
+            ]);
+        }
     }
 }

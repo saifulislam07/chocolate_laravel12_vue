@@ -132,6 +132,42 @@ const submitArea = () => {
             },
         });
 };
+
+/* ---- Rename / remove an area ---- */
+
+const editingArea = ref(null);
+const confirmingDelete = ref(false);
+
+const editForm = useForm({ name: '' });
+
+const openEditArea = (district) => {
+    editingArea.value = district;
+    confirmingDelete.value = false;
+    editForm.clearErrors();
+    editForm.name = district.name;
+};
+
+const closeEditArea = () => {
+    if (!editForm.processing) editingArea.value = null;
+};
+
+const submitRename = () => {
+    editForm.patch(route('admin.shipping.areas.update', editingArea.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            editingArea.value = null;
+        },
+    });
+};
+
+const deleteArea = () => {
+    editForm.delete(route('admin.shipping.areas.destroy', editingArea.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            editingArea.value = null;
+        },
+    });
+};
 </script>
 
 <template>
@@ -241,7 +277,25 @@ const submitArea = () => {
 
                                         <div class="row">
                                             <div class="col-lg-4 col-md-6 mb-2" v-for="district in division.districts" :key="district.id">
-                                                <label class="district-label">{{ district.name }}</label>
+                                                <label class="district-label">
+                                                    <span class="district-name">{{ district.name }}</span>
+                                                    <button
+                                                        v-if="!district.orders_count"
+                                                        type="button"
+                                                        class="area-action"
+                                                        title="Rename or remove this area"
+                                                        @click="openEditArea(district)"
+                                                    >
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    <span
+                                                        v-else
+                                                        class="area-locked"
+                                                        :title="`${district.orders_count} order(s) use this area — it can't be renamed or removed`"
+                                                    >
+                                                        <i class="fas fa-lock"></i>
+                                                    </span>
+                                                </label>
                                                 <div class="input-group input-group-sm">
                                                     <div class="input-group-prepend"><span class="input-group-text">৳</span></div>
                                                     <input
@@ -321,6 +375,61 @@ const submitArea = () => {
                                     <i class="fas mr-1" :class="areaForm.processing ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
                                     {{ areaForm.processing ? 'Adding...' : 'Add Area' }}
                                 </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+
+        <!-- Rename / remove area -->
+        <Transition name="area-fade">
+            <div v-if="editingArea" class="modal d-block area-backdrop" tabindex="-1" role="dialog" @click.self="closeEditArea">
+                <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+                    <div class="modal-content border-0 shadow-lg area-card">
+                        <form @submit.prevent="submitRename">
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title font-weight-bold">Edit Area</h5>
+                                <button type="button" class="close" aria-label="Close" @click="closeEditArea"><span>&times;</span></button>
+                            </div>
+                            <div class="modal-body">
+                                <template v-if="!confirmingDelete">
+                                    <div class="form-group mb-0">
+                                        <label>Area Name <span class="text-danger">*</span></label>
+                                        <input type="text" v-model="editForm.name" class="form-control" :class="{ 'is-invalid': editForm.errors.name }" required>
+                                        <div class="text-danger small mt-1" v-if="editForm.errors.name">{{ editForm.errors.name }}</div>
+                                    </div>
+                                </template>
+
+                                <template v-else>
+                                    <div class="text-center">
+                                        <div class="delete-icon mb-3"><i class="fas fa-trash-alt"></i></div>
+                                        <p class="mb-0 small">
+                                            Remove <strong class="text-dark">{{ editingArea.name }}</strong> from the area list?
+                                            Customers will no longer be able to pick it at checkout.
+                                        </p>
+                                        <div class="text-danger small mt-2" v-if="editForm.errors.name">{{ editForm.errors.name }}</div>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="modal-footer border-0 d-flex">
+                                <template v-if="!confirmingDelete">
+                                    <button type="button" class="btn btn-outline-danger mr-auto" :disabled="editForm.processing" @click="confirmingDelete = true">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-light border" :disabled="editForm.processing" @click="closeEditArea">Cancel</button>
+                                    <button type="submit" class="btn btn-info shadow-sm" :disabled="editForm.processing">
+                                        <i class="fas mr-1" :class="editForm.processing ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                                        {{ editForm.processing ? 'Saving...' : 'Rename' }}
+                                    </button>
+                                </template>
+                                <template v-else>
+                                    <button type="button" class="btn btn-light border" :disabled="editForm.processing" @click="confirmingDelete = false">Back</button>
+                                    <button type="button" class="btn btn-danger shadow-sm" :disabled="editForm.processing" @click="deleteArea">
+                                        <i class="fas mr-1" :class="editForm.processing ? 'fa-spinner fa-spin' : 'fa-trash-alt'"></i>
+                                        {{ editForm.processing ? 'Removing...' : 'Remove' }}
+                                    </button>
+                                </template>
                             </div>
                         </form>
                     </div>
@@ -411,13 +520,53 @@ const submitArea = () => {
 }
 
 .district-label {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 4px;
     margin-bottom: 2px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color: #6c757d;
+}
+
+.district-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.area-action {
+    padding: 0;
+    border: 0;
+    background: none;
+    line-height: 1;
+    font-size: 10px;
+    color: #ced4da;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.district-label:hover .area-action {
+    color: #17a2b8;
+}
+
+.area-locked {
+    font-size: 9px;
+    color: #dee2e6;
+    cursor: help;
+}
+
+.delete-icon {
+    width: 54px;
+    height: 54px;
+    line-height: 54px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: #fdecea;
+    color: #dc3545;
+    font-size: 20px;
 }
 
 .toggle-link {
