@@ -5,6 +5,7 @@ import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/vu
 import SiteHeader from "@/Components/SiteHeader.vue";
 import SiteFooter from "@/Components/SiteFooter.vue";
 import BackToTop from "@/Components/BackToTop.vue";
+import CartDrawer from "@/Components/CartDrawer.vue";
 
 const page = usePage();
 const showToast = ref(false);
@@ -87,6 +88,8 @@ watch(shouldShowMessenger, (visible) => {
         <main>
             <slot />
         </main>
+
+        <CartDrawer />
 
         <BackToTop />
 

@@ -9,6 +9,7 @@ import {
 } from "@heroicons/vue/24/outline";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import { menuHref } from "@/composables/useMenuHref";
+import { openCartDrawer } from "@/composables/useCartDrawer";
 
 const props = defineProps({
     sliders: { type: Array, default: () => [] },
@@ -28,7 +29,10 @@ function formatMoney(amount) {
     return `${Number(amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}৳`;
 }
 function addToCart(id) {
-    router.post(route("cart.store"), { product_id: id, quantity: 1 }, { preserveScroll: true });
+    router.post(route("cart.store"), { product_id: id, quantity: 1 }, {
+        preserveScroll: true,
+        onSuccess: () => openCartDrawer(),
+    });
 }
 function toggleWishlist(id) {
     router.post(route("wishlist.toggle", id), {}, { preserveScroll: true });

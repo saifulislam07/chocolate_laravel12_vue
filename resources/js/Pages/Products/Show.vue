@@ -4,6 +4,7 @@ import { computed, ref } from "vue";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import { ChevronRightIcon, PlusIcon, MinusIcon } from "@heroicons/vue/20/solid";
 import { HeartIcon } from "@heroicons/vue/24/outline";
+import { openCartDrawer } from "@/composables/useCartDrawer";
 
 const props = defineProps({
     product: { type: Object, required: true },
@@ -29,7 +30,10 @@ function addToCart() {
     router.post(route("cart.store"), {
         product_id: props.product.id,
         quantity: quantity.value
-    }, { preserveScroll: true });
+    }, {
+        preserveScroll: true,
+        onSuccess: () => openCartDrawer(),
+    });
 }
 
 const buyingNow = ref(false);

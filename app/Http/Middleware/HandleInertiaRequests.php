@@ -37,8 +37,31 @@ class HandleInertiaRequests extends Middleware
             ? \App\Models\Cart::where('user_id', $user->id)->first()
             : \App\Models\Cart::where('session_id', $sessionId)->first();
 
+        $cartItems = collect();
+
         if ($cart) {
-            $cartCount = \App\Models\CartItem::where('cart_id', $cart->id)->sum('quantity');
+            $cart->load('items.product.images');
+
+            $cartItems = $cart->items
+                ->filter(fn ($item) => $item->product !== null)
+                ->map(function ($item): array {
+                    $price = (float) $item->product->price;
+                    $quantity = (int) $item->quantity;
+
+                    return [
+                        'id' => $item->id,
+                        'product_id' => $item->product->id,
+                        'slug' => $item->product->slug,
+                        'name' => $item->product->name,
+                        'price' => $price,
+                        'quantity' => $quantity,
+                        'line_total' => $price * $quantity,
+                        'image' => $item->product->images->first()?->image_path,
+                    ];
+                })
+                ->values();
+
+            $cartCount = $cartItems->sum('quantity');
         }
 
         $wishlistCount = $user
@@ -69,6 +92,8 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $user?->getAllPermissions()->pluck('name') ?? [],
             ],
             'cartCount' => (int) $cartCount,
+            'cartItems' => $cartItems->all(),
+            'cartSubtotal' => (float) $cartItems->sum('line_total'),
             'wishlistCount' => (int) $wishlistCount,
             'mainMenu' => $mainMenu,
             'webSettings' => \App\Models\WebSetting::first(),

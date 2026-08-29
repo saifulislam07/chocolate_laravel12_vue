@@ -9,6 +9,7 @@ import {
     XMarkIcon,
 } from "@heroicons/vue/20/solid";
 import { HeartIcon } from "@heroicons/vue/24/outline";
+import { openCartDrawer } from "@/composables/useCartDrawer";
 
 function debounce(fn, delay) {
     let timeoutId;
@@ -154,7 +155,10 @@ function loadMore() {
 }
 
 function addToCart(productId) {
-    router.post(route("cart.store"), { product_id: productId, quantity: 1 }, { preserveScroll: true });
+    router.post(route("cart.store"), { product_id: productId, quantity: 1 }, {
+        preserveScroll: true,
+        onSuccess: () => openCartDrawer(),
+    });
 }
 
 function toggleWishlist(productId) {

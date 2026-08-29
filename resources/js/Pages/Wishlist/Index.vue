@@ -2,6 +2,7 @@
 import { Head, Link, router } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import { HeartIcon, ShoppingBagIcon, TrashIcon } from "@heroicons/vue/24/outline";
+import { openCartDrawer } from "@/composables/useCartDrawer";
 
 defineProps({
     items: { type: Array, default: () => [] },
@@ -20,7 +21,10 @@ function formatMoney(value) {
 }
 
 function addToCart(productId) {
-    router.post(route("cart.store"), { product_id: productId, quantity: 1 }, { preserveScroll: true });
+    router.post(route("cart.store"), { product_id: productId, quantity: 1 }, {
+        preserveScroll: true,
+        onSuccess: () => openCartDrawer(),
+    });
 }
 
 function removeFromWishlist(productId) {

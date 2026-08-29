@@ -12,6 +12,7 @@ import {
     ChevronDownIcon,
 } from "@heroicons/vue/24/outline";
 import { menuHref } from "@/composables/useMenuHref";
+import { openCartDrawer } from "@/composables/useCartDrawer";
 
 const page = usePage();
 const settings = computed(() => page.props.webSettings || {});
@@ -195,10 +196,10 @@ const isActive = (url) => {
                             <Link :href="route('logout')" method="post" as="button" class="block w-full border-t border-cocov-line px-5 pb-1 pt-2.5 text-left text-sm text-red-500 transition hover:bg-cocov-card">Log Out</Link>
                         </div>
                     </div>
-                    <Link :href="route('cart.index')" class="relative transition hover:text-cocov-gold" aria-label="Cart">
+                    <button type="button" class="relative transition hover:text-cocov-gold" aria-label="Cart" @click="openCartDrawer">
                         <ShoppingBagIcon class="h-6 w-6" />
                         <span class="absolute -right-2 -top-2 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-cocov-gold text-[11px] font-bold text-white">{{ cartCount }}</span>
-                    </Link>
+                    </button>
                 </div>
             </div>
         </div>

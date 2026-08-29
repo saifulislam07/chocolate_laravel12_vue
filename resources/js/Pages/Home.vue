@@ -20,6 +20,7 @@ import { Autoplay, EffectFade, Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/navigation';
+import { openCartDrawer } from "@/composables/useCartDrawer";
 
 const heroModules = [Autoplay, EffectFade, Navigation];
 const arrivalsModules = [Navigation];
@@ -39,7 +40,10 @@ defineProps({
 const fallbackImage = "/images/godiva/product_default.png";
 
 function addToCart(productId) {
-    router.post(route("cart.store"), { product_id: productId, quantity: 1 }, { preserveScroll: true });
+    router.post(route("cart.store"), { product_id: productId, quantity: 1 }, {
+        preserveScroll: true,
+        onSuccess: () => openCartDrawer(),
+    });
 }
 
 function toggleWishlist(productId) {
