@@ -504,7 +504,7 @@ class DatabaseSeeder extends Seeder {
             ],
             [
                 'name' => 'Contact',
-                'url' => 'contact-us',
+                'url' => '/contact-us',
                 'order' => 6,
                 'children' => [],
             ],
