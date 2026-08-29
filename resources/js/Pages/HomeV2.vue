@@ -189,10 +189,7 @@ onUnmounted(() => {
                         </div>
                         <Link
                             :href="route('categories.show', cat.slug)"
-                            class="absolute bottom-5 left-1/2 flex h-[52px] w-[280px] max-w-[85%] -translate-x-1/2 items-center justify-center rounded-[3px] text-[15px] capitalize transition md:h-[60px] md:w-[320px]"
-                            :class="index === 1
-                                ? 'bg-cocov-gold text-white hover:bg-[#e0851a]'
-                                : 'border border-cocov-gold text-cocov-gold hover:bg-cocov-gold hover:text-white'"
+                            class="absolute bottom-5 left-1/2 flex h-[52px] w-[280px] max-w-[85%] -translate-x-1/2 items-center justify-center rounded-[3px] border border-cocov-gold text-[15px] capitalize text-cocov-gold transition hover:bg-cocov-gold hover:text-white md:h-[60px] md:w-[320px]"
                         >View all collections</Link>
                     </div>
                 </div>
