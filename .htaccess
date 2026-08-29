@@ -1,0 +1,19 @@
+# Serve the Laravel app from the public/ subdirectory
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Avoid rewrite loop: skip requests already pointing at public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Strip version-disclosing headers
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+</IfModule>
+
+# Block direct web access to sensitive files
+<FilesMatch "^\.(env|git|user\.ini)$">
+    Require all denied
+</FilesMatch>
