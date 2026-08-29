@@ -51,6 +51,7 @@ const typeBadges = {
     purchase_in: 'badge-success',
     sale_out: 'badge-info',
     return_in: 'badge-warning',
+    cancel_in: 'badge-warning',
     adjustment: 'badge-secondary',
 };
 </script>

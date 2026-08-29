@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\CartManager;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,8 +30,12 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CartManager $carts): RedirectResponse
     {
+        // Captured before Auth::login() regenerates the session id, so a bag
+        // filled before signing up follows the shopper into their new account.
+        $guestSessionId = $request->session()->getId();
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
@@ -46,6 +51,8 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        $carts->mergeGuestCartInto($user, $guestSessionId);
 
         return redirect(route('dashboard', absolute: false));
     }

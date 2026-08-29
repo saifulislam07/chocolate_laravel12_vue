@@ -7,8 +7,11 @@ use App\Models\Order;
 use App\Models\WebSetting;
 use App\Services\Courier\PathaoCourierService;
 use App\Services\Courier\SteadfastCourierService;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use RuntimeException;
 
 class SaleController extends Controller
 {
@@ -33,28 +36,58 @@ class SaleController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy($id, InventoryService $inventory)
     {
-        $sale = Order::findOrFail($id);
-        $sale->delete();
-        return redirect()->route('admin.sales.index')->with('success', 'Sale record deleted successfully.');
+        $sale = Order::with('items.product')->findOrFail($id);
+
+        DB::transaction(function () use ($sale, $inventory): void {
+            // A cancelled order has already handed its stock back. Any other
+            // order still holds it, and once the record is gone there is
+            // nothing left to reconcile against — so release it first.
+            if ($sale->status !== 'cancelled') {
+                $inventory->releaseOrderStock($sale, "Deleted order {$sale->order_number}");
+            }
+
+            $sale->delete();
+        });
+
+        return redirect()->route('admin.sales.index')->with('success', 'Sale record deleted and stock released.');
     }
 
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, $id, InventoryService $inventory)
     {
         $payload = $request->validate([
             'status' => ['required', 'in:pending,processing,shipped,delivered,cancelled,partially_returned,returned'],
             'payment_status' => ['required', 'in:unpaid,partial,paid'],
         ]);
 
-        $sale = Order::findOrFail($id);
+        $sale = Order::with('items.product')->findOrFail($id);
 
-        $sale->update([
-            'status' => $payload['status'],
-            'payment_status' => $payload['payment_status'],
-            'paid_amount' => $payload['payment_status'] === 'paid' ? $sale->total : $sale->paid_amount,
-            'due_amount' => $payload['payment_status'] === 'paid' ? 0 : $sale->due_amount,
-        ]);
+        $wasCancelled = $sale->status === 'cancelled';
+        $nowCancelled = $payload['status'] === 'cancelled';
+
+        try {
+            DB::transaction(function () use ($sale, $payload, $inventory, $wasCancelled, $nowCancelled): void {
+                // Stock moves only when the order crosses into or out of
+                // "cancelled", so re-saving the same status never double-counts.
+                if (! $wasCancelled && $nowCancelled) {
+                    $inventory->releaseOrderStock($sale, "Cancelled order {$sale->order_number}");
+                } elseif ($wasCancelled && ! $nowCancelled) {
+                    $inventory->reserveOrderStock($sale, "Reopened order {$sale->order_number}");
+                }
+
+                $sale->update([
+                    'status' => $payload['status'],
+                    'payment_status' => $payload['payment_status'],
+                    'paid_amount' => $payload['payment_status'] === 'paid' ? $sale->total : $sale->paid_amount,
+                    'due_amount' => $payload['payment_status'] === 'paid' ? 0 : $sale->due_amount,
+                ]);
+            });
+        } catch (RuntimeException $e) {
+            // Reopening needs the goods back off the shelf; if they have since
+            // been sold, leave the order cancelled rather than oversell.
+            return redirect()->back()->with('error', $e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Order status updated successfully.');
     }
