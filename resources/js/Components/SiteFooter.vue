@@ -1,7 +1,6 @@
 <script setup>
 import { Link, usePage } from "@inertiajs/vue3";
 import { computed } from "vue";
-import { menuHref } from "@/composables/useMenuHref";
 
 const page = usePage();
 const settings = computed(() => page.props.webSettings || {});
@@ -14,10 +13,10 @@ const settings = computed(() => page.props.webSettings || {});
             <img :src="settings.footer_logo || '/images/cococraft-logo-light.svg'" alt="" class="h-16 w-auto" />
 
             <nav class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[15px] text-white/90">
-                <Link :href="menuHref('about-us')" class="transition hover:text-cocov-gold">About Us</Link>
+                <Link :href="route('page.show', 'about-us')" class="transition hover:text-cocov-gold">About Us</Link>
                 <Link :href="route('products.index')" class="transition hover:text-cocov-gold">Products</Link>
-                <Link :href="menuHref('privacy-policy')" class="transition hover:text-cocov-gold">Privacy Policy</Link>
-                <Link :href="menuHref('terms-of-service')" class="transition hover:text-cocov-gold">Terms of Service</Link>
+                <Link :href="route('page.show', 'privacy-policy')" class="transition hover:text-cocov-gold">Privacy Policy</Link>
+                <Link :href="route('page.show', 'terms-of-service')" class="transition hover:text-cocov-gold">Terms of Service</Link>
                 <Link :href="route('contact.index')" class="transition hover:text-cocov-gold">Contact</Link>
             </nav>
 

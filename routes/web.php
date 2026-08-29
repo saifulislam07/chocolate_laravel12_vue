@@ -26,7 +26,6 @@ Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])-
 Route::get('/payment/bkash/callback', [CheckoutController::class, 'bkashCallback'])->name('payment.bkash.callback');
 Route::post('/newsletter/subscribe', [\App\Http\Controllers\NewsletterController::class, 'store'])->name('newsletter.subscribe');
 Route::get('/contact-us', [\App\Http\Controllers\ContactController::class, 'index'])->name('contact.index');
-Route::get('/p/contact-us', [\App\Http\Controllers\ContactController::class, 'index'])->name('contact.index');
 Route::post('/contact-us', [\App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
 
 Route::middleware('auth')->group(function () {
@@ -167,3 +166,9 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__ . '/auth.php';
+
+// CMS pages at the root level (/about-us, /privacy-policy, ...).
+// Must stay last so it never shadows a real route.
+Route::get('/{slug}', [\App\Http\Controllers\PublicPageController::class, 'show'])
+    ->where('slug', '[A-Za-z0-9_-]+')
+    ->name('page.show');
