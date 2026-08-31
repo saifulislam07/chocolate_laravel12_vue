@@ -20,8 +20,8 @@ const printInvoiceData = ref(null);
 
 const filteredProducts = computed(() => {
     if (!searchQuery.value) return props.products;
-    return props.products.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
+    return props.products.filter(p =>
+        p.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         (p.sku && p.sku.toLowerCase().includes(searchQuery.value.toLowerCase()))
     );
 });
@@ -91,7 +91,7 @@ const checkoutForm = useForm({
 
 const processSale = () => {
     if (cart.value.length === 0) return alert('Cart is empty!');
-    
+
     checkoutForm.customer_id = selectedCustomerId.value;
     checkoutForm.items = cart.value;
     checkoutForm.subtotal = subtotal.value;
@@ -143,7 +143,7 @@ const submitQuickCustomer = () => {
     quickCustomerForm.post(route('admin.customers.store'), {
         onSuccess: (page) => {
             // The list of customers will be updated via props automatically if using resource
-            // but we need to select the new one. 
+            // but we need to select the new one.
             // Since we don't have the new ID immediately in standard Inertia response without custom logic,
             // we can try to find it by phone in the updated props if they are refreshed.
             showCustomerModal.value = false;
@@ -181,9 +181,9 @@ const printInvoice = () => {
                             <div class="card-body p-2" style="height: 75vh; overflow-y: auto;">
                                 <div class="row">
                                     <div v-for="product in filteredProducts" :key="product.id" class="col-lg-3 col-md-4 col-sm-4 col-6 mb-4 px-2">
-                                        <div class="card h-100 product-card shadow-sm border-0 bg-white" @click="addToCart(product)" 
+                                        <div class="card h-100 product-card shadow-sm border-0 bg-white" @click="addToCart(product)"
                                              :style="{ cursor: product.stock > 0 ? 'pointer' : 'not-allowed', opacity: product.stock > 0 ? 1 : 0.6, borderRadius: '15px', overflow: 'hidden' }">
-                                            
+
                                             <!-- Top Image Area -->
                                             <div class="position-relative" style="height: 110px; background: #f9f9f9; width: 100%;">
                                                 <!-- Image -->
@@ -197,7 +197,7 @@ const printInvoice = () => {
 
                                                 <!-- Overlays -->
                                                 <div class="position-absolute w-100 px-2 d-flex justify-content-between" style="top: 8px;">
-                                                    <span class="badge shadow-sm border" 
+                                                    <span class="badge shadow-sm border"
                                                           :class="product.stock > 10 ? 'bg-white text-info' : 'bg-danger text-white'"
                                                           style="font-size: 9px; border-radius: 4px; padding: 2px 6px; border-color: rgba(0,0,0,0.05) !important;">
                                                         STK: {{ product.stock }}
@@ -305,7 +305,7 @@ const printInvoice = () => {
                                     </tr>
                                 </table>
                             </div>
-                            
+
                             <!-- Payment Area -->
                             <div class="card-body p-2 bg-white border-top">
                                 <div class="row mb-2">
@@ -338,7 +338,7 @@ const printInvoice = () => {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="card-footer p-2">
                                 <div class="row">
                                     <div class="col-4">
@@ -441,7 +441,7 @@ const printInvoice = () => {
                             </tfoot>
                         </table>
                         <div class="text-center mt-5">
-                            <p class="font-italic">Thank you for your business!</p>
+                            <p class="font-italic">Thank You for Your Order!</p>
                         </div>
                     </div>
                     <div class="modal-footer d-print-none">

@@ -139,19 +139,19 @@ function decrement() {
                         </div>
 
                         <!-- Add to Cart Controls -->
-                        <div class="mt-12 flex flex-col sm:flex-row items-center gap-4">
-                            <div class="flex h-12 w-full sm:w-32 items-center justify-between border border-gray-200 px-4">
-                                <button @click="decrement" class="text-gray-500 hover:text-cocov-gold">
-                                    <MinusIcon class="h-4 w-4" />
+                        <div class="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                            <div class="flex h-14 w-full items-center justify-between border border-gray-200 px-5 sm:h-12 sm:w-32 sm:px-4">
+                                <button @click="decrement" class="text-gray-500 hover:text-cocov-gold" aria-label="Decrease quantity">
+                                    <MinusIcon class="h-5 w-5 sm:h-4 sm:w-4" />
                                 </button>
-                                <span class="text-sm font-bold">{{ quantity }}</span>
-                                <button @click="increment" class="text-gray-500 hover:text-cocov-gold">
-                                    <PlusIcon class="h-4 w-4" />
+                                <span class="text-base font-bold sm:text-sm">{{ quantity }}</span>
+                                <button @click="increment" class="text-gray-500 hover:text-cocov-gold" aria-label="Increase quantity">
+                                    <PlusIcon class="h-5 w-5 sm:h-4 sm:w-4" />
                                 </button>
                             </div>
                             <button
                                 type="button"
-                                class="h-12 w-full flex-1 border border-cocov-gold text-[11px] font-bold uppercase tracking-[0.2em] text-cocov-gold transition hover:bg-cocov-gold hover:text-white disabled:border-gray-300 disabled:text-gray-300"
+                                class="h-14 w-full border border-cocov-gold text-xs font-bold uppercase tracking-[0.15em] text-cocov-gold transition hover:bg-cocov-gold hover:text-white disabled:border-gray-300 disabled:text-gray-300 sm:h-12 sm:flex-1 sm:text-[11px] sm:tracking-[0.2em]"
                                 :disabled="product.stock <= 0"
                                 @click="addToCart"
                             >
@@ -159,7 +159,7 @@ function decrement() {
                             </button>
                             <button
                                 type="button"
-                                class="h-12 w-full flex-1 border border-cocov-gold bg-cocov-gold text-[11px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-[#e0851a] disabled:border-gray-300 disabled:bg-gray-300"
+                                class="h-14 w-full border border-cocov-gold bg-cocov-gold text-xs font-bold uppercase tracking-[0.15em] text-white transition hover:bg-[#e0851a] disabled:border-gray-300 disabled:bg-gray-300 sm:h-12 sm:flex-1 sm:text-[11px] sm:tracking-[0.2em]"
                                 :disabled="product.stock <= 0 || buyingNow"
                                 @click="buyNow"
                             >
@@ -167,7 +167,7 @@ function decrement() {
                             </button>
                             <button
                                 type="button"
-                                class="flex h-12 w-full items-center justify-center gap-2 border border-gray-200 px-6 text-[11px] font-bold uppercase tracking-[0.2em] transition hover:border-red-200 hover:text-red-500 sm:w-auto"
+                                class="flex h-14 w-full items-center justify-center gap-2 border border-gray-200 px-6 text-xs font-bold uppercase tracking-[0.15em] transition hover:border-red-200 hover:text-red-500 sm:h-12 sm:w-auto sm:text-[11px] sm:tracking-[0.2em]"
                                 :class="{ 'border-red-200 text-red-500': product.is_wishlisted }"
                                 @click="toggleWishlist()"
                             >

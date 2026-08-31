@@ -12,21 +12,33 @@ class ProductController extends Controller
 {
     public function index(Request $request): Response
     {
+        return $this->renderList($request, bundlesOnly: false);
+    }
+
+    public function combos(Request $request): Response
+    {
+        return $this->renderList($request, bundlesOnly: true);
+    }
+
+    private function renderList(Request $request, bool $bundlesOnly): Response
+    {
         $selectedCategory = null;
         $wishlistProductIds = $request->user()
             ? $request->user()->wishlists()->pluck('product_id')->all()
             : [];
 
+        // Regular shop lists every active product (combos included so they are
+        // discoverable there too); the dedicated /combos page lists only combos.
         $priceBounds = Product::query()
             ->where('is_active', true)
-            ->where('is_bundle', false)
+            ->when($bundlesOnly, fn ($q) => $q->where('is_bundle', true))
             ->selectRaw('MIN(price) as min_price, MAX(price) as max_price')
             ->first();
 
         $query = Product::query()
             ->with(['images', 'category'])
             ->where('is_active', true)
-            ->where('is_bundle', false);
+            ->when($bundlesOnly, fn ($q) => $q->where('is_bundle', true));
 
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
@@ -104,6 +116,17 @@ class ProductController extends Controller
             'priceBounds' => [
                 'min' => (float) ($priceBounds->min_price ?? 0),
                 'max' => (float) ($priceBounds->max_price ?? 0),
+            ],
+            'comboMode' => $bundlesOnly,
+            'routeName' => $bundlesOnly ? 'combos.index' : 'products.index',
+            'pageMeta' => $bundlesOnly ? [
+                'breadcrumb' => 'Combos',
+                'title' => 'Combo Packs',
+                'subtitle' => 'Curated bundles at a better price',
+            ] : [
+                'breadcrumb' => 'Shop All',
+                'title' => 'The Collection',
+                'subtitle' => 'Find the chocolate that fits the moment',
             ],
         ]);
     }

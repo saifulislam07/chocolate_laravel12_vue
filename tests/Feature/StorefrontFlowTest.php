@@ -102,11 +102,11 @@ class StorefrontFlowTest extends TestCase
         ])->assertRedirect();
 
         $order = Order::sole();
-        // 2 x 100 subtotal, 80 district shipping, 5% tax.
+        // 2 x 100 subtotal, 80 district shipping, no tax.
         $this->assertEquals(200, (float) $order->subtotal);
         $this->assertEquals(80, (float) $order->shipping_cost);
-        $this->assertEquals(10, (float) $order->tax);
-        $this->assertEquals(290, (float) $order->total);
+        $this->assertEquals(0, (float) $order->tax);
+        $this->assertEquals(280, (float) $order->total);
 
         $this->assertSame(8, $product->fresh()->stock, 'stock should be drawn down by the order');
         $this->assertSame(0, CartItem::count(), 'the bag should be emptied once the order is placed');

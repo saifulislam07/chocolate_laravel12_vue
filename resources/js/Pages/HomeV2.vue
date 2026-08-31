@@ -16,6 +16,7 @@ const props = defineProps({
     categories: { type: Array, default: () => [] },
     featuredItems: { type: Array, default: () => [] },
     newArrivals: { type: Array, default: () => [] },
+    combos: { type: Array, default: () => [] },
     aboutContent: { type: String, default: "" },
     testimonials: { type: Array, default: () => [] },
 });
@@ -287,6 +288,59 @@ onUnmounted(() => {
                             </div>
                         </article>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= COMBO PACKS ================= -->
+        <section v-if="combos.length" class="px-5 py-16 md:px-8 lg:px-[126px] md:py-20">
+            <div class="mx-auto max-w-full">
+                <div class="mb-12 text-center">
+                    <p class="font-corinthia text-[46px] lowercase leading-none text-cocov-gold md:text-[50px]">more together, less cost</p>
+                    <h2 class="mt-1 font-heading text-3xl uppercase leading-tight text-cocov-text md:text-[48px]">Combo Packs</h2>
+                    <p class="mx-auto mt-4 max-w-[760px] text-[15px] leading-[25px] text-black/80">{{ sectionDesc }}</p>
+                </div>
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-[35px]">
+                    <article v-for="product in combos" :key="product.id" class="group relative flex flex-col overflow-hidden bg-cocov-card">
+                        <div class="relative aspect-square overflow-hidden">
+                            <span class="absolute left-3 top-3 z-10 bg-cocov-gold px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">Combo</span>
+                            <Link :href="route('products.show', product.slug)">
+                                <img :src="product.image || fallbackImage" :alt="product.name" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                            </Link>
+                            <button
+                                type="button"
+                                class="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-cocov-gold text-white opacity-0 shadow transition group-hover:opacity-100 hover:bg-[#e0851a]"
+                                :class="{ 'opacity-100': product.is_wishlisted }"
+                                aria-label="Wishlist"
+                                @click="toggleWishlist(product.id)"
+                            ><HeartIcon class="h-4 w-4" :class="{ 'fill-current': product.is_wishlisted }" /></button>
+                        </div>
+                        <div class="relative flex min-h-[102px] flex-col px-4 pt-4">
+                            <h3 class="font-heading text-[18px] capitalize leading-[24px] text-cocov-text md:text-[20px] md:leading-[28px]">
+                                <Link :href="route('products.show', product.slug)" class="transition hover:text-cocov-gold">{{ product.name }}</Link>
+                            </h3>
+                            <p v-if="product.bundle_items_count" class="mt-1 text-[13px] text-cocov-muted">{{ product.bundle_items_count }} items included</p>
+                            <div class="mt-3 flex items-baseline gap-2 text-[15px]">
+                                <span v-if="product.compare_at_price > product.price" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
+                                <span v-if="product.compare_at_price > product.price" class="text-cocov-muted">|</span>
+                                <span class="text-[18px] font-semibold text-cocov-gold md:text-[20px]">{{ formatMoney(product.price) }}</span>
+                            </div>
+                            <button
+                                type="button"
+                                class="absolute bottom-0 right-0 flex h-[44px] w-[73px] items-center justify-center bg-cocov-gold text-white transition group-hover:opacity-0"
+                                aria-label="Add to cart"
+                                @click="addToCart(product.id)"
+                            ><ShoppingBagIcon class="h-5 w-5" /></button>
+                            <button
+                                type="button"
+                                class="absolute inset-x-0 bottom-0 flex h-[44px] translate-y-full items-center justify-center gap-2 bg-cocov-gold text-[15px] capitalize text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
+                                @click="addToCart(product.id)"
+                            ><ShoppingBagIcon class="h-5 w-5" /> Add to cart</button>
+                        </div>
+                    </article>
+                </div>
+                <div class="mt-12 text-center">
+                    <Link :href="route('combos.index')" class="inline-flex h-[50px] items-center justify-center rounded-[3px] border border-cocov-gold px-8 text-[15px] capitalize text-cocov-gold transition hover:bg-cocov-gold hover:text-white">view all combos</Link>
                 </div>
             </div>
         </section>

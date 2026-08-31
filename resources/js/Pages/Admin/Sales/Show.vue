@@ -1,7 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 
 // Shop details for the invoice header come from Settings, not hardcoded text.
@@ -74,9 +74,23 @@ const printInvoice = () => {
     window.print();
 };
 
-const getSourceContext = (source) => {
-    return source === 'pos' ? 'POS System' : 'Web Store';
-};
+// Force the print sheet to A5 only while this page is on screen. Kept in a
+// dedicated <style> node so it never lingers for other admin print views
+// (reports, POS receipt) after an SPA navigation.
+const A5_PAGE_RULE = '@page { size: A5; margin: 10mm; }';
+let a5StyleEl = null;
+
+onMounted(() => {
+    a5StyleEl = document.createElement('style');
+    a5StyleEl.setAttribute('data-invoice-a5', '');
+    a5StyleEl.textContent = A5_PAGE_RULE;
+    document.head.appendChild(a5StyleEl);
+});
+
+onBeforeUnmount(() => {
+    a5StyleEl?.remove();
+    a5StyleEl = null;
+});
 </script>
 
 <template>
@@ -199,144 +213,83 @@ const getSourceContext = (source) => {
                 </div>
                 <div class="row">
                     <div class="col-12">
-                        <!-- Main content -->
-                        <div class="invoice p-3 mb-3 border bg-white" id="invoice-print-area">
-                            <!-- title row -->
-                            <div class="row border-bottom pb-4 mb-4">
-                                <div class="col-7">
-                                    <img v-if="shop.logo" :src="shop.logo" alt="" class="invoice-logo mb-2">
-                                    <h2 class="font-weight-bold mb-1">{{ shop.site_name || 'Invoice' }}</h2>
-                                    <p class="mb-0 text-muted" v-if="shop.address">{{ shop.address }}</p>
-                                    <p class="text-muted mb-0">
-                                        <span v-if="shop.phone">Phone: {{ shop.phone }}</span>
-                                        <span v-if="shop.phone && shop.email"> | </span>
+                        <!-- Minimal A5 invoice -->
+                        <div class="invoice-sheet" id="invoice-print-area">
+                            <header class="inv-head">
+                                <div>
+                                    <img v-if="shop.logo" :src="shop.logo" alt="" class="inv-logo">
+                                    <div class="inv-shop">{{ shop.site_name || 'Invoice' }}</div>
+                                    <div class="inv-muted" v-if="shop.address">{{ shop.address }}</div>
+                                    <div class="inv-muted">
+                                        <span v-if="shop.phone">{{ shop.phone }}</span>
+                                        <span v-if="shop.phone && shop.email"> · </span>
                                         <span v-if="shop.email">{{ shop.email }}</span>
-                                    </p>
+                                    </div>
                                 </div>
-                                <div class="col-5 text-right">
-                                    <h3 class="text-uppercase font-weight-bold text-gray-dark mb-2">Invoice</h3>
-                                    <p class="mb-1"><b class="h5 text-info">#{{ sale.order_number }}</b></p>
-                                    <p class="mb-0 text-muted">{{ new Date(sale.created_at).toLocaleString() }}</p>
+                                <div class="inv-head-right">
+                                    <div class="inv-title">Invoice</div>
+                                    <div class="inv-number">#{{ sale.order_number }}</div>
+                                    <div class="inv-muted">{{ new Date(sale.created_at).toLocaleDateString() }}</div>
                                 </div>
-                            </div>
-                            
-                            <!-- info row -->
-                            <div class="row invoice-info mb-4">
-                                <div class="col-sm-4 invoice-col">
-                                    <span class="text-muted text-sm text-uppercase">Billed To</span>
-                                    <address class="mt-1">
-                                        <template v-if="sale.order_source === 'pos'">
-                                            <strong class="h5">{{ sale.customer?.name || 'Walk-in Customer' }}</strong><br>
-                                            <span v-if="sale.customer?.address">{{ sale.customer.address }}<br></span>
-                                            <span v-if="sale.customer?.phone">Phone: {{ sale.customer.phone }}<br></span>
-                                            <span v-if="sale.customer?.email">Email: {{ sale.customer.email }}</span>
-                                        </template>
-                                        <template v-else>
-                                            <strong class="h5">{{ sale.customer_name || sale.user?.name || 'Guest User' }}</strong><br>
-                                            Address: {{ sale.shipping_address || 'N/A' }}<br>
-                                            <span v-if="sale.customer_phone">Phone: {{ sale.customer_phone }}<br></span>
-                                            Email: {{ sale.user?.email || 'N/A' }}
-                                        </template>
-                                    </address>
+                            </header>
+
+                            <section class="inv-parties">
+                                <div>
+                                    <div class="inv-label">Billed To</div>
+                                    <template v-if="sale.order_source === 'pos'">
+                                        <div class="inv-strong">{{ sale.customer?.name || 'Walk-in Customer' }}</div>
+                                        <div v-if="sale.customer?.address">{{ sale.customer.address }}</div>
+                                        <div v-if="sale.customer?.phone">{{ sale.customer.phone }}</div>
+                                        <div v-if="sale.customer?.email">{{ sale.customer.email }}</div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="inv-strong">{{ sale.customer_name || sale.user?.name || 'Guest User' }}</div>
+                                        <div v-if="sale.shipping_address" style="white-space: pre-line">{{ sale.shipping_address }}</div>
+                                        <div v-if="sale.customer_phone || sale.customer?.email || sale.user?.email">
+                                            <span v-if="sale.customer_phone">{{ sale.customer_phone }}</span>
+                                            <span v-if="sale.customer_phone && (sale.customer?.email || sale.user?.email)"> · </span>
+                                            <span v-if="sale.customer?.email || sale.user?.email">{{ sale.customer?.email || sale.user?.email }}</span>
+                                        </div>
+                                    </template>
                                 </div>
-                                
-                                <div class="col-sm-4 invoice-col">
-                                    <span class="text-muted text-sm text-uppercase">Order Attributes</span>
-                                    <address class="mt-1">
-                                        <strong>Source:</strong> {{ getSourceContext(sale.order_source) }}<br>
-                                        <strong>Status:</strong> <span class="text-uppercase">{{ sale.status }}</span><br>
-                                        <strong>Sale Type:</strong> Retail
-                                    </address>
+                                <div class="inv-head-right">
+                                    <div class="inv-label">Payment</div>
+                                    <div class="inv-upper">{{ sale.payment_method }}</div>
+                                    <div class="inv-upper" :class="sale.payment_status === 'paid' ? 'inv-ok' : 'inv-due'">{{ sale.payment_status }}</div>
                                 </div>
-                                
-                                <div class="col-sm-4 invoice-col text-sm-right">
-                                    <span class="text-muted text-sm text-uppercase">Payment</span>
-                                    <address class="mt-1">
-                                        <strong>Method:</strong> <span class="text-uppercase">{{ sale.payment_method }}</span><br>
-                                        <strong>Status:</strong> <span class="text-uppercase text-bold" :class="sale.payment_status === 'paid' ? 'text-success' : 'text-danger'">{{ sale.payment_status }}</span>
-                                    </address>
-                                </div>
-                            </div>
-                            
-                            <!-- Table row -->
-                            <div class="row">
-                                <div class="col-12 table-responsive">
-                                    <table class="table table-striped table-bordered text-center">
-                                        <thead class="bg-light">
-                                            <tr>
-                                                <th>#</th>
-                                                <th class="text-left">Product Title</th>
-                                                <th>Unit Price</th>
-                                                <th>Quantity</th>
-                                                <th class="text-right">Subtotal</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="(item, index) in sale.items" :key="item.id">
-                                                <td>{{ index + 1 }}</td>
-                                                <td class="text-left font-weight-bold">{{ item.product_name }}</td>
-                                                <td>৳{{ item.price }}</td>
-                                                <td>{{ item.quantity }}</td>
-                                                <td class="text-right font-weight-bold">৳{{ (item.price * item.quantity).toFixed(2) }}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                            </section>
+
+                            <table class="inv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th class="num">Qty</th>
+                                        <th class="num">Price</th>
+                                        <th class="num">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in sale.items" :key="item.id">
+                                        <td>{{ item.product_name }}</td>
+                                        <td class="num">{{ item.quantity }}</td>
+                                        <td class="num">৳{{ item.price }}</td>
+                                        <td class="num">৳{{ (item.price * item.quantity).toFixed(2) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="inv-totals">
+                                <div class="inv-row"><span>Subtotal</span><span>৳{{ sale.subtotal }}</span></div>
+                                <div class="inv-row" v-if="parseFloat(sale.tax) > 0"><span>Tax</span><span>৳{{ sale.tax }}</span></div>
+                                <div class="inv-row" v-if="parseFloat(sale.shipping_cost) > 0"><span>Shipping</span><span>৳{{ sale.shipping_cost }}</span></div>
+                                <div class="inv-row inv-due" v-if="parseFloat(sale.discount) > 0"><span>Discount</span><span>-৳{{ sale.discount }}</span></div>
+                                <div class="inv-row inv-grand"><span>Total</span><span>৳{{ sale.total }}</span></div>
+                                <div class="inv-row" v-if="parseFloat(sale.paid_amount) > 0"><span>Paid</span><span>৳{{ sale.paid_amount }}</span></div>
+                                <div class="inv-row inv-due" v-if="parseFloat(sale.due_amount) > 0"><span>Due</span><span>৳{{ sale.due_amount }}</span></div>
                             </div>
 
-                            <div class="row mt-4">
-                                <div class="col-6">
-                                    <p class="lead">Payment Summary:</p>
-                                    <div class="bg-light p-3 rounded border">
-                                        <p class="text-muted well well-sm shadow-none mt-2 mb-0">
-                                            This invoice acts as a proof of purchase for the items listed. For any queries, please communicate with the support desk.
-                                            <br><br>
-                                            <span v-if="sale.notes"><strong>Note:</strong> {{ sale.notes }}</span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm border">
-                                            <tr>
-                                                <th style="width:50%" class="bg-light pl-3">Subtotal:</th>
-                                                <td class="text-right pr-3 font-weight-bold">৳{{ sale.subtotal }}</td>
-                                            </tr>
-                                            <tr v-if="parseFloat(sale.tax) > 0">
-                                                <th class="bg-light pl-3">Tax:</th>
-                                                <td class="text-right pr-3 font-weight-bold">৳{{ sale.tax }}</td>
-                                            </tr>
-                                            <tr v-if="parseFloat(sale.shipping_cost) > 0">
-                                                <th class="bg-light pl-3">Shipping Charge:</th>
-                                                <td class="text-right pr-3 font-weight-bold">৳{{ sale.shipping_cost }}</td>
-                                            </tr>
-                                            <tr v-if="parseFloat(sale.discount) > 0">
-                                                <th class="bg-light pl-3">Discount:</th>
-                                                <td class="text-right pr-3 font-weight-bold text-danger">-৳{{ sale.discount }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th class="bg-gray-light pl-3 h5 border-top">Grand Total:</th>
-                                                <td class="text-right pr-3 h5 text-success font-weight-bold border-top">৳{{ sale.total }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th class="bg-light pl-3 border-top">Total Paid:</th>
-                                                <td class="text-right pr-3 text-success font-weight-bold border-top">৳{{ sale.paid_amount || '0.00' }}</td>
-                                            </tr>
-                                            <tr v-if="parseFloat(sale.due_amount) > 0">
-                                                <th class="bg-light pl-3 text-danger">Total Due:</th>
-                                                <td class="text-right pr-3 text-danger font-weight-bold h6">৳{{ sale.due_amount }}</td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="row mt-5">
-                                <div class="col-12 text-center">
-                                    <hr>
-                                    <p class="font-italic text-sm text-muted">Thank you for your business!</p>
-                                </div>
-                            </div>
+                            <p class="inv-note" v-if="sale.notes"><strong>Note:</strong> {{ sale.notes }}</p>
+                            <p class="inv-thanks">Thank you for your order</p>
                         </div>
                     </div>
                 </div>
@@ -345,11 +298,182 @@ const getSourceContext = (source) => {
     </AdminLayout>
 </template>
 
-<!-- Print rules live unscoped in AdminLayout: a scoped `body *` cannot reach the sidebar. -->
+<!-- Print rules that hide the admin chrome live unscoped in AdminLayout: a scoped
+     `body *` cannot reach the sidebar. These are just the invoice's own look. -->
 <style scoped>
-.invoice-logo {
-    max-height: 60px;
-    max-width: 200px;
+.invoice-sheet {
+    width: 148mm;
+    max-width: 100%;
+    min-height: 210mm;
+    margin: 0 auto 1.5rem;
+    padding: 10mm;
+    background: #fff;
+    border: 1px solid #ececec;
+    color: #1c1c1c;
+    font-size: 12px;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+}
+
+.inv-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.inv-logo {
+    display: block;
+    max-height: 30px;
+    max-width: 130px;
     object-fit: contain;
+    margin-bottom: 3px;
+}
+
+.inv-shop {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.inv-muted {
+    color: #8a8a8a;
+    font-size: 11px;
+}
+
+.inv-head-right {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.inv-title {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 11px;
+    color: #8a8a8a;
+}
+
+.inv-number {
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.inv-parties {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 9px 0;
+}
+
+.inv-label {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 10px;
+    color: #9a9a9a;
+    margin-bottom: 2px;
+}
+
+.inv-strong {
+    font-weight: 700;
+}
+
+.inv-upper {
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+}
+
+.inv-ok {
+    color: #1a7f4b;
+}
+
+.inv-due {
+    color: #c0392b;
+}
+
+.inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+
+.inv-table th {
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9a9a9a;
+    font-weight: 600;
+    border-bottom: 1px solid #333;
+    padding: 6px 4px;
+}
+
+.inv-table td {
+    padding: 6px 4px;
+    border-bottom: 1px solid #ededed;
+}
+
+.inv-table .num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.inv-totals {
+    width: 55%;
+    margin-left: auto;
+    margin-top: 12px;
+}
+
+.inv-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 4px;
+}
+
+.inv-grand {
+    border-top: 1px solid #333;
+    margin-top: 4px;
+    padding-top: 6px;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.inv-note {
+    margin-top: 12px;
+    font-size: 11px;
+    color: #555;
+}
+
+/* Footer: pinned to the bottom of the A5 sheet, not floating after the content. */
+.inv-thanks {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #e6e6e6;
+    text-align: center;
+    font-size: 11px;
+    color: #9a9a9a;
+}
+
+@media print {
+    .invoice-sheet {
+        width: auto;
+        min-height: 0;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        font-size: 11px;
+        display: block;
+    }
+
+    .inv-thanks {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: 0;
+        background: #fff;
+    }
 }
 </style>

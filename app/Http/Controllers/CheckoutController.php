@@ -60,7 +60,7 @@ class CheckoutController extends Controller
         $subtotal = $items->sum('line_total');
         // No area picked yet, so quote the default rate; the page re-prices live on selection.
         $shipping = $this->shipping->charge($subtotal);
-        $tax = round($subtotal * 0.05, 2);
+        $tax = 0;
         $total = $subtotal + $shipping + $tax;
 
         return Inertia::render('Checkout/Index', [
@@ -111,7 +111,7 @@ class CheckoutController extends Controller
 
         $subtotal = $cart->items->sum(fn ($item) => (float) $item->product->price * (int) $item->quantity);
         $shipping = $this->shipping->charge($subtotal, $payload['district_id']);
-        $tax = round($subtotal * 0.05, 2);
+        $tax = 0;
         $total = $subtotal + $shipping + $tax;
 
         $district = \App\Models\District::find($payload['district_id']);
@@ -142,12 +142,11 @@ class CheckoutController extends Controller
                 'total' => $total,
                 'payment_method' => $payload['payment_method'],
                 'payment_status' => 'unpaid',
+                // Street address only — name, phone and email live in their own
+                // columns and are rendered separately on the invoice.
                 'shipping_address' => collect([
-                    $payload['full_name'] ?? null,
                     $payload['address'],
                     trim(($district?->name ?? '') . ' ' . ($payload['postal_code'] ?? '')) ?: null,
-                    'Phone: ' . $payload['phone'],
-                    isset($payload['email']) ? 'Email: ' . $payload['email'] : null,
                 ])->filter()->implode("\n"),
                 'customer_phone' => $payload['phone'],
                 'customer_name' => $payload['full_name'] ?? null,

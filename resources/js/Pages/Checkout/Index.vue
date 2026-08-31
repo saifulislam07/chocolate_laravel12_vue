@@ -47,7 +47,7 @@ const shipping = computed(() => {
     return Number(areaCharge ?? props.shippingConfig.default_charge ?? 0);
 });
 
-const total = computed(() => Number(props.summary.subtotal) + shipping.value + Number(props.summary.tax));
+const total = computed(() => Number(props.summary.subtotal) + shipping.value);
 
 const selectedDistrictName = computed(
     () => districtOptions.value.find((d) => String(d.id) === String(form.district_id))?.name || "",
@@ -152,7 +152,6 @@ function placeOrder() {
                         <span v-if="freeShipping" class="font-semibold uppercase tracking-widest text-green-600">Free</span>
                         <span v-else>{{ formatMoney(shipping) }}</span>
                     </div>
-                    <div class="flex justify-between"><span>Tax</span><span>{{ formatMoney(summary.tax) }}</span></div>
                     <div class="flex justify-between font-heading text-base text-cocov-text"><span>Total</span><span>{{ formatMoney(total) }}</span></div>
                     <p v-if="!freeShipping && shippingConfig.free_threshold" class="pt-1 text-[10px] uppercase tracking-widest text-cocov-gold">
                         Add {{ formatMoney(shippingConfig.free_threshold - summary.subtotal) }} more for free delivery
