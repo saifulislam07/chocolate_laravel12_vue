@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -105,6 +106,35 @@ class BundleController extends Controller
         });
 
         return redirect()->route('admin.bundles.index')->with('success', 'Bundle updated successfully.');
+    }
+
+    public function destroyImage(Product $bundle, ProductImage $image)
+    {
+        abort_unless($bundle->is_bundle, 404);
+        abort_if($image->product_id !== $bundle->id, 404);
+
+        $wasPrimary = $image->is_primary;
+
+        Storage::disk('uploads')->delete(str_replace('/uploads/', '', $image->image_path));
+        $image->delete();
+
+        // Never leave the gallery without a main image.
+        if ($wasPrimary) {
+            $bundle->images()->oldest('id')->first()?->update(['is_primary' => true]);
+        }
+
+        return redirect()->back()->with('success', 'Image deleted successfully.');
+    }
+
+    public function setPrimaryImage(Product $bundle, ProductImage $image)
+    {
+        abort_unless($bundle->is_bundle, 404);
+        abort_if($image->product_id !== $bundle->id, 404);
+
+        $bundle->images()->update(['is_primary' => false]);
+        $image->update(['is_primary' => true]);
+
+        return redirect()->back()->with('success', 'Main image updated.');
     }
 
     public function destroy(Product $bundle)

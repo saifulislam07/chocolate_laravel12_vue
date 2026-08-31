@@ -83,6 +83,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/products/{product}/images/{image}', [\App\Http\Controllers\Admin\ProductController::class, 'destroyImage'])->name('admin.products.images.destroy')->middleware('permission:view_products');
     Route::patch('/admin/products/{product}/images/{image}/primary', [\App\Http\Controllers\Admin\ProductController::class, 'setPrimaryImage'])->name('admin.products.images.primary')->middleware('permission:view_products');
     Route::resource('/admin/bundles', \App\Http\Controllers\Admin\BundleController::class)->except(['show'])->names('admin.bundles')->middleware('permission:view_bundles');
+    Route::delete('/admin/bundles/{bundle}/images/{image}', [\App\Http\Controllers\Admin\BundleController::class, 'destroyImage'])->name('admin.bundles.images.destroy')->middleware('permission:view_bundles');
+    Route::patch('/admin/bundles/{bundle}/images/{image}/primary', [\App\Http\Controllers\Admin\BundleController::class, 'setPrimaryImage'])->name('admin.bundles.images.primary')->middleware('permission:view_bundles');
     Route::resource('/admin/brands', \App\Http\Controllers\Admin\BrandController::class)->names('admin.brands')->middleware('permission:view_brands');
     Route::resource('/admin/units', \App\Http\Controllers\Admin\UnitController::class)->names('admin.units')->middleware('permission:view_units');
     Route::resource('/admin/purchases', \App\Http\Controllers\Admin\PurchaseController::class)->names('admin.purchases')->middleware('permission:view_purchases');

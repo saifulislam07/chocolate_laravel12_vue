@@ -93,21 +93,12 @@ const staticRight = [
     { id: "r3", name: "Contact", url: "/contact-us" },
 ];
 const mainMenu = computed(() => page.props.mainMenu || []);
-// Always-present entry point for combo/bundle products, regardless of the
-// admin-managed menu. Skipped if the menu already links to /combos.
-const comboLink = { id: "combos", name: "Combos", url: "/combos", children: [] };
-const hasComboLink = computed(() =>
-    mainMenu.value.some((m) => (m.url || "").replace(/\/$/, "") === "/combos")
-);
 const leftMenu = computed(() =>
     mainMenu.value.length ? mainMenu.value.slice(0, Math.ceil(mainMenu.value.length / 2)) : staticLeft
 );
-const rightMenu = computed(() => {
-    const base = mainMenu.value.length
-        ? mainMenu.value.slice(Math.ceil(mainMenu.value.length / 2))
-        : staticRight;
-    return hasComboLink.value ? base : [...base, comboLink];
-});
+const rightMenu = computed(() =>
+    mainMenu.value.length ? mainMenu.value.slice(Math.ceil(mainMenu.value.length / 2)) : staticRight
+);
 const allMenu = computed(() => [...leftMenu.value, ...rightMenu.value]);
 const isActive = (url) => {
     const href = menuHref(url);

@@ -1,7 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     product: Object,
@@ -28,6 +28,9 @@ const form = useForm({
     is_new: !!props.product.is_new,
     _method: 'put', // Required for file uploads on update
 });
+
+// Laravel keys the `images.*` rule as `images.0`, so look the error up by prefix.
+const imageError = computed(() => Object.entries(form.errors).find(([key]) => key.startsWith('images'))?.[1]);
 
 const imagePreviews = ref([]);
 
@@ -177,7 +180,7 @@ const submit = () => {
                                             <input type="file" @change="handleFileChange" class="custom-file-input" id="customFile" accept="image/*" multiple>
                                             <label class="custom-file-label" for="customFile">Choose files...</label>
                                         </div>
-                                        <div class="invalid-feedback d-block" v-if="form.errors.images">{{ form.errors.images }}</div>
+                                        <div class="invalid-feedback d-block" v-if="imageError">{{ imageError }}</div>
                                     </div>
                                     
                                     <div v-if="imagePreviews.length > 0" class="row border rounded p-3 bg-light mt-3 animated fadeIn">
