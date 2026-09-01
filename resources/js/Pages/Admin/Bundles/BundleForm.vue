@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -193,12 +194,12 @@ function submit() {
 
                                     <div class="form-group">
                                         <label>Description</label>
-                                        <textarea v-model="form.description" rows="4" class="form-control"></textarea>
+                                        <RichTextEditor v-model="form.description" :height="180" :invalid="!!form.errors.description" placeholder="Describe this bundle..." />
                                     </div>
 
                                     <div class="form-group mb-0">
                                         <label>Bundle Note</label>
-                                        <textarea v-model="form.bundle_note" rows="3" class="form-control" placeholder="Example: Includes gift wrap and a handwritten note."></textarea>
+                                        <RichTextEditor v-model="form.bundle_note" :height="130" toolbar="basic" :invalid="!!form.errors.bundle_note" placeholder="Example: Includes gift wrap and a handwritten note." />
                                     </div>
                                 </div>
                             </div>

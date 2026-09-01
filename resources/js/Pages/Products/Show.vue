@@ -68,7 +68,7 @@ function decrement() {
 
         <div class="bg-white">
             <!-- Breadcrumbs -->
-            <nav class="mx-auto max-w-full px-6 py-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+            <nav class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px] py-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 <Link href="/" class="hover:text-cocov-gold">Home</Link>
                 <ChevronRightIcon class="h-3 w-3" />
                 <span class="text-cocov-text">{{ product.category || 'Chocolate' }}</span>
@@ -76,7 +76,7 @@ function decrement() {
                 <span class="text-cocov-gold">{{ product.name }}</span>
             </nav>
 
-            <main class="mx-auto max-w-full px-6 py-12">
+            <main class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px] py-12">
                 <div class="grid gap-16 lg:grid-cols-2">
                     <!-- Image Gallery -->
                     <section class="space-y-4">
@@ -108,10 +108,12 @@ function decrement() {
                         </div>
 
                         <div class="mt-8 space-y-6">
-                            <p class="text-sm leading-8 text-gray-600 tracking-wide">{{ product.description }}</p>
-                            <div v-if="product.is_bundle && product.bundle_note" class="border-l-2 border-cocov-gold bg-cocov-card/30 px-5 py-4 text-sm leading-7 text-cocov-text">
-                                {{ product.bundle_note }}
-                            </div>
+                            <div class="rich-text text-sm leading-8 text-gray-600 tracking-wide" v-html="product.description"></div>
+                            <div
+                                v-if="product.is_bundle && product.bundle_note"
+                                class="rich-text border-l-2 border-cocov-gold bg-cocov-card/30 px-5 py-4 text-sm leading-7 text-cocov-text"
+                                v-html="product.bundle_note"
+                            ></div>
                             <div v-if="product.is_bundle && product.bundle_items?.length" class="border border-gray-100 p-5">
                                 <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-cocov-gold">Included in this bundle</p>
                                 <div class="space-y-3">

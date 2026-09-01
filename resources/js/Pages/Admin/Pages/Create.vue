@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { watch } from 'vue';
 
@@ -52,7 +53,7 @@ const submit = () => {
                                     
                                     <div class="form-group">
                                         <label class="font-weight-bold">Page Content <span class="text-danger">*</span></label>
-                                        <textarea v-model="form.content" class="form-control" rows="15" :class="{'is-invalid': form.errors.content}" placeholder="Write your page content here (HTML supported)"></textarea>
+                                        <RichTextEditor v-model="form.content" :height="420" :invalid="!!form.errors.content" placeholder="Write your page content here..." />
                                         <span class="text-danger text-sm" v-if="form.errors.content">{{ form.errors.content }}</span>
                                     </div>
                                 </div>

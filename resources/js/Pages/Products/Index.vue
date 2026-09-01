@@ -1,5 +1,6 @@
 <script setup>
 import { Head, Link, router } from "@inertiajs/vue3";
+import { stripHtml } from '@/composables/useRichText';
 import { computed, ref, watch } from "vue";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import {
@@ -187,7 +188,7 @@ watch(
 
         <div class="bg-white">
             <div class="border-b border-[#eee4d8] bg-[#fcf8f3] py-14">
-                <div class="mx-auto max-w-full px-6">
+                <div class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px]">
                     <nav class="mb-6 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                         <Link href="/" class="transition hover:text-cocov-gold">Home</Link>
                         <ChevronRightIcon class="h-3 w-3" />
@@ -198,13 +199,13 @@ watch(
                             {{ selectedCategory?.name || pageMeta.title || 'The Collection' }}
                         </h1>
                         <p class="mt-4 text-[11px] font-bold uppercase tracking-[0.3em] text-cocov-gold">
-                            {{ selectedCategory?.description || pageMeta.subtitle || 'Find the chocolate that fits the moment' }}
+                            {{ stripHtml(selectedCategory?.description) || pageMeta.subtitle || 'Find the chocolate that fits the moment' }}
                         </p>
                     </div>
                 </div>
             </div>
 
-            <main class="mx-auto max-w-full px-6 py-10">
+            <main class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px] py-10">
                 <section class="mb-10 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
                     <div class="relative">
                         <MagnifyingGlassIcon class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

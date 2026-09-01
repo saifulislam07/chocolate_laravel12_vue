@@ -136,7 +136,7 @@ onUnmounted(() => {
                         <div class="mx-auto w-full max-w-full px-5 pb-10 md:px-8 md:pb-16 lg:px-[126px]">
                             <div class="max-w-lg text-white">
                                 <h1 v-if="slide.title" class="font-heading text-4xl uppercase leading-[1.05] md:text-6xl" v-html="slide.title"></h1>
-                                <p v-if="slide.description" class="mt-4 max-w-md text-sm leading-relaxed text-white/85">{{ slide.description }}</p>
+                                <div v-if="slide.description" class="rich-text mt-4 max-w-md text-sm leading-relaxed text-white/85" v-html="slide.description"></div>
                                 <component
                                     :is="menuHref(slide.button_link).startsWith('http') ? 'a' : Link"
                                     v-if="slide.button_text"
@@ -419,9 +419,10 @@ onUnmounted(() => {
 
                         
 
-                                <p class="mx-auto mt-6 max-w-[820px] text-[20px] font-medium leading-[36px] text-cocov-text">
-                                    &ldquo;{{ testimonialSlides[activeTestimonial].quote }}&rdquo;
-                                </p>
+                                <div
+                                    class="rich-text mx-auto mt-6 max-w-[820px] text-[20px] font-medium leading-[36px] text-cocov-text"
+                                    v-html="`&ldquo;${testimonialSlides[activeTestimonial].quote || ''}&rdquo;`"
+                                ></div>
                                 <p class="mt-8 text-[20px] font-bold uppercase leading-[32px] text-cocov-text">{{ testimonialSlides[activeTestimonial].customer_name }}</p>
                                 <p v-if="testimonialSlides[activeTestimonial].location" class="text-[16px] leading-[32px] text-cocov-text">{{ testimonialSlides[activeTestimonial].location }}</p>
                             </div>

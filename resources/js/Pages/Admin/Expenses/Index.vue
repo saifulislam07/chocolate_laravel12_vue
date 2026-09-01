@@ -1,5 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { stripHtml } from '@/composables/useRichText';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
@@ -147,8 +149,8 @@ const deleteExpense = (id) => {
 
                     <!-- Description Cell -->
                     <template #cell-description="{ item }">
-                        <div class="text-xs text-muted text-truncate" style="max-width: 250px;" :title="item.description">
-                            {{ item.description || '-' }}
+                        <div class="text-xs text-muted text-truncate" style="max-width: 250px;" :title="stripHtml(item.description)">
+                            {{ stripHtml(item.description) || '-' }}
                         </div>
                     </template>
 
@@ -221,7 +223,7 @@ const deleteExpense = (id) => {
                             </div>
                             <div class="form-group mb-0">
                                 <label class="font-weight-bold">Description / Remarks</label>
-                                <textarea class="form-control" v-model="form.description" rows="3" placeholder="Enter expense details..."></textarea>
+                                <RichTextEditor v-model="form.description" :height="140" toolbar="basic" :invalid="!!form.errors.description" placeholder="Enter expense details..." />
                             </div>
                         </div>
                         <div class="modal-footer bg-white border-0" style="border-radius: 0 0 12px 12px;">

@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -198,7 +199,7 @@ function deleteCategory(id) {
                             
                             <div class="form-group">
                                 <label for="cdesc">Description <small class="text-muted">(Optional)</small></label>
-                                <textarea class="form-control" id="cdesc" rows="3" v-model="form.description" :class="{ 'is-invalid': form.errors.description }" placeholder="Brief description..."></textarea>
+                                <RichTextEditor id="cdesc" v-model="form.description" :height="140" toolbar="basic" :invalid="!!form.errors.description" placeholder="Brief description..." />
                                 <span class="error invalid-feedback" v-if="form.errors.description">{{ form.errors.description }}</span>
                             </div>
 

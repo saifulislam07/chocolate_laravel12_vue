@@ -132,8 +132,9 @@ function getPaymentBadge(status) {
                         <!-- accepted payments column -->
                         <div class="col-6">
                             <p class="lead font-weight-bold text-muted small text-uppercase">Terms & Notes:</p>
-                            <div class="text-muted bg-light p-3 rounded" style="min-height: 100px;">
-                                {{ purchase.notes || 'No notes available for this purchase.' }}
+                            <div v-if="purchase.notes" class="text-muted bg-light p-3 rounded rich-text" style="min-height: 100px;" v-html="purchase.notes"></div>
+                            <div v-else class="text-muted bg-light p-3 rounded" style="min-height: 100px;">
+                                No notes available for this purchase.
                             </div>
                         </div>
                         <!-- /.col -->

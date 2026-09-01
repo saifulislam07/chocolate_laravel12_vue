@@ -26,7 +26,7 @@ function submit() {
     <Head title="Contact Us" />
 
     <MainLayout>
-        <header class="border-b border-gray-100 bg-cocov-card px-6 py-20">
+        <header class="border-b border-gray-100 bg-cocov-card px-5 md:px-8 lg:px-[126px] py-20">
             <div class="mx-auto max-w-full text-center">
                 <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-cocov-gold">Coco Craft</p>
                 <h1 class="mt-5 font-heading text-5xl uppercase leading-tight text-cocov-text md:text-6xl">Contact Us</h1>
@@ -37,7 +37,7 @@ function submit() {
             </div>
         </header>
 
-        <section class="px-6 py-16 md:py-20">
+        <section class="px-5 md:px-8 lg:px-[126px] py-16 md:py-20">
             <div class="mx-auto grid max-w-4xl gap-12 md:grid-cols-[1fr_1.3fr]">
                 <div class="space-y-8">
                     <div>

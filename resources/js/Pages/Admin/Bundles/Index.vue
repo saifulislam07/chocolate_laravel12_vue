@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { stripHtml } from '@/composables/useRichText';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 
@@ -63,7 +64,7 @@ function deleteBundle(id) {
                             <div>
                                 <div class="font-weight-bold text-dark">{{ item.name }}</div>
                                 <div class="text-xs text-muted">SKU: {{ item.sku || 'N/A' }}</div>
-                                <div v-if="item.bundle_note" class="text-xs text-muted">{{ item.bundle_note }}</div>
+                                <div v-if="item.bundle_note" class="text-xs text-muted">{{ stripHtml(item.bundle_note) }}</div>
                             </div>
                         </div>
                     </template>

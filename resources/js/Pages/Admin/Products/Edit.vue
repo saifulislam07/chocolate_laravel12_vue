@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -145,7 +146,7 @@ const submit = () => {
 
                                     <div class="form-group">
                                         <label>Description</label>
-                                        <textarea v-model="form.description" class="form-control" rows="5" placeholder="Enter detailed description..."></textarea>
+                                        <RichTextEditor v-model="form.description" :height="220" :invalid="!!form.errors.description" placeholder="Enter detailed description..." />
                                     </div>
                                 </div>
                             </div>

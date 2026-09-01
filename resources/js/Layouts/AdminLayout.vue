@@ -302,12 +302,14 @@ watch(() => flash.value.error, (message) => {
                                     <p>Website <i class="right fas" :class="openGroups.website ? 'fa-angle-up' : 'fa-angle-down'"></i></p>
                                 </button>
                                 <ul class="nav nav-treeview" :style="{ display: openGroups.website ? 'block' : 'none' }">
+                                    <!-- Disabled along with the admin.menus routes in routes/web.php.
                                     <li class="nav-item" v-if="can('view_menus')">
                                         <Link :href="r('admin.menus.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Menus') }">
                                             <i class="nav-icon fas fa-stream text-indigo-400"></i>
                                             <p>Navigation</p>
                                         </Link>
                                     </li>
+                                    -->
                                     <li class="nav-item" v-if="can('view_pages')">
                                         <Link :href="r('admin.pages.index')" class="nav-link" :class="{ active: $page.component.startsWith('Admin/Pages') }">
                                             <i class="nav-icon fas fa-file-invoice text-violet-500"></i>

@@ -20,7 +20,9 @@ Route::post('/cart/items', [CartController::class, 'store'])->name('cart.store')
 Route::patch('/cart/items/{cartItem}', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
-Route::get('/p/{slug}', [\App\Http\Controllers\PublicPageController::class, 'show'])->name('page.public');
+// CMS pages moved from /p/{slug} to the root (see page.show at the bottom of this
+// file). Kept as a permanent redirect so old links and bookmarks still resolve.
+Route::permanentRedirect('/p/{slug}', '/{slug}')->name('page.public');
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
@@ -93,7 +95,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('/admin/pages', \App\Http\Controllers\Admin\PageController::class)->names('admin.pages')->middleware('permission:view_pages');
     Route::resource('/admin/roles', \App\Http\Controllers\Admin\RoleController::class)->names('admin.roles')->middleware('permission:view_roles');
     Route::resource('/admin/users', \App\Http\Controllers\Admin\UserController::class)->except(['create', 'show', 'edit'])->names('admin.users')->middleware('permission:view_users');
-    Route::resource('/admin/menus', \App\Http\Controllers\Admin\MenuController::class)->names('admin.menus')->middleware('permission:view_menus');
+    // Disabled. Re-enable together with the "Navigation" link in AdminLayout.vue,
+    // which resolves admin.menus.index through Ziggy and errors without this route.
+    // Route::resource('/admin/menus', \App\Http\Controllers\Admin\MenuController::class)->names('admin.menus')->middleware('permission:view_menus');
     Route::resource('/admin/customers', \App\Http\Controllers\Admin\CustomerController::class)->names('admin.customers')->middleware('permission:view_customers');
     Route::get('/admin/shipping', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'index'])->name('admin.shipping.index')->middleware('permission:view_settings');
     Route::post('/admin/shipping', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'update'])->name('admin.shipping.update')->middleware('permission:edit_settings');
