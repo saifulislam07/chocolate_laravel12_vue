@@ -25,7 +25,7 @@ defineProps({
 
                     <p class="mt-16 text-[11px] font-bold uppercase tracking-[0.35em] text-cocov-gold">{{ status }} Maintenance</p>
                     <h1 class="mt-6 font-heading text-6xl uppercase leading-none lg:text-7xl">{{ title }}</h1>
-                    <p class="mt-8 max-w-xl text-base leading-9 text-white/65">{{ message }}</p>
+                    <div class="rich-text mt-8 max-w-xl text-base leading-9 text-white/65" v-html="message"></div>
 
                     <div class="mt-12 flex flex-wrap gap-3">
                         <button type="button" class="rounded-[3px] bg-cocov-gold px-8 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white transition hover:bg-[#e0851a]" @click="location.reload()">

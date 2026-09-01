@@ -29,7 +29,7 @@ class StockAdjustmentController extends Controller
         $payload = $request->validate([
             'product_id' => ['required', 'exists:products,id'],
             'delta' => ['required', 'integer', 'not_in:0'],
-            'note' => ['required', 'string', 'max:255'],
+            'note' => ['required', 'string', 'max:5000'],
         ]);
 
         $product = Product::findOrFail($payload['product_id']);

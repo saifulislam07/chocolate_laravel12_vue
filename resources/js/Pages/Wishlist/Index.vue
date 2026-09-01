@@ -38,7 +38,7 @@ function removeFromWishlist(productId) {
 
         <div class="bg-white">
             <section class="border-b border-[#eee4d8] bg-[#fcf8f3] py-16 text-center">
-                <div class="mx-auto max-w-full px-6">
+                <div class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px]">
                     <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-red-500 shadow-sm">
                         <HeartIcon class="h-6 w-6 fill-current" />
                     </div>
@@ -47,7 +47,7 @@ function removeFromWishlist(productId) {
                 </div>
             </section>
 
-            <main class="mx-auto max-w-full px-6 py-12">
+            <main class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px] py-12">
                 <div v-if="items.length" class="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
                     <article v-for="item in items" :key="item.id" class="group relative flex flex-col bg-white">
                         <div class="relative aspect-square overflow-hidden bg-white p-4">

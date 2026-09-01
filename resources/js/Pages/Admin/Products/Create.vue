@@ -1,7 +1,8 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     categories: Array,
@@ -26,6 +27,9 @@ const form = useForm({
     is_featured: false,
     is_new: true,
 });
+
+// Laravel keys the `images.*` rule as `images.0`, so look the error up by prefix.
+const imageError = computed(() => Object.entries(form.errors).find(([key]) => key.startsWith('images'))?.[1]);
 
 const imagePreviews = ref([]);
 
@@ -108,7 +112,7 @@ const submit = () => {
 
                                     <div class="form-group">
                                         <label>Description</label>
-                                        <textarea v-model="form.description" class="form-control" rows="5" placeholder="Enter detailed description..."></textarea>
+                                        <RichTextEditor v-model="form.description" :height="220" :invalid="!!form.errors.description" placeholder="Enter detailed description..." />
                                     </div>
                                 </div>
                             </div>
@@ -124,7 +128,7 @@ const submit = () => {
                                             <input type="file" @change="handleFileChange" class="custom-file-input" id="customFile" accept="image/*" multiple>
                                             <label class="custom-file-label" for="customFile">Choose files...</label>
                                         </div>
-                                        <div class="invalid-feedback d-block" v-if="form.errors.images">{{ form.errors.images }}</div>
+                                        <div class="invalid-feedback d-block" v-if="imageError">{{ imageError }}</div>
                                     </div>
                                     
                                     <div v-if="imagePreviews.length > 0" class="row border rounded p-3 bg-light mt-3">

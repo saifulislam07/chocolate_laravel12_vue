@@ -87,7 +87,7 @@ const testimonial = {
                         <div class="relative mx-auto flex h-full max-w-full items-end px-6 pb-16 md:pb-24">
                             <div class="max-w-lg text-white">
                                 <h1 class="font-sans text-5xl font-bold uppercase leading-[1.05] tracking-tight md:text-6xl" v-html="slider.title"></h1>
-                                <p v-if="slider.description" class="mt-6 max-w-md text-sm leading-loose tracking-wide text-white/85">{{ slider.description }}</p>
+                                <div v-if="slider.description" class="rich-text mt-6 max-w-md text-sm leading-loose tracking-wide text-white/85" v-html="slider.description"></div>
                                 <div class="mt-9">
                                     <Link
                                         :href="slider.button_link || route('products.index')"
@@ -243,7 +243,7 @@ const testimonial = {
                         We source high-quality cocoa beans directly from the finest natural farms in West Africa and Latin America. Every chocolate bar is then crafted under the strict supervision of our expert chocolatiers, combining modern, hygienic technology. Our special collection features rich dark chocolate, creamy milk chocolate, and mouth-watering chocolates infused with various nuts and fruits. To maintain the highest quality, we do not use any artificial preservatives.
                     </p>
                     <div class="mt-9">
-                        <Link :href="route('page.public', 'about-us')" class="inline-block border border-godiva-charcoal px-10 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-godiva-charcoal transition hover:bg-godiva-charcoal hover:text-white dark:border-godiva-cream dark:text-godiva-cream dark:hover:bg-godiva-cream dark:hover:text-godiva-charcoal">
+                        <Link :href="route('page.show', 'about-us')" class="inline-block border border-godiva-charcoal px-10 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-godiva-charcoal transition hover:bg-godiva-charcoal hover:text-white dark:border-godiva-cream dark:text-godiva-cream dark:hover:bg-godiva-cream dark:hover:text-godiva-charcoal">
                             Details
                         </Link>
                     </div>
@@ -276,9 +276,7 @@ const testimonial = {
                     <p class="font-script text-2xl text-godiva-gold">Testimonials</p>
                     <h2 class="mt-2 font-serif text-4xl font-semibold text-godiva-charcoal">What Our Guest Are Saying</h2>
                     <ChatBubbleBottomCenterTextIcon class="mx-auto mt-8 h-9 w-9 text-godiva-gold md:mx-0" />
-                    <p class="mx-auto mt-6 max-w-xl font-serif text-xl italic leading-relaxed text-godiva-charcoal/90 md:mx-0">
-                        "{{ testimonial.quote }}"
-                    </p>
+                    <div class="rich-text mx-auto mt-6 max-w-xl font-serif text-xl italic leading-relaxed text-godiva-charcoal/90 md:mx-0" v-html="`&ldquo;${testimonial.quote || ''}&rdquo;`"></div>
                     <p class="mt-8 text-sm font-bold uppercase tracking-[0.2em] text-godiva-charcoal">{{ testimonial.name }}</p>
                     <p class="mt-1 text-xs uppercase tracking-[0.15em] text-gray-500">{{ testimonial.location }}</p>
                 </div>

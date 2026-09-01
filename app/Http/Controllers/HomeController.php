@@ -53,6 +53,13 @@ class HomeController extends Controller
             ->get()
             ->map(fn($p) => $this->mapProduct($p, $wishlistProductIds));
 
+        $combos = (clone $productsQuery)
+            ->where('is_bundle', true)
+            ->with('bundleItems')
+            ->take(8)
+            ->get()
+            ->map(fn($p) => $this->mapProduct($p, $wishlistProductIds));
+
         $categories = Category::query()
             ->where('is_active', true)
             ->whereHas('products', fn ($query) => $query->where('is_active', true))
@@ -84,6 +91,7 @@ class HomeController extends Controller
             'categories' => $categories,
             'featuredItems' => $featuredItems,
             'newArrivals' => $newArrivals,
+            'combos' => $combos,
             'testimonials' => $testimonials,
             'aboutContent' => $aboutContent,
         ];

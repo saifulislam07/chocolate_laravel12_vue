@@ -6,7 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Menu extends Model
 {
-    protected $fillable = ['name', 'url', 'parent_id', 'order', 'is_active'];
+    protected $fillable = ['name', 'url', 'show_categories', 'parent_id', 'order', 'is_active'];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+            'show_categories' => 'boolean',
+        ];
+    }
 
     public function parent()
     {

@@ -1,5 +1,6 @@
 <script setup>
 import { Head, Link, router } from "@inertiajs/vue3";
+import { stripHtml } from '@/composables/useRichText';
 import { computed, ref, watch } from "vue";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import {
@@ -26,6 +27,9 @@ const props = defineProps({
     selectedCategory: Object,
     filters: Object,
     priceBounds: Object,
+    comboMode: { type: Boolean, default: false },
+    routeName: { type: String, default: "products.index" },
+    pageMeta: { type: Object, default: () => ({}) },
 });
 
 const filterForm = ref({
@@ -100,7 +104,7 @@ function formatMoney(value) {
 }
 
 function applyFilters() {
-    router.get(route("products.index"), cleanFilters(), {
+    router.get(route(props.routeName), cleanFilters(), {
         preserveState: true,
         preserveScroll: true,
         replace: true,
@@ -180,28 +184,28 @@ watch(
 
 <template>
     <MainLayout>
-        <Head title="Shop Premium Chocolate | Coco Craft" />
+        <Head :title="(comboMode ? 'Combo Packs' : 'Shop Premium Chocolate') + ' | Coco Craft'" />
 
         <div class="bg-white">
             <div class="border-b border-[#eee4d8] bg-[#fcf8f3] py-14">
-                <div class="mx-auto max-w-full px-6">
+                <div class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px]">
                     <nav class="mb-6 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                         <Link href="/" class="transition hover:text-cocov-gold">Home</Link>
                         <ChevronRightIcon class="h-3 w-3" />
-                        <span class="text-cocov-gold">Shop All</span>
+                        <span class="text-cocov-gold">{{ pageMeta.breadcrumb || 'Shop All' }}</span>
                     </nav>
                     <div class="text-center">
                         <h1 class="font-heading text-4xl uppercase tracking-tight text-cocov-text md:text-5xl">
-                            {{ selectedCategory?.name || 'The Collection' }}
+                            {{ selectedCategory?.name || pageMeta.title || 'The Collection' }}
                         </h1>
                         <p class="mt-4 text-[11px] font-bold uppercase tracking-[0.3em] text-cocov-gold">
-                            {{ selectedCategory?.description || 'Find the chocolate that fits the moment' }}
+                            {{ stripHtml(selectedCategory?.description) || pageMeta.subtitle || 'Find the chocolate that fits the moment' }}
                         </p>
                     </div>
                 </div>
             </div>
 
-            <main class="mx-auto max-w-full px-6 py-10">
+            <main class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px] py-10">
                 <section class="mb-10 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
                     <div class="relative">
                         <MagnifyingGlassIcon class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -307,7 +311,8 @@ watch(
                         <div v-if="displayedProducts.length" class="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 xl:grid-cols-3">
                             <article v-for="product in displayedProducts" :key="product.id" class="group relative flex flex-col bg-white">
                                 <div class="relative aspect-square overflow-hidden bg-white p-4">
-                                    <span v-if="product.is_new" class="absolute left-4 top-4 z-10 bg-cocov-offer px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-cocov-text">New</span>
+                                    <span v-if="product.is_bundle" class="absolute left-4 top-4 z-10 bg-cocov-gold px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white">Combo</span>
+                                    <span v-else-if="product.is_new" class="absolute left-4 top-4 z-10 bg-cocov-offer px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-cocov-text">New</span>
                                     <button
                                         type="button"
                                         class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-cocov-text shadow-sm transition hover:text-red-500"

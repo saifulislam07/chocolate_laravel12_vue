@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\CartManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,11 +37,17 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, CartManager $carts): RedirectResponse
     {
+        // Signing in regenerates the session id, so the guest bag has to be
+        // claimed against the id it was filled under.
+        $guestSessionId = $request->session()->getId();
+
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        $carts->mergeGuestCartInto($request->user(), $guestSessionId);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

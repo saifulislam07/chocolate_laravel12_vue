@@ -1,5 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { stripHtml } from '@/composables/useRichText';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -51,6 +53,7 @@ const typeBadges = {
     purchase_in: 'badge-success',
     sale_out: 'badge-info',
     return_in: 'badge-warning',
+    cancel_in: 'badge-warning',
     adjustment: 'badge-secondary',
 };
 </script>
@@ -103,7 +106,7 @@ const typeBadges = {
                         </span>
                     </template>
                     <template #cell-note="{ item }">
-                        <span class="text-xs text-muted">{{ item.note || '—' }}</span>
+                        <span class="text-xs text-muted" :title="stripHtml(item.note)">{{ stripHtml(item.note) || '—' }}</span>
                     </template>
                 </PremiumTable>
             </div>
@@ -127,7 +130,7 @@ const typeBadges = {
                             </div>
                             <div class="form-group mb-0">
                                 <label class="text-xs font-bold text-muted text-uppercase">Reason</label>
-                                <textarea v-model="form.note" rows="2" class="form-control" placeholder="e.g. Damaged in warehouse, stock recount" :class="{ 'is-invalid': form.errors.note }"></textarea>
+                                <RichTextEditor v-model="form.note" :height="110" toolbar="basic" :invalid="!!form.errors.note" placeholder="e.g. Damaged in warehouse, stock recount" />
                                 <span class="text-danger text-sm" v-if="form.errors.note">{{ form.errors.note }}</span>
                             </div>
                         </div>

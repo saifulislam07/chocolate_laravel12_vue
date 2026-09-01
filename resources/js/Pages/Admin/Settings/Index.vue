@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -613,7 +614,7 @@ function tabForField(field) {
                                         </div>
                                         <div class="form-group mb-0">
                                             <label>Maintenance Message</label>
-                                            <textarea v-model="form.maintenance_message" class="form-control" rows="5"></textarea>
+                                            <RichTextEditor v-model="form.maintenance_message" :height="180" toolbar="basic" :invalid="!!form.errors.maintenance_message" placeholder="Message shown to visitors while the site is down..." />
                                         </div>
                                     </div>
                                 </div>

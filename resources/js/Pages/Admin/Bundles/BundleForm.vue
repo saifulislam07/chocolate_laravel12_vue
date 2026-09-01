@@ -1,6 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
@@ -34,6 +35,11 @@ const form = useForm({
 });
 
 const imagePreviews = ref([]);
+// Must stay in sync with the `images.*` rule in BundleController::validatedPayload().
+const MAX_IMAGE_MB = 2;
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const rejectedImages = ref([]);
+const fileInput = ref(null);
 
 const selectedProducts = computed(() => new Set(form.items.map((item) => Number(item.product_id)).filter(Boolean)));
 const productById = computed(() => new Map(props.products.map((product) => [Number(product.id), product])));
@@ -73,18 +79,61 @@ function isProductDisabled(productId, currentIndex) {
 
 function handleFileChange(event) {
     const files = Array.from(event.target.files);
-    form.images = files;
-    imagePreviews.value = [];
 
-    files.forEach((file) => {
+    // Catch oversized/unsupported files here so the server does not reject the
+    // whole submit with an error the form has no room to show.
+    const rejected = files.filter(
+        (file) => file.size > MAX_IMAGE_MB * 1024 * 1024 || !ACCEPTED_IMAGE_TYPES.includes(file.type)
+    );
+    rejectedImages.value = rejected.map((file) => `${file.name} (${(file.size / 1048576).toFixed(1)} MB)`);
+
+    const accepted = files.filter((file) => !rejected.includes(file));
+
+    form.images = accepted;
+    // Readers resolve out of order, so pre-size the array and fill by index —
+    // the previews have to stay aligned with form.images to be removable.
+    imagePreviews.value = accepted.map(() => null);
+
+    accepted.forEach((file, index) => {
         const reader = new FileReader();
-        reader.onload = (e) => imagePreviews.value.push(e.target.result);
+        reader.onload = (e) => { imagePreviews.value[index] = e.target.result; };
         reader.readAsDataURL(file);
     });
 }
 
+function removeSelectedImage(index) {
+    form.images = form.images.filter((_, i) => i !== index);
+    imagePreviews.value.splice(index, 1);
+    // A FileList is read-only, so reset the input to allow re-picking the same file.
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+}
+
+function deleteExistingImage(image) {
+    if (!confirm('Delete this image? This cannot be undone.')) return;
+
+    router.delete(route('admin.bundles.images.destroy', [props.bundle.id, image.id]), { preserveScroll: true });
+}
+
+function setPrimaryImage(imageId) {
+    router.patch(route('admin.bundles.images.primary', [props.bundle.id, imageId]), {}, { preserveScroll: true });
+}
+
+// Laravel keys nested rules as `images.0` / `items.1.product_id`, so a plain
+// per-field lookup misses them and the submit fails with nothing on screen.
+const errorMessages = computed(() => Object.values(form.errors).filter(Boolean));
+const imageError = computed(() => Object.entries(form.errors).find(([key]) => key.startsWith('images'))?.[1]);
+
+function itemError(index) {
+    return form.errors[`items.${index}.product_id`] || form.errors[`items.${index}.quantity`];
+}
+
 function submit() {
-    form.post(props.submitRoute, { forceFormData: true });
+    form.post(props.submitRoute, {
+        forceFormData: true,
+        onError: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+    });
 }
 </script>
 
@@ -106,6 +155,13 @@ function submit() {
         <section class="content">
             <div class="container-fluid">
                 <form @submit.prevent="submit">
+                    <div v-if="errorMessages.length" class="alert alert-danger">
+                        <h6 class="font-weight-bold mb-2"><i class="fas fa-exclamation-triangle mr-1"></i> Bundle could not be saved</h6>
+                        <ul class="mb-0 pl-3">
+                            <li v-for="(message, index) in errorMessages" :key="index">{{ message }}</li>
+                        </ul>
+                    </div>
+
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="card card-primary card-outline">
@@ -138,12 +194,12 @@ function submit() {
 
                                     <div class="form-group">
                                         <label>Description</label>
-                                        <textarea v-model="form.description" rows="4" class="form-control"></textarea>
+                                        <RichTextEditor v-model="form.description" :height="180" :invalid="!!form.errors.description" placeholder="Describe this bundle..." />
                                     </div>
 
                                     <div class="form-group mb-0">
                                         <label>Bundle Note</label>
-                                        <textarea v-model="form.bundle_note" rows="3" class="form-control" placeholder="Example: Includes gift wrap and a handwritten note."></textarea>
+                                        <RichTextEditor v-model="form.bundle_note" :height="130" toolbar="basic" :invalid="!!form.errors.bundle_note" placeholder="Example: Includes gift wrap and a handwritten note." />
                                     </div>
                                 </div>
                             </div>
@@ -180,6 +236,7 @@ function submit() {
                                                 <i class="fas fa-trash text-danger"></i>
                                             </button>
                                         </div>
+                                        <div v-if="itemError(index)" class="col-12 text-danger text-sm mt-2">{{ itemError(index) }}</div>
                                     </div>
                                     <div v-if="form.errors.items" class="text-danger text-sm">{{ form.errors.items }}</div>
                                 </div>
@@ -191,17 +248,38 @@ function submit() {
                                 </div>
                                 <div class="card-body">
                                     <div v-if="bundle?.images?.length" class="row mb-3">
-                                        <div v-for="image in bundle.images" :key="image.id" class="col-md-2 col-4 mb-2">
-                                            <img :src="image.image_path" class="img-fluid border rounded bg-white p-1" style="height: 90px; width: 100%; object-fit: contain;">
+                                        <div v-for="image in bundle.images" :key="image.id" class="col-md-3 col-6 mb-3">
+                                            <div class="gallery-tile position-relative border rounded bg-white p-1">
+                                                <img :src="image.image_path" class="img-fluid rounded" style="height: 90px; width: 100%; object-fit: contain;">
+                                                <span v-if="image.is_primary" class="badge badge-success position-absolute" style="top: 5px; left: 5px;">Main</span>
+                                                <button type="button" class="btn btn-danger btn-sm tile-remove position-absolute" style="top: 5px; right: 5px;" title="Delete image" @click="deleteExistingImage(image)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                                <button v-if="!image.is_primary" type="button" class="btn btn-outline-success btn-sm btn-block mt-1" @click="setPrimaryImage(image.id)">
+                                                    <i class="fas fa-star mr-1"></i> Set as Main
+                                                </button>
+                                                <div v-else class="text-muted text-center small mt-1">Current main image</div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="custom-file">
-                                        <input id="bundleImages" type="file" class="custom-file-input" accept="image/*" multiple @change="handleFileChange">
+                                        <input id="bundleImages" ref="fileInput" type="file" class="custom-file-input" accept=".jpg,.jpeg,.png,.webp" multiple @change="handleFileChange">
                                         <label class="custom-file-label" for="bundleImages">Choose images...</label>
                                     </div>
+                                    <small class="form-text text-muted">JPG, PNG or WEBP &middot; up to {{ MAX_IMAGE_MB }} MB each.</small>
+                                    <div v-if="rejectedImages.length" class="text-danger text-sm mt-2">
+                                        Skipped (over {{ MAX_IMAGE_MB }} MB or unsupported format): {{ rejectedImages.join(', ') }}
+                                    </div>
+                                    <div v-if="imageError" class="text-danger text-sm mt-2">{{ imageError }}</div>
                                     <div v-if="imagePreviews.length" class="row mt-3">
-                                        <div v-for="(preview, index) in imagePreviews" :key="index" class="col-md-2 col-4 mb-2">
-                                            <img :src="preview" class="img-fluid border rounded bg-white p-1" style="height: 90px; width: 100%; object-fit: contain;">
+                                        <div class="col-12 mb-2"><strong class="text-success small">New selection (not saved yet)</strong></div>
+                                        <div v-for="(preview, index) in imagePreviews" :key="index" class="col-md-3 col-6 mb-3">
+                                            <div class="gallery-tile position-relative border rounded bg-white p-1">
+                                                <img :src="preview" class="img-fluid rounded" style="height: 90px; width: 100%; object-fit: contain;">
+                                                <button type="button" class="btn btn-danger btn-sm tile-remove position-absolute" style="top: 5px; right: 5px;" title="Remove from selection" @click="removeSelectedImage(index)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -277,6 +355,11 @@ function submit() {
 </template>
 
 <style scoped>
+.tile-remove {
+    line-height: 1;
+    padding: 0.15rem 0.4rem;
+}
+
 .pricing-summary {
     background: #f8fafc;
     border: 1px solid #eef2f7;

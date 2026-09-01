@@ -12,6 +12,7 @@ use Inertia\Inertia;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/home-v2', [HomeController::class, 'v2'])->name('home.v2');
 Route::get('/shop', [ProductController::class, 'index'])->name('products.index');
+Route::get('/combos', [ProductController::class, 'combos'])->name('combos.index');
 Route::get('/search/suggestions', [ProductController::class, 'searchSuggestions'])->name('products.search');
 Route::get('/categories/{category:slug}', [ProductController::class, 'category'])->name('categories.show');
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -19,7 +20,9 @@ Route::post('/cart/items', [CartController::class, 'store'])->name('cart.store')
 Route::patch('/cart/items/{cartItem}', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
-Route::get('/p/{slug}', [\App\Http\Controllers\PublicPageController::class, 'show'])->name('page.public');
+// CMS pages moved from /p/{slug} to the root (see page.show at the bottom of this
+// file). Kept as a permanent redirect so old links and bookmarks still resolve.
+Route::permanentRedirect('/p/{slug}', '/{slug}')->name('page.public');
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
@@ -82,6 +85,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/products/{product}/images/{image}', [\App\Http\Controllers\Admin\ProductController::class, 'destroyImage'])->name('admin.products.images.destroy')->middleware('permission:view_products');
     Route::patch('/admin/products/{product}/images/{image}/primary', [\App\Http\Controllers\Admin\ProductController::class, 'setPrimaryImage'])->name('admin.products.images.primary')->middleware('permission:view_products');
     Route::resource('/admin/bundles', \App\Http\Controllers\Admin\BundleController::class)->except(['show'])->names('admin.bundles')->middleware('permission:view_bundles');
+    Route::delete('/admin/bundles/{bundle}/images/{image}', [\App\Http\Controllers\Admin\BundleController::class, 'destroyImage'])->name('admin.bundles.images.destroy')->middleware('permission:view_bundles');
+    Route::patch('/admin/bundles/{bundle}/images/{image}/primary', [\App\Http\Controllers\Admin\BundleController::class, 'setPrimaryImage'])->name('admin.bundles.images.primary')->middleware('permission:view_bundles');
     Route::resource('/admin/brands', \App\Http\Controllers\Admin\BrandController::class)->names('admin.brands')->middleware('permission:view_brands');
     Route::resource('/admin/units', \App\Http\Controllers\Admin\UnitController::class)->names('admin.units')->middleware('permission:view_units');
     Route::resource('/admin/purchases', \App\Http\Controllers\Admin\PurchaseController::class)->names('admin.purchases')->middleware('permission:view_purchases');
@@ -90,7 +95,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('/admin/pages', \App\Http\Controllers\Admin\PageController::class)->names('admin.pages')->middleware('permission:view_pages');
     Route::resource('/admin/roles', \App\Http\Controllers\Admin\RoleController::class)->names('admin.roles')->middleware('permission:view_roles');
     Route::resource('/admin/users', \App\Http\Controllers\Admin\UserController::class)->except(['create', 'show', 'edit'])->names('admin.users')->middleware('permission:view_users');
-    Route::resource('/admin/menus', \App\Http\Controllers\Admin\MenuController::class)->names('admin.menus')->middleware('permission:view_menus');
+    // Disabled. Re-enable together with the "Navigation" link in AdminLayout.vue,
+    // which resolves admin.menus.index through Ziggy and errors without this route.
+    // Route::resource('/admin/menus', \App\Http\Controllers\Admin\MenuController::class)->names('admin.menus')->middleware('permission:view_menus');
     Route::resource('/admin/customers', \App\Http\Controllers\Admin\CustomerController::class)->names('admin.customers')->middleware('permission:view_customers');
     Route::get('/admin/shipping', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'index'])->name('admin.shipping.index')->middleware('permission:view_settings');
     Route::post('/admin/shipping', [\App\Http\Controllers\Admin\ShippingChargeController::class, 'update'])->name('admin.shipping.update')->middleware('permission:edit_settings');

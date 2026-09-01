@@ -1,5 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { stripHtml } from '@/composables/useRichText';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -144,7 +146,7 @@ function handleImageChange(e) {
                     </template>
 
                     <template #cell-quote="{ item }">
-                        <div class="text-muted truncate" style="max-width: 380px;">&ldquo;{{ item.quote }}&rdquo;</div>
+                        <div class="text-muted truncate" style="max-width: 380px;" :title="stripHtml(item.quote)">&ldquo;{{ stripHtml(item.quote) }}&rdquo;</div>
                     </template>
 
                     <template #cell-is_active="{ item }">
@@ -195,7 +197,7 @@ function handleImageChange(e) {
                             </div>
                             <div class="form-group mb-3">
                                 <label class="text-xs font-bold text-muted text-uppercase tracking-wider">Quote</label>
-                                <textarea v-model="form.quote" class="form-control" rows="4" placeholder="What did the guest say?" required></textarea>
+                                <RichTextEditor v-model="form.quote" :height="150" toolbar="basic" :invalid="!!form.errors.quote" placeholder="What did the guest say?" />
                                 <div class="text-danger text-xs mt-1" v-if="form.errors.quote">{{ form.errors.quote }}</div>
                             </div>
                             <div class="form-group mb-3 d-flex align-items-center">

@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -119,7 +120,7 @@ function submit() {
                         <div class="row mt-4">
                             <div class="col-md-6 form-group">
                                 <label class="text-xs font-bold text-muted text-uppercase">Reason (optional)</label>
-                                <textarea v-model="form.reason" rows="2" class="form-control" placeholder="e.g. Customer changed mind, wrong item shipped..."></textarea>
+                                <RichTextEditor v-model="form.reason" :height="110" toolbar="basic" :invalid="!!form.errors.reason" placeholder="e.g. Customer changed mind, wrong item shipped..." />
                             </div>
                             <div class="col-md-6 form-group">
                                 <label class="text-xs font-bold text-muted text-uppercase">Refund Method</label>

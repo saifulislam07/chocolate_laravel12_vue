@@ -4,6 +4,9 @@ import { computed } from "vue";
 
 const page = usePage();
 const settings = computed(() => page.props.webSettings || {});
+
+// Published pages from Admin > Static Pages. Deactivating one drops it from here.
+const footerPages = computed(() => page.props.footerPages || []);
 </script>
 
 <template>
@@ -12,13 +15,19 @@ const settings = computed(() => page.props.webSettings || {});
         <div class="mx-auto flex max-w-full flex-col items-center gap-6 px-5 py-10 text-center md:flex-row md:justify-between md:px-8 md:text-left lg:px-[126px]">
             <img :src="settings.footer_logo || '/images/cococraft-logo-light.svg'" alt="" class="h-16 w-auto" />
 
-            <nav class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[15px] text-white/90">
-                <Link :href="route('page.show', 'about-us')" class="transition hover:text-cocov-gold">About Us</Link>
-                <Link :href="route('products.index')" class="transition hover:text-cocov-gold">Products</Link>
-                <Link :href="route('page.show', 'privacy-policy')" class="transition hover:text-cocov-gold">Privacy Policy</Link>
-                <Link :href="route('page.show', 'terms-of-service')" class="transition hover:text-cocov-gold">Terms of Service</Link>
-                <Link :href="route('contact.index')" class="transition hover:text-cocov-gold">Contact</Link>
-            </nav>
+            <!-- Takes the space between logo and socials so the links sit centred. -->
+            <div class="flex w-full justify-center md:flex-1">
+                <!-- Five links per row on desktop, fewer as the footer narrows. -->
+                <nav class="grid grid-cols-2 justify-items-center gap-x-6 gap-y-2 text-center text-[15px] text-white/90 sm:grid-cols-3 md:grid-cols-5">
+                    <Link :href="route('products.index')" class="transition hover:text-cocov-gold">Products</Link>
+                    <Link
+                        v-for="item in footerPages"
+                        :key="item.id"
+                        :href="route('page.show', item.slug)"
+                        class="transition hover:text-cocov-gold"
+                    >{{ item.title }}</Link>
+                </nav>
+            </div>
 
             <div class="flex items-center gap-5 text-white">
                 <a :href="settings.facebook_url || '#'" aria-label="Facebook" class="transition hover:text-cocov-gold"><svg viewBox="0 0 24 24" class="h-5 w-5 fill-current"><path d="M13.5 21v-8h2.6l.4-3h-3V8.1c0-.9.3-1.5 1.6-1.5H17V4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H8.2v3h2.6v8h2.7z"/></svg></a>

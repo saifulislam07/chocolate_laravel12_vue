@@ -68,13 +68,7 @@ class HandleInertiaRequests extends Middleware
             ? \App\Models\Wishlist::where('user_id', $user->id)->count()
             : 0;
 
-        $mainMenu = \App\Models\Menu::with(['children' => function ($query) {
-                $query->where('is_active', true)->orderBy('order');
-            }])
-            ->whereNull('parent_id')
-            ->where('is_active', true)
-            ->orderBy('order')
-            ->get();
+        $mainMenu = $this->mainMenu();
 
         if ($mainMenu->isEmpty()) {
             $mainMenu = collect([
@@ -96,6 +90,10 @@ class HandleInertiaRequests extends Middleware
             'cartSubtotal' => (float) $cartItems->sum('line_total'),
             'wishlistCount' => (int) $wishlistCount,
             'mainMenu' => $mainMenu,
+            // Published CMS pages, listed in the footer.
+            'footerPages' => \App\Models\Page::where('is_active', true)
+                ->orderBy('title')
+                ->get(['id', 'title', 'slug']),
             'webSettings' => \App\Models\WebSetting::first(),
             'flash' => [
                 'success' => $request->session()->get('success'),
@@ -103,5 +101,61 @@ class HandleInertiaRequests extends Middleware
                 'invoice' => $request->session()->get('invoice'),
             ],
         ];
+    }
+
+    /**
+     * The storefront navigation. A main menu item flagged with show_categories
+     * takes its dropdown straight from the product categories instead of its own
+     * child rows, so the menu follows the catalogue without any manual upkeep.
+     */
+    protected function mainMenu(): \Illuminate\Support\Collection
+    {
+        $categoryLinks = null;
+
+        return \App\Models\Menu::with(['children' => function ($query) {
+                $query->where('is_active', true)->orderBy('order');
+            }])
+            ->whereNull('parent_id')
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get()
+            ->map(function (\App\Models\Menu $item) use (&$categoryLinks) {
+                $children = $item->children->map(fn (\App\Models\Menu $child) => [
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'url' => $child->url,
+                ]);
+
+                // The flag hands the whole dropdown over to the catalogue, so any
+                // child rows still attached to this item are deliberately ignored.
+                if ($item->show_categories) {
+                    $children = $categoryLinks ??= $this->categoryLinks();
+                }
+
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'url' => $item->url,
+                    'children' => $children->values()->all(),
+                ];
+            });
+    }
+
+    /**
+     * Active categories that actually have something to show.
+     */
+    protected function categoryLinks(): \Illuminate\Support\Collection
+    {
+        return \App\Models\Category::query()
+            ->where('is_active', true)
+            ->whereHas('products', fn ($query) => $query->where('is_active', true))
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug'])
+            ->map(fn (\App\Models\Category $category) => [
+                // Prefixed so it never collides with a menu row id in Vue's :key.
+                'id' => 'category-' . $category->id,
+                'name' => $category->name,
+                'url' => '/categories/' . $category->slug,
+            ]);
     }
 }

@@ -1,3 +1,108 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Rendering styles for content written in Components/RichTextEditor.vue.
+ * Tailwind preflight strips heading/list defaults, so any block rendered with
+ * v-html from a rich text field needs the .rich-text class to look right.
+ */
+@layer components {
+    .rich-text > *:first-child {
+        margin-top: 0;
+    }
+
+    .rich-text > *:last-child {
+        margin-bottom: 0;
+    }
+
+    .rich-text p {
+        margin: 0 0 0.75em;
+    }
+
+    .rich-text h1,
+    .rich-text h2,
+    .rich-text h3,
+    .rich-text h4,
+    .rich-text h5,
+    .rich-text h6 {
+        margin: 1.2em 0 0.5em;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .rich-text h1 { font-size: 1.75em; }
+    .rich-text h2 { font-size: 1.45em; }
+    .rich-text h3 { font-size: 1.2em; }
+    .rich-text h4 { font-size: 1.05em; }
+
+    .rich-text ul,
+    .rich-text ol {
+        margin: 0 0 0.75em;
+        padding-left: 1.4em;
+    }
+
+    .rich-text ul { list-style: disc; }
+    .rich-text ol { list-style: decimal; }
+    .rich-text li { margin-bottom: 0.25em; }
+
+    .rich-text b,
+    .rich-text strong { font-weight: 700; }
+    .rich-text i,
+    .rich-text em { font-style: italic; }
+    .rich-text u { text-decoration: underline; }
+    .rich-text s,
+    .rich-text strike { text-decoration: line-through; }
+
+    .rich-text a {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .rich-text blockquote {
+        margin: 0 0 0.75em;
+        padding: 0.4em 0.9em;
+        border-left: 3px solid currentColor;
+        opacity: 0.85;
+    }
+
+    .rich-text pre {
+        margin: 0 0 0.75em;
+        padding: 0.7em 0.9em;
+        border-radius: 6px;
+        background: rgba(15, 23, 42, 0.92);
+        color: #e2e8f0;
+        font-size: 0.85em;
+        overflow-x: auto;
+    }
+
+    .rich-text code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+    }
+
+    .rich-text img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 6px;
+    }
+
+    .rich-text hr {
+        margin: 1em 0;
+        border: 0;
+        border-top: 1px solid currentColor;
+        opacity: 0.2;
+    }
+
+    .rich-text table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0.75em;
+    }
+
+    .rich-text th,
+    .rich-text td {
+        border: 1px solid rgba(100, 116, 139, 0.35);
+        padding: 6px 8px;
+    }
+}

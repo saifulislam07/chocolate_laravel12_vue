@@ -68,7 +68,7 @@ function decrement() {
 
         <div class="bg-white">
             <!-- Breadcrumbs -->
-            <nav class="mx-auto max-w-full px-6 py-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+            <nav class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px] py-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 <Link href="/" class="hover:text-cocov-gold">Home</Link>
                 <ChevronRightIcon class="h-3 w-3" />
                 <span class="text-cocov-text">{{ product.category || 'Chocolate' }}</span>
@@ -76,7 +76,7 @@ function decrement() {
                 <span class="text-cocov-gold">{{ product.name }}</span>
             </nav>
 
-            <main class="mx-auto max-w-full px-6 py-12">
+            <main class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px] py-12">
                 <div class="grid gap-16 lg:grid-cols-2">
                     <!-- Image Gallery -->
                     <section class="space-y-4">
@@ -108,10 +108,12 @@ function decrement() {
                         </div>
 
                         <div class="mt-8 space-y-6">
-                            <p class="text-sm leading-8 text-gray-600 tracking-wide">{{ product.description }}</p>
-                            <div v-if="product.is_bundle && product.bundle_note" class="border-l-2 border-cocov-gold bg-cocov-card/30 px-5 py-4 text-sm leading-7 text-cocov-text">
-                                {{ product.bundle_note }}
-                            </div>
+                            <div class="rich-text text-sm leading-8 text-gray-600 tracking-wide" v-html="product.description"></div>
+                            <div
+                                v-if="product.is_bundle && product.bundle_note"
+                                class="rich-text border-l-2 border-cocov-gold bg-cocov-card/30 px-5 py-4 text-sm leading-7 text-cocov-text"
+                                v-html="product.bundle_note"
+                            ></div>
                             <div v-if="product.is_bundle && product.bundle_items?.length" class="border border-gray-100 p-5">
                                 <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-cocov-gold">Included in this bundle</p>
                                 <div class="space-y-3">
@@ -139,19 +141,19 @@ function decrement() {
                         </div>
 
                         <!-- Add to Cart Controls -->
-                        <div class="mt-12 flex flex-col sm:flex-row items-center gap-4">
-                            <div class="flex h-12 w-full sm:w-32 items-center justify-between border border-gray-200 px-4">
-                                <button @click="decrement" class="text-gray-500 hover:text-cocov-gold">
-                                    <MinusIcon class="h-4 w-4" />
+                        <div class="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                            <div class="flex h-14 w-full items-center justify-between border border-gray-200 px-5 sm:h-12 sm:w-32 sm:px-4">
+                                <button @click="decrement" class="text-gray-500 hover:text-cocov-gold" aria-label="Decrease quantity">
+                                    <MinusIcon class="h-5 w-5 sm:h-4 sm:w-4" />
                                 </button>
-                                <span class="text-sm font-bold">{{ quantity }}</span>
-                                <button @click="increment" class="text-gray-500 hover:text-cocov-gold">
-                                    <PlusIcon class="h-4 w-4" />
+                                <span class="text-base font-bold sm:text-sm">{{ quantity }}</span>
+                                <button @click="increment" class="text-gray-500 hover:text-cocov-gold" aria-label="Increase quantity">
+                                    <PlusIcon class="h-5 w-5 sm:h-4 sm:w-4" />
                                 </button>
                             </div>
                             <button
                                 type="button"
-                                class="h-12 w-full flex-1 border border-cocov-gold text-[11px] font-bold uppercase tracking-[0.2em] text-cocov-gold transition hover:bg-cocov-gold hover:text-white disabled:border-gray-300 disabled:text-gray-300"
+                                class="h-14 w-full border border-cocov-gold text-xs font-bold uppercase tracking-[0.15em] text-cocov-gold transition hover:bg-cocov-gold hover:text-white disabled:border-gray-300 disabled:text-gray-300 sm:h-12 sm:flex-1 sm:text-[11px] sm:tracking-[0.2em]"
                                 :disabled="product.stock <= 0"
                                 @click="addToCart"
                             >
@@ -159,7 +161,7 @@ function decrement() {
                             </button>
                             <button
                                 type="button"
-                                class="h-12 w-full flex-1 border border-cocov-gold bg-cocov-gold text-[11px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-[#e0851a] disabled:border-gray-300 disabled:bg-gray-300"
+                                class="h-14 w-full border border-cocov-gold bg-cocov-gold text-xs font-bold uppercase tracking-[0.15em] text-white transition hover:bg-[#e0851a] disabled:border-gray-300 disabled:bg-gray-300 sm:h-12 sm:flex-1 sm:text-[11px] sm:tracking-[0.2em]"
                                 :disabled="product.stock <= 0 || buyingNow"
                                 @click="buyNow"
                             >
@@ -167,7 +169,7 @@ function decrement() {
                             </button>
                             <button
                                 type="button"
-                                class="flex h-12 w-full items-center justify-center gap-2 border border-gray-200 px-6 text-[11px] font-bold uppercase tracking-[0.2em] transition hover:border-red-200 hover:text-red-500 sm:w-auto"
+                                class="flex h-14 w-full items-center justify-center gap-2 border border-gray-200 px-6 text-xs font-bold uppercase tracking-[0.15em] transition hover:border-red-200 hover:text-red-500 sm:h-12 sm:w-auto sm:text-[11px] sm:tracking-[0.2em]"
                                 :class="{ 'border-red-200 text-red-500': product.is_wishlisted }"
                                 @click="toggleWishlist()"
                             >

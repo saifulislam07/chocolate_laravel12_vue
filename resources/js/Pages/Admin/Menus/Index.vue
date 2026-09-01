@@ -1,7 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     menus: Array,
@@ -16,8 +16,25 @@ const form = useForm({
     name: '',
     url: '',
     parent_id: '',
-    order: 0,
+    order: '',
     is_active: true,
+    show_categories: false,
+});
+
+// Only a main menu item can carry a dropdown.
+const isTopLevel = computed(() => !form.parent_id);
+
+// Navigation is two levels deep, so only top level items can be parents.
+const parentOptions = computed(() =>
+    props.allMenus.filter((item) => !item.parent_id && item.id !== form.id)
+);
+
+// A parent with children cannot become a sub menu itself - the server rejects it,
+// and letting the dropdown offer it would just produce a confusing error.
+const editingHasChildren = computed(() => {
+    if (!isEditing.value) return false;
+
+    return !!props.menus.find((item) => item.id === form.id)?.children?.length;
 });
 
 const openCreateModal = () => {
@@ -31,10 +48,11 @@ const openEditModal = (menu) => {
     isEditing.value = true;
     form.id = menu.id;
     form.name = menu.name;
-    form.url = menu.url;
+    form.url = menu.url ?? '';
     form.parent_id = menu.parent_id || '';
-    form.order = menu.order;
-    form.is_active = menu.is_active;
+    form.order = menu.order ?? '';
+    form.is_active = !!menu.is_active;
+    form.show_categories = !!menu.show_categories;
     form.clearErrors();
     showModal.value = true;
 };
@@ -105,6 +123,9 @@ const deleteMenu = (id) => {
                                                     <i class="fas fa-bars text-indigo text-xs"></i>
                                                 </div>
                                                 <span class="font-bold text-indigo">{{ menu.name }}</span>
+                                                <span v-if="menu.show_categories" class="badge badge-pill border border-indigo text-indigo ml-2 text-xs font-weight-normal">
+                                                    <i class="fas fa-sitemap mr-1"></i> + categories
+                                                </span>
                                             </div>
                                         </td>
                                         <td class="px-4"><code class="text-xs">{{ menu.url || '---' }}</code></td>
@@ -175,27 +196,44 @@ const deleteMenu = (id) => {
                         <div class="modal-body bg-light">
                             <div class="form-group">
                                 <label class="font-weight-bold">Menu Text <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" v-model="form.name" required placeholder="e.g. Products">
+                                <input type="text" class="form-control" :class="{ 'is-invalid': form.errors.name }" v-model="form.name" required placeholder="e.g. Products">
+                                <div v-if="form.errors.name" class="invalid-feedback">{{ form.errors.name }}</div>
                             </div>
 
                             <div class="form-group">
                                 <label class="font-weight-bold">Target URL / Page Slug</label>
-                                <input type="text" class="form-control" v-model="form.url" placeholder="e.g. /products or about-us">
+                                <input type="text" class="form-control" :class="{ 'is-invalid': form.errors.url }" v-model="form.url" placeholder="e.g. /products or about-us">
+                                <div v-if="form.errors.url" class="invalid-feedback">{{ form.errors.url }}</div>
                                 <small class="text-muted italic">Leave empty for category parent. If linking to a Page, just enter the slug.</small>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6 form-group">
                                     <label class="font-weight-bold">Parent Item</label>
-                                    <select class="form-control" v-model="form.parent_id">
+                                    <select class="form-control" :class="{ 'is-invalid': form.errors.parent_id }" v-model="form.parent_id" :disabled="editingHasChildren">
                                         <option value="">-- Main Menu --</option>
-                                        <option v-for="m in allMenus.filter(x => !x.parent_id && x.id !== form.id)" :key="m.id" :value="m.id">{{ m.name }}</option>
+                                        <option v-for="m in parentOptions" :key="m.id" :value="m.id">{{ m.name }}</option>
                                     </select>
+                                    <div v-if="form.errors.parent_id" class="invalid-feedback">{{ form.errors.parent_id }}</div>
+                                    <small v-if="editingHasChildren" class="text-muted italic">
+                                        This item has sub menu items, so it has to stay in the main menu.
+                                    </small>
                                 </div>
                                 <div class="col-md-6 form-group">
                                     <label class="font-weight-bold">Display Order</label>
-                                    <input type="number" class="form-control" v-model="form.order">
+                                    <input type="number" min="0" class="form-control" :class="{ 'is-invalid': form.errors.order }" v-model="form.order" placeholder="Auto">
+                                    <div v-if="form.errors.order" class="invalid-feedback">{{ form.errors.order }}</div>
+                                    <small class="text-muted italic">Leave empty to place it last.</small>
                                 </div>
+                            </div>
+
+                            <div v-if="isTopLevel" class="form-group custom-control custom-switch mt-2">
+                                <input type="checkbox" v-model="form.show_categories" class="custom-control-input" id="menuShowCategories">
+                                <label class="custom-control-label font-weight-bold" for="menuShowCategories">Show product categories</label>
+                                <small class="d-block text-muted italic">
+                                    The dropdown lists every active category that has products. Sub menu items
+                                    added under this item are not shown while this is on.
+                                </small>
                             </div>
 
                             <div class="form-group custom-control custom-switch mt-2">

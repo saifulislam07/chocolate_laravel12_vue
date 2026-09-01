@@ -3,5 +3,6 @@ export function menuHref(url) {
         return "#";
     }
 
-    return url.startsWith("http") || url.startsWith("/") ? url : `/p/${url}`;
+    // A bare value is a CMS page slug, which lives at the root: /about-us
+    return url.startsWith("http") || url.startsWith("/") ? url : `/${url}`;
 }

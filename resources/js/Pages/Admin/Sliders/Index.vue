@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -208,7 +209,7 @@ function handleImageChange(e) {
                                             </div>
                                             <div class="form-group mb-3">
                                                 <label class="text-xs font-bold text-muted text-uppercase tracking-wider">Description</label>
-                                                <textarea v-model="form.description" class="form-control" rows="3" placeholder="Short marketing text..."></textarea>
+                                                <RichTextEditor v-model="form.description" :height="130" toolbar="basic" :invalid="!!form.errors.description" placeholder="Short marketing text..." />
                                             </div>
                                             <div class="form-group mb-0">
                                                 <label class="text-xs font-bold text-muted text-uppercase tracking-wider">Button Link (URL)</label>

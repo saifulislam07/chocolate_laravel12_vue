@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cart;
 use App\Models\Division;
 use App\Models\Order;
 use App\Models\PaymentTransaction;
 use App\Models\WebSetting;
+use App\Services\CartManager;
 use App\Services\InventoryService;
 use App\Services\ShippingCalculator;
 use App\Services\Payments\BkashPaymentService;
@@ -22,16 +22,24 @@ use Inertia\Response;
 
 class CheckoutController extends Controller
 {
-    public function __construct(private readonly ShippingCalculator $shipping)
-    {
+    /**
+     * Ids of the orders placed from this browser session, so a guest can still
+     * open their own confirmation page without an account.
+     */
+    private const PLACED_ORDERS_KEY = 'placed_order_ids';
+
+    public function __construct(
+        private readonly ShippingCalculator $shipping,
+        private readonly CartManager $carts,
+    ) {
     }
 
     public function index(Request $request): Response|RedirectResponse
     {
-        $cart = $this->resolveCart($request);
-        $cart->load('items.product.images');
+        $cart = $this->carts->find($request);
+        $cart?->load('items.product.images');
 
-        if ($cart->items->isEmpty()) {
+        if (! $cart || $cart->items->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your bag is empty.');
         }
 
@@ -52,7 +60,7 @@ class CheckoutController extends Controller
         $subtotal = $items->sum('line_total');
         // No area picked yet, so quote the default rate; the page re-prices live on selection.
         $shipping = $this->shipping->charge($subtotal);
-        $tax = round($subtotal * 0.05, 2);
+        $tax = 0;
         $total = $subtotal + $shipping + $tax;
 
         return Inertia::render('Checkout/Index', [
@@ -86,10 +94,10 @@ class CheckoutController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $cart = $this->resolveCart($request);
-        $cart->load('items.product');
+        $cart = $this->carts->find($request);
+        $cart?->load('items.product');
 
-        if ($cart->items->isEmpty()) {
+        if (! $cart || $cart->items->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your bag is empty.');
         }
 
@@ -103,7 +111,7 @@ class CheckoutController extends Controller
 
         $subtotal = $cart->items->sum(fn ($item) => (float) $item->product->price * (int) $item->quantity);
         $shipping = $this->shipping->charge($subtotal, $payload['district_id']);
-        $tax = round($subtotal * 0.05, 2);
+        $tax = 0;
         $total = $subtotal + $shipping + $tax;
 
         $district = \App\Models\District::find($payload['district_id']);
@@ -134,12 +142,11 @@ class CheckoutController extends Controller
                 'total' => $total,
                 'payment_method' => $payload['payment_method'],
                 'payment_status' => 'unpaid',
+                // Street address only — name, phone and email live in their own
+                // columns and are rendered separately on the invoice.
                 'shipping_address' => collect([
-                    $payload['full_name'] ?? null,
                     $payload['address'],
                     trim(($district?->name ?? '') . ' ' . ($payload['postal_code'] ?? '')) ?: null,
-                    'Phone: ' . $payload['phone'],
-                    isset($payload['email']) ? 'Email: ' . $payload['email'] : null,
                 ])->filter()->implode("\n"),
                 'customer_phone' => $payload['phone'],
                 'customer_name' => $payload['full_name'] ?? null,
@@ -163,6 +170,8 @@ class CheckoutController extends Controller
 
             return $order;
         });
+
+        $request->session()->push(self::PLACED_ORDERS_KEY, $order->id);
 
         if ($order->payment_method === 'bkash') {
             $settings = WebSetting::first();
@@ -257,8 +266,12 @@ class CheckoutController extends Controller
             ->with($paid ? 'success' : 'error', $paid ? 'bKash payment completed successfully.' : 'bKash payment execution failed.');
     }
 
-    public function success(Order $order): Response
+    public function success(Request $request, Order $order): Response
     {
+        // 404 rather than 403 so a stranger can't use the status to tell a real
+        // order id from one that doesn't exist.
+        abort_unless($this->canViewOrder($request, $order), 404);
+
         $order->load('items');
 
         return Inertia::render('Checkout/Success', [
@@ -280,16 +293,18 @@ class CheckoutController extends Controller
         ]);
     }
 
-    private function resolveCart(Request $request): Cart
+    /**
+     * An order confirmation exposes the customer's name, phone, items and totals,
+     * so it is readable only by the browser that placed it or the account that
+     * owns it — otherwise anyone could walk the id range and read every order.
+     */
+    private function canViewOrder(Request $request, Order $order): bool
     {
-        $sessionId = $request->session()->getId();
-        $user = Auth::user();
-
-        if ($user) {
-            return Cart::firstOrCreate(['user_id' => $user->id]);
+        if ($order->user_id !== null && $order->user_id === $request->user()?->id) {
+            return true;
         }
 
-        return Cart::firstOrCreate(['session_id' => $sessionId]);
+        return in_array($order->id, $request->session()->get(self::PLACED_ORDERS_KEY, []), true);
     }
 
     private function paymentGatewayOptions(): array

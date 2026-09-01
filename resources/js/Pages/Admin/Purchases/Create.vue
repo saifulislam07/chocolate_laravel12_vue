@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
@@ -227,7 +228,7 @@ const submit = () => {
 
                                     <div class="form-group mb-3">
                                         <label class="text-xs">Purchases Note</label>
-                                        <textarea v-model="form.notes" class="form-control form-control-sm" rows="3" placeholder="Write any remarks..."></textarea>
+                                        <RichTextEditor v-model="form.notes" :height="130" toolbar="basic" :invalid="!!form.errors.notes" placeholder="Write any remarks..." />
                                     </div>
 
                                     <button type="submit" class="btn btn-primary btn-lg btn-block shadow-sm mb-2" :disabled="form.processing || form.items.length === 0">

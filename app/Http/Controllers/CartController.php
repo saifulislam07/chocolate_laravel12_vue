@@ -2,23 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
+use App\Services\CartManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CartController extends Controller
 {
+    /**
+     * Most of any one product a shopper may hold in their bag at a time.
+     */
+    private const MAX_PER_ITEM = 20;
+
+    public function __construct(private readonly CartManager $carts)
+    {
+    }
+
     public function index(Request $request): Response
     {
-        $cart = $this->resolveCart($request);
-        $cart->load('items.product.images');
+        $cart = $this->carts->find($request);
+        $cart?->load('items.product.images');
 
-        $items = $cart->items->map(function (CartItem $item): array {
+        $items = collect($cart?->items ?? [])->map(function (CartItem $item): array {
             $price = (float) $item->product->price;
             $quantity = (int) $item->quantity;
 
@@ -44,19 +53,23 @@ class CartController extends Controller
     {
         $payload = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
-            'quantity' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'quantity' => ['nullable', 'integer', 'min:1', 'max:' . self::MAX_PER_ITEM],
         ]);
 
         $product = Product::query()
             ->where('is_active', true)
             ->findOrFail($payload['product_id']);
 
-        $cart = $this->resolveCart($request);
+        $cart = $this->carts->resolve($request);
         $quantityToAdd = $payload['quantity'] ?? 1;
 
         $item = $cart->items()
             ->where('product_id', $product->id)
             ->first();
+
+        // The rules below apply to what the bag would end up holding, not to
+        // this one click — otherwise adding 20 twice sails past both limits.
+        $this->assertQuantityIsAllowed($product, ((int) $item?->quantity) + $quantityToAdd);
 
         if ($item) {
             $item->increment('quantity', $quantityToAdd);
@@ -75,8 +88,11 @@ class CartController extends Controller
         $this->assertCartOwnership($request, $cartItem);
 
         $payload = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1', 'max:20'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:' . self::MAX_PER_ITEM],
         ]);
+
+        $cartItem->loadMissing('product');
+        $this->assertQuantityIsAllowed($cartItem->product, $payload['quantity']);
 
         $cartItem->update([
             'quantity' => $payload['quantity'],
@@ -93,22 +109,34 @@ class CartController extends Controller
         return back()->with('success', 'Item removed from bag.');
     }
 
-    private function resolveCart(Request $request): Cart
+    /**
+     * Guard the bag against quantities the shop can't honour: more than the
+     * per-item cap, or more than there is on the shelf. Checking here means the
+     * shopper hears about it while browsing rather than at the payment step.
+     */
+    private function assertQuantityIsAllowed(?Product $product, int $quantity): void
     {
-        $sessionId = $request->session()->getId();
-        $user = Auth::user();
-
-        if ($user) {
-            return Cart::firstOrCreate(['user_id' => $user->id]);
+        if ($product === null) {
+            return;
         }
 
-        return Cart::firstOrCreate(['session_id' => $sessionId]);
+        if ($quantity > self::MAX_PER_ITEM) {
+            throw ValidationException::withMessages([
+                'quantity' => "You can keep at most " . self::MAX_PER_ITEM . " of \"{$product->name}\" in your bag.",
+            ]);
+        }
+
+        if ($quantity > $product->stock) {
+            throw ValidationException::withMessages([
+                'quantity' => "\"{$product->name}\" only has {$product->stock} left in stock.",
+            ]);
+        }
     }
 
     private function assertCartOwnership(Request $request, CartItem $cartItem): void
     {
-        $cart = $this->resolveCart($request);
+        $cart = $this->carts->find($request);
 
-        abort_unless($cartItem->cart_id === $cart->id, 403);
+        abort_unless($cart && $cartItem->cart_id === $cart->id, 403);
     }
 }
