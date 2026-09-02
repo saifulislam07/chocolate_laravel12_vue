@@ -13,11 +13,6 @@ use Inertia\Response;
 
 class CartController extends Controller
 {
-    /**
-     * Most of any one product a shopper may hold in their bag at a time.
-     */
-    private const MAX_PER_ITEM = 20;
-
     public function __construct(private readonly CartManager $carts)
     {
     }
@@ -53,7 +48,7 @@ class CartController extends Controller
     {
         $payload = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
-            'quantity' => ['nullable', 'integer', 'min:1', 'max:' . self::MAX_PER_ITEM],
+            'quantity' => ['nullable', 'integer', 'min:1', 'max:' . CartManager::MAX_PER_ITEM],
         ]);
 
         $product = Product::query()
@@ -88,7 +83,7 @@ class CartController extends Controller
         $this->assertCartOwnership($request, $cartItem);
 
         $payload = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1', 'max:' . self::MAX_PER_ITEM],
+            'quantity' => ['required', 'integer', 'min:1', 'max:' . CartManager::MAX_PER_ITEM],
         ]);
 
         $cartItem->loadMissing('product');
@@ -120,9 +115,9 @@ class CartController extends Controller
             return;
         }
 
-        if ($quantity > self::MAX_PER_ITEM) {
+        if ($quantity > CartManager::MAX_PER_ITEM) {
             throw ValidationException::withMessages([
-                'quantity' => "You can keep at most " . self::MAX_PER_ITEM . " of \"{$product->name}\" in your bag.",
+                'quantity' => "You can keep at most " . CartManager::MAX_PER_ITEM . " of \"{$product->name}\" in your bag.",
             ]);
         }
 

@@ -42,6 +42,14 @@ if (initiallyOpen) {
     openGroups.value[initiallyOpen] = true;
 }
 const bodyClasses = ['hold-transition', 'sidebar-mini', 'layout-fixed'];
+
+// AdminLTE bundles Bootstrap's print reboot, which declares `@page{size:a3}`,
+// and its stylesheet is injected after ours — so a page box written in our own
+// CSS never wins. Asserting it at runtime puts it last in <head> instead.
+// Pages that need a different sheet (the A5 invoice) re-assert their own rule
+// after this one.
+const PAGE_RULE = '@page { size: A4; margin: 12mm; }';
+let pageStyleEl = null;
 const r = (name, params = undefined) => route(name, params, false);
 
 const userPermissions = computed(() => page.props.auth?.permissions || []);
@@ -51,6 +59,11 @@ function can(permission) {
 
 onMounted(() => {
     document.body.classList.add(...bodyClasses);
+
+    pageStyleEl = document.createElement('style');
+    pageStyleEl.setAttribute('data-admin-page-box', '');
+    pageStyleEl.textContent = PAGE_RULE;
+    document.head.appendChild(pageStyleEl);
 
     // Show a light loading overlay while Inertia navigates between admin pages.
     // Small delay so it doesn't flash on near-instant loads.
@@ -67,6 +80,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+    pageStyleEl?.remove();
+    pageStyleEl = null;
     document.body.classList.remove(...bodyClasses, 'sidebar-collapse');
     clearTimeout(navTimer);
     offNavStart?.();
@@ -477,6 +492,16 @@ body {
         overflow: visible !important;
     }
 
+    /* AdminLTE bundles Bootstrap's print reboot, which forces
+       `body{min-width:992px!important}` — about 262mm. A sheet laid out at paper
+       width is then scaled down or clipped to fit, so the printout stops
+       matching the screen. Its stylesheet loads after ours, so the override
+       needs the extra element to outrank it. */
+    html body,
+    html .container {
+        min-width: 0 !important;
+    }
+
     .main-sidebar,
     .main-header,
     .main-footer,
@@ -491,6 +516,13 @@ body {
         margin-left: 0 !important;
         min-height: 0 !important;
         background: #fff !important;
+    }
+
+    /* The content inset is screen chrome. On paper the page box sets the
+       margins, and another 1.5rem on top of them pushes a sheet that is already
+       drawn at paper width off the edge. */
+    .content-wrapper main {
+        padding: 0 !important;
     }
 
     /* The POS invoice sits inside a Bootstrap modal; flatten it so the whole
@@ -543,9 +575,8 @@ body {
     }
 }
 
-@page {
-    margin: 12mm;
-}
+/* The page box is asserted from script (PAGE_RULE) so it lands after AdminLTE's
+   own `@page{size:a3}`; declaring it here would simply be overridden. */
 
 .main-sidebar {
     bottom: 0;

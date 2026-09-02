@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { MinusIcon, PlusIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps({
     items: { type: Array, default: () => [] },
@@ -61,6 +62,53 @@ const moneyFormatter = new Intl.NumberFormat("en-BD", {
 
 function formatMoney(value) {
     return moneyFormatter.format(Number(value || 0));
+}
+
+// Id of the line currently in flight, so its own buttons freeze while the
+// server catches up instead of the whole summary going dead.
+const pendingItemId = ref(null);
+const bagError = ref("");
+
+// The bag endpoints answer with back(), which re-renders this page with fresh
+// items and totals. preserveState keeps everything already typed into the form.
+function editBag(itemId, visit) {
+    if (pendingItemId.value !== null) return;
+
+    pendingItemId.value = itemId;
+    bagError.value = "";
+
+    visit({
+        preserveScroll: true,
+        preserveState: true,
+        onError: (errors) => {
+            bagError.value = errors.quantity || Object.values(errors)[0] || "Could not update your bag.";
+        },
+        onFinish: () => {
+            pendingItemId.value = null;
+        },
+    });
+}
+
+function setQuantity(item, quantity) {
+    if (quantity < 1 || quantity > item.max_quantity || quantity === item.quantity) {
+        return;
+    }
+
+    editBag(item.id, (options) => router.patch(route("cart.update", item.id), { quantity }, options));
+}
+
+function increment(item) {
+    setQuantity(item, item.quantity + 1);
+}
+
+function decrement(item) {
+    setQuantity(item, item.quantity - 1);
+}
+
+// Emptying the bag entirely sends the shopper back to it — there is nothing
+// left here to check out — which CheckoutController@index already handles.
+function removeItem(item) {
+    editBag(item.id, (options) => router.delete(route("cart.destroy", item.id), options));
 }
 
 function placeOrder() {
@@ -135,10 +183,67 @@ function placeOrder() {
 
             <aside class="rounded-[3px] border border-cocov-line bg-white p-6">
                 <h2 class="font-heading text-xl uppercase text-cocov-text">Order Summary</h2>
-                <div class="mt-4 space-y-3">
-                    <article v-for="item in items" :key="item.id" class="flex items-center justify-between text-sm">
-                        <p class="text-cocov-text/70">{{ item.name }} x {{ item.quantity }}</p>
-                        <p class="font-semibold">{{ formatMoney(item.line_total) }}</p>
+                <p v-if="bagError" class="mt-3 rounded border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">{{ bagError }}</p>
+                <div class="mt-4 divide-y divide-cocov-line">
+                    <article
+                        v-for="item in items"
+                        :key="item.id"
+                        class="flex gap-3 py-3 text-sm transition"
+                        :class="pendingItemId === item.id ? 'opacity-50' : ''"
+                    >
+                        <img
+                            :src="item.image || '/images/godiva/product_default.png'"
+                            :alt="item.name"
+                            class="h-14 w-14 flex-shrink-0 border border-cocov-line object-contain p-1"
+                        />
+                        <div class="flex flex-1 flex-col justify-between gap-2">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <p class="text-cocov-text/80">{{ item.name }}</p>
+                                    <p class="mt-0.5 text-[10px] uppercase tracking-widest text-gray-400">{{ formatMoney(item.price) }} / ea</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    :disabled="pendingItemId !== null"
+                                    :aria-label="`Remove ${item.name} from bag`"
+                                    class="text-gray-400 transition hover:text-cocov-gold disabled:cursor-not-allowed disabled:opacity-40"
+                                    @click="removeItem(item)"
+                                >
+                                    <XMarkIcon class="h-4 w-4" />
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex h-8 w-24 items-center justify-between border border-cocov-line px-2">
+                                    <button
+                                        type="button"
+                                        :disabled="pendingItemId !== null || item.quantity <= 1"
+                                        aria-label="Decrease quantity"
+                                        class="text-gray-400 transition hover:text-cocov-gold disabled:cursor-not-allowed disabled:opacity-30"
+                                        @click="decrement(item)"
+                                    >
+                                        <MinusIcon class="h-3 w-3" />
+                                    </button>
+                                    <span class="text-xs font-bold">{{ item.quantity }}</span>
+                                    <button
+                                        type="button"
+                                        :disabled="pendingItemId !== null || item.quantity >= item.max_quantity"
+                                        aria-label="Increase quantity"
+                                        class="text-gray-400 transition hover:text-cocov-gold disabled:cursor-not-allowed disabled:opacity-30"
+                                        @click="increment(item)"
+                                    >
+                                        <PlusIcon class="h-3 w-3" />
+                                    </button>
+                                </div>
+                                <p class="font-semibold">{{ formatMoney(item.line_total) }}</p>
+                            </div>
+                            <p v-if="item.quantity >= item.max_quantity" class="text-[10px] uppercase tracking-widest text-cocov-gold">
+                                {{
+                                    item.max_quantity >= item.stock
+                                        ? `Only ${item.stock} left in stock`
+                                        : `Limit ${item.max_quantity} per item`
+                                }}
+                            </p>
+                        </div>
                     </article>
                 </div>
                 <div class="mt-5 space-y-2 border-t border-cocov-line pt-4 text-sm">

@@ -49,11 +49,16 @@ class CheckoutController extends Controller
 
             return [
                 'id' => $item->id,
+                'product_id' => $item->product->id,
                 'name' => $item->product->name,
                 'quantity' => $quantity,
                 'price' => $price,
                 'line_total' => $price * $quantity,
                 'image' => $item->product->images->first()?->image_path,
+                'stock' => (int) $item->product->stock,
+                // The ceiling the +/- stepper on this page may not cross; the
+                // same rule CartController enforces when the request lands.
+                'max_quantity' => min(CartManager::MAX_PER_ITEM, (int) $item->product->stock),
             ];
         })->values();
 

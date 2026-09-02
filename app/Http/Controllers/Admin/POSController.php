@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Customer;
 use App\Models\Division;
+use App\Models\Order;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -23,6 +25,7 @@ class POSController extends Controller
                 ->get(),
             'customers' => Customer::latest()->get(),
             'divisions' => Division::with('districts:id,division_id,name')->get(['id', 'name']),
+            'leadSources' => Order::LEAD_SOURCES,
         ]);
     }
 
@@ -42,6 +45,8 @@ class POSController extends Controller
             'paid_amount' => 'required|numeric',
             'due_amount' => 'required|numeric',
             'payment_method' => 'required|string',
+            'lead_source' => ['nullable', Rule::in(Order::LEAD_SOURCES)],
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         // Validate stock availability up front so a partial sale never happens.
@@ -56,7 +61,7 @@ class POSController extends Controller
         }
 
         $order = DB::transaction(function () use ($request, $products, $inventory) {
-            $order = \App\Models\Order::create([
+            $order = Order::create([
                 'order_number' => 'POS-' . strtoupper(uniqid()),
                 'customer_id' => $request->customer_id,
                 'status' => 'completed',
@@ -70,6 +75,8 @@ class POSController extends Controller
                 'payment_method' => $request->payment_method,
                 'payment_status' => $request->due_amount > 0 ? ($request->paid_amount > 0 ? 'partial' : 'unpaid') : 'paid',
                 'order_source' => 'pos',
+                'lead_source' => $request->lead_source ?: null,
+                'notes' => $request->notes ?: null,
             ]);
 
             foreach ($request->items as $item) {
@@ -94,6 +101,8 @@ class POSController extends Controller
             'customer_name' => $customer ? $customer->name : null,
             'customer_phone' => $customer ? $customer->phone : null,
             'payment_method' => $order->payment_method,
+            'lead_source' => $order->lead_source,
+            'notes' => $order->notes,
             'items' => $request->items,
             'subtotal' => $order->subtotal,
             'discount' => $order->discount,

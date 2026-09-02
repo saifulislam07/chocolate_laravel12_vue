@@ -1,80 +1,180 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
-
-// Shop details for the receipt header come from Settings, not hardcoded text.
-const shop = computed(() => usePage().props.webSettings || {});
+import { computed, onBeforeUnmount, ref } from 'vue';
 
 const props = defineProps({
     products: Array,
     customers: Array,
     divisions: { type: Array, default: () => [] },
+    leadSources: { type: Array, default: () => [] },
 });
+
+// Shop details for the receipt header come from Settings, not hardcoded text.
+const shop = computed(() => usePage().props.webSettings || {});
+
+const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+const money = (value) => '৳' + Number(value || 0).toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/* ------------------------------------------------------------------ *
+ * Catalogue: search, category filter, category-first ordering
+ * ------------------------------------------------------------------ */
 
 const searchQuery = ref('');
-const cart = ref([]);
-const selectedCustomerId = ref('');
-const showInvoiceModal = ref(false);
-const printInvoiceData = ref(null);
+const selectedCategoryId = ref('all');
+
+// Only the categories that actually have a product on this screen, so the
+// filter bar never offers a tab that turns up empty.
+const categories = computed(() => {
+    const found = new Map();
+
+    for (const product of props.products) {
+        if (!product.category) continue;
+
+        const entry = found.get(product.category.id);
+
+        if (entry) {
+            entry.count++;
+        } else {
+            found.set(product.category.id, { id: product.category.id, name: product.category.name, count: 1 });
+        }
+    }
+
+    return [...found.values()].sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const uncategorisedCount = computed(() => props.products.filter((p) => !p.category).length);
+
+const categoryOf = (product) => product.category?.id ?? 'uncategorised';
 
 const filteredProducts = computed(() => {
-    if (!searchQuery.value) return props.products;
-    return props.products.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        (p.sku && p.sku.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    );
+    const term = searchQuery.value.trim().toLowerCase();
+
+    return props.products
+        .filter((product) => {
+            if (selectedCategoryId.value !== 'all' && categoryOf(product) !== selectedCategoryId.value) {
+                return false;
+            }
+
+            if (!term) return true;
+
+            return product.name.toLowerCase().includes(term)
+                || (product.sku && product.sku.toLowerCase().includes(term));
+        })
+        // Category first so the grid reads as one shelf per category, then name
+        // within it. Anything without a category is parked at the end.
+        .sort((a, b) => {
+            const rankA = a.category ? 0 : 1;
+            const rankB = b.category ? 0 : 1;
+
+            if (rankA !== rankB) return rankA - rankB;
+
+            return (a.category?.name || '').localeCompare(b.category?.name || '')
+                || a.name.localeCompare(b.name);
+        });
 });
+
+/* ------------------------------------------------------------------ *
+ * Cart
+ * ------------------------------------------------------------------ */
+
+const cart = ref([]);
+const selectedCustomerId = ref('');
+
+// A short-lived line above the cart. Replaces the alert() dialogs, which stop
+// the operator dead in the middle of a queue.
+const notice = ref('');
+let noticeTimer = null;
+
+function flashNotice(message) {
+    notice.value = message;
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => { notice.value = ''; }, 2500);
+}
+
+onBeforeUnmount(() => clearTimeout(noticeTimer));
 
 const addToCart = (product) => {
     if (product.stock <= 0) {
-        alert('Item out of stock!');
+        flashNotice(`"${product.name}" is out of stock.`);
         return;
     }
-    const existing = cart.value.find(item => item.id === product.id);
-    if (existing) {
-        existing.quantity++;
-    } else {
+
+    const existing = cart.value.find((item) => item.id === product.id);
+
+    if (!existing) {
+        // The shelf count rides along on the line so the stepper can stop at it
+        // without going back to the product list on every click.
         cart.value.push({
             id: product.id,
             name: product.name,
             price: parseFloat(product.price),
-            quantity: 1
+            quantity: 1,
+            stock: product.stock,
         });
+
+        return;
     }
+
+    if (existing.quantity >= existing.stock) {
+        flashNotice(`Only ${existing.stock} of "${product.name}" in stock.`);
+        return;
+    }
+
+    existing.quantity++;
+};
+
+const increment = (item) => {
+    if (item.quantity >= item.stock) {
+        flashNotice(`Only ${item.stock} of "${item.name}" in stock.`);
+        return;
+    }
+
+    item.quantity++;
+};
+
+const decrement = (item) => {
+    if (item.quantity > 1) item.quantity--;
 };
 
 const removeFromCart = (index) => {
     cart.value.splice(index, 1);
 };
 
-const subtotal = computed(() => {
-    return cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-});
+const cartCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
+
+/* ------------------------------------------------------------------ *
+ * Money
+ * ------------------------------------------------------------------ */
 
 const discount = ref(0);
 const taxRate = ref(0);
 const shippingCost = ref(0);
 const paidAmount = ref(0);
 const paymentMethod = ref('cash');
+// Which channel brought this sale in, and anything the operator wants on record.
+const leadSource = ref('');
+const saleNote = ref('');
 
-const taxAmount = computed(() => {
-    return (subtotal.value * taxRate.value) / 100;
-});
+const subtotal = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
 
-const grandTotal = computed(() => {
-    return subtotal.value - parseFloat(discount.value || 0) + taxAmount.value + parseFloat(shippingCost.value || 0);
-});
+const taxAmount = computed(() => (subtotal.value * taxRate.value) / 100);
 
-const dueAmount = computed(() => {
-    let due = grandTotal.value - parseFloat(paidAmount.value || 0);
-    return due > 0 ? due : 0;
-});
+const grandTotal = computed(
+    () => subtotal.value - parseFloat(discount.value || 0) + taxAmount.value + parseFloat(shippingCost.value || 0),
+);
 
-const changeAmount = computed(() => {
-    let change = parseFloat(paidAmount.value || 0) - grandTotal.value;
-    return change > 0 ? change : 0;
-});
+const dueAmount = computed(() => Math.max(grandTotal.value - parseFloat(paidAmount.value || 0), 0));
+
+const changeAmount = computed(() => Math.max(parseFloat(paidAmount.value || 0) - grandTotal.value, 0));
+
+/* ------------------------------------------------------------------ *
+ * Checkout
+ * ------------------------------------------------------------------ */
+
+const showInvoiceModal = ref(false);
+const printInvoiceData = ref(null);
 
 const checkoutForm = useForm({
     customer_id: '',
@@ -86,14 +186,20 @@ const checkoutForm = useForm({
     total: 0,
     paid_amount: 0,
     due_amount: 0,
-    payment_method: 'cash'
+    payment_method: 'cash',
+    lead_source: '',
+    notes: '',
 });
 
+// Stock and validation failures come back keyed by field; the operator needs to
+// see them next to the cart rather than nowhere at all.
+const checkoutError = computed(() => Object.values(checkoutForm.errors)[0] || '');
+
 const processSale = () => {
-    if (cart.value.length === 0) return alert('Cart is empty!');
+    if (!cart.value.length) return;
 
     checkoutForm.customer_id = selectedCustomerId.value;
-    checkoutForm.items = cart.value;
+    checkoutForm.items = cart.value.map(({ id, name, price, quantity }) => ({ id, name, price, quantity }));
     checkoutForm.subtotal = subtotal.value;
     checkoutForm.discount = parseFloat(discount.value || 0);
     checkoutForm.tax = taxAmount.value;
@@ -102,25 +208,43 @@ const processSale = () => {
     checkoutForm.paid_amount = parseFloat(paidAmount.value || 0);
     checkoutForm.due_amount = dueAmount.value;
     checkoutForm.payment_method = paymentMethod.value;
+    checkoutForm.lead_source = leadSource.value;
+    checkoutForm.notes = saleNote.value;
 
     checkoutForm.post(route('admin.pos.store'), {
         preserveScroll: true,
         onSuccess: (page) => {
             printInvoiceData.value = page.props.flash?.invoice || null;
-            if(printInvoiceData.value){
+
+            if (printInvoiceData.value) {
                 showInvoiceModal.value = true;
             }
-            // Reset fields
-            cart.value = [];
-            discount.value = 0;
-            taxRate.value = 0;
-            shippingCost.value = 0;
-            paidAmount.value = 0;
-        }
+
+            clearSale();
+        },
     });
 };
 
+function clearSale() {
+    cart.value = [];
+    discount.value = 0;
+    taxRate.value = 0;
+    shippingCost.value = 0;
+    paidAmount.value = 0;
+    leadSource.value = '';
+    saleNote.value = '';
+}
+
+const printInvoice = () => {
+    window.print();
+};
+
+/* ------------------------------------------------------------------ *
+ * Quick add customer
+ * ------------------------------------------------------------------ */
+
 const showCustomerModal = ref(false);
+
 const quickCustomerForm = useForm({
     name: '',
     phone: '',
@@ -140,402 +264,570 @@ function onQuickCustomerDivisionChange() {
 }
 
 const submitQuickCustomer = () => {
+    const phone = quickCustomerForm.phone;
+
     quickCustomerForm.post(route('admin.customers.store'), {
+        preserveScroll: true,
         onSuccess: (page) => {
-            // The list of customers will be updated via props automatically if using resource
-            // but we need to select the new one.
-            // Since we don't have the new ID immediately in standard Inertia response without custom logic,
-            // we can try to find it by phone in the updated props if they are refreshed.
+            // Phone is unique, so the refreshed list is enough to find the row
+            // that was just created and put it straight on this sale.
+            const created = (page.props.customers || []).find((c) => c.phone === phone);
+
+            if (created) selectedCustomerId.value = created.id;
+
             showCustomerModal.value = false;
             quickCustomerForm.reset();
         },
     });
 };
-
-const printInvoice = () => {
-    window.print();
-};
 </script>
 
 <template>
     <Head title="POS - Point of Sale" />
-    <AdminLayout border="0">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Advanced POS System</h2>
-        </template>
 
-        <section class="content pt-3 d-print-none">
-            <div class="container-fluid">
-                <div class="row">
-                    <!-- Left: Product List -->
-                    <div class="col-lg-7 col-md-6">
-                        <div class="card card-outline card-primary shadow-sm">
-                            <div class="card-header border-0">
-                                <div class="input-group">
-                                    <input type="text" v-model="searchQuery" class="form-control" placeholder="Search product by name or SKU...">
-                                    <div class="input-group-append">
-                                        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body p-2" style="height: 75vh; overflow-y: auto;">
-                                <div class="row">
-                                    <div v-for="product in filteredProducts" :key="product.id" class="col-lg-3 col-md-4 col-sm-4 col-6 mb-4 px-2">
-                                        <div class="card h-100 product-card shadow-sm border-0 bg-white" @click="addToCart(product)"
-                                             :style="{ cursor: product.stock > 0 ? 'pointer' : 'not-allowed', opacity: product.stock > 0 ? 1 : 0.6, borderRadius: '15px', overflow: 'hidden' }">
-
-                                            <!-- Top Image Area -->
-                                            <div class="position-relative" style="height: 110px; background: #f9f9f9; width: 100%;">
-                                                <!-- Image -->
-                                                <div class="d-flex align-items-center justify-content-center h-100 w-100 p-2">
-                                                    <img v-if="product.image" :src="product.image" class="img-fluid" style="max-height: 100%; object-fit: contain;">
-                                                    <div v-else class="text-center text-muted opacity-25">
-                                                        <i class="fas fa-image fa-2x d-block"></i>
-                                                        <span class="text-[8px] font-bold">NO IMAGE</span>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Overlays -->
-                                                <div class="position-absolute w-100 px-2 d-flex justify-content-between" style="top: 8px;">
-                                                    <span class="badge shadow-sm border"
-                                                          :class="product.stock > 10 ? 'bg-white text-info' : 'bg-danger text-white'"
-                                                          style="font-size: 9px; border-radius: 4px; padding: 2px 6px; border-color: rgba(0,0,0,0.05) !important;">
-                                                        STK: {{ product.stock }}
-                                                    </span>
-                                                    <div class="d-flex flex-column align-items-end">
-                                                        <span class="badge bg-white shadow-sm border text-success font-bold mb-1" style="font-size: 10px; border-radius: 4px; padding: 2px 6px; border-color: rgba(0,0,0,0.05) !important;">
-                                                            ৳{{ product.price }}
-                                                        </span>
-                                                        <span v-if="product.compare_at_price > product.price" class="badge badge-danger shadow-sm" style="font-size: 8px; border-radius: 4px; padding: 1px 4px;">
-                                                            -{{ Math.round((product.compare_at_price - product.price) / product.compare_at_price * 100) }}%
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Bottom Content Area -->
-                                            <div class="card-body p-3 d-flex flex-column justify-content-between" style="min-height: 95px; background: white;">
-                                                <div class="product-info mb-1">
-                                                    <div class="text-xs font-bold text-dark line-clamp-2 leading-tight mb-2" :title="product.name" style="height: 2.2rem; overflow: hidden; line-height: 1.1rem;">
-                                                        {{ product.name }}
-                                                    </div>
-                                                    <div class="d-flex align-items-center justify-content-between mt-1">
-                                                        <span class="text-[9px] text-muted font-mono tracking-tighter bg-light px-2 py-0.5 rounded border">{{ product.sku || 'N/A' }}</span>
-                                                        <del v-if="product.compare_at_price > product.price" class="text-[9px] text-muted">৳{{ product.compare_at_price }}</del>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right: Cart & Checkout calculation -->
-                    <div class="col-lg-5 col-md-6">
-                        <div class="card card-outline card-success shadow-sm border-0" style="border-radius: 15px;">
-                            <div class="card-header p-3 border-bottom bg-white" style="border-radius: 20px 20px 0 0;"> <!-- Subtle curve -->
-                                <div class="d-flex align-items-center gap-2 bg-light p-1 rounded-pill border shadow-inset transition-all" style="height: 48px;">
-                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; flex-shrink: 0;">
-                                        <i class="fas fa-user text-sm"></i>
-                                    </div>
-                                    <select v-model="selectedCustomerId" class="form-control border-0 bg-transparent text-sm font-bold text-dark px-2" style="height: 38px; box-shadow: none;">
-                                        <option value="">Walk-in Customer</option>
-                                        <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                                            {{ customer.name }} ({{ customer.phone }})
-                                        </option>
-                                    </select>
-                                    <button type="button" @click="showCustomerModal = true" class="btn btn-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; flex: 0 0 36px; padding: 0; outline: none !important; border: none;">
-                                        <i class="fas fa-plus text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body p-0" style="height: 35vh; overflow-y: auto;">
-                                <table class="table table-sm table-striped mb-0">
-                                    <thead class="bg-light sticky-top">
-                                        <tr>
-                                            <th>Product</th>
-                                            <th style="width: 80px" class="text-center">Qty</th>
-                                            <th style="width: 90px" class="text-right">Total</th>
-                                            <th style="width: 40px"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(item, index) in cart" :key="index">
-                                            <td class="text-sm font-weight-bold">{{ item.name }}<br><small class="text-muted">৳{{ item.price }}</small></td>
-                                            <td>
-                                                <div class="input-group input-group-sm">
-                                                    <input type="number" v-model.number="item.quantity" class="form-control text-center px-1" min="1">
-                                                </div>
-                                            </td>
-                                            <td class="text-right font-weight-bold">৳{{ (item.price * item.quantity).toFixed(2) }}</td>
-                                            <td class="text-center">
-                                                <button @click="removeFromCart(index)" class="btn btn-xs btn-outline-danger"><i class="fas fa-times"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr v-if="cart.length === 0">
-                                            <td colspan="4" class="text-center p-5 text-muted"><h4><i class="fas fa-shopping-cart mb-2"></i></h4> Cart is empty</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <!-- Calculation summary -->
-                            <div class="card-footer bg-light p-2">
-                                <table class="table table-sm table-borderless mb-0">
-                                    <tr>
-                                        <td class="font-weight-bold text-muted">Subtotal:</td>
-                                        <td class="text-right font-weight-bold h5">৳{{ subtotal.toFixed(2) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="align-middle">Discount (৳):</td>
-                                        <td><input type="number" v-model.number="discount" class="form-control form-control-sm text-right" min="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="align-middle">Tax (%):</td>
-                                        <td><input type="number" v-model.number="taxRate" class="form-control form-control-sm text-right" min="0" max="100"></td>
-                                    </tr>
-                                    <tr class="border-bottom">
-                                        <td class="align-middle">Shipping (৳):</td>
-                                        <td><input type="number" v-model.number="shippingCost" class="form-control form-control-sm text-right" min="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-weight-bold h4 text-success pt-2">Grand Total:</td>
-                                        <td class="text-right font-weight-bold h3 text-success pt-2">৳{{ grandTotal.toFixed(2) }}</td>
-                                    </tr>
-                                </table>
-                            </div>
-
-                            <!-- Payment Area -->
-                            <div class="card-body p-2 bg-white border-top">
-                                <div class="row mb-2">
-                                    <div class="col-6">
-                                        <label class="text-xs text-muted mb-0">Payment Method</label>
-                                        <select v-model="paymentMethod" class="form-control form-control-sm">
-                                            <option value="cash">Cash</option>
-                                            <option value="card">Card / POS</option>
-                                            <option value="mobile_banking">Mobile Banking (bKash/Nagad)</option>
-                                            <option value="bank">Bank Transfer</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="text-xs text-muted mb-0">Paid Amount (৳)</label>
-                                        <input type="number" v-model.number="paidAmount" class="form-control form-control-sm text-right font-weight-bold text-primary" style="font-size: 1.1rem" :min="0">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="bg-gray-light p-1 rounded text-center">
-                                            <small class="d-block text-muted">Change</small>
-                                            <span class="font-weight-bold text-success">৳{{ changeAmount.toFixed(2) }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="bg-gray-light p-1 rounded text-center">
-                                            <small class="d-block text-muted">Due</small>
-                                            <span class="font-weight-bold text-danger">৳{{ dueAmount.toFixed(2) }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card-footer p-2">
-                                <div class="row">
-                                    <div class="col-4">
-                                        <button class="btn btn-block btn-outline-danger" @click="cart = []">Cancel</button>
-                                    </div>
-                                    <div class="col-8">
-                                        <button @click="processSale" class="btn btn-block btn-success shadow" :disabled="cart.length === 0 || checkoutForm.processing">
-                                            <i class="fas fa-check-circle mr-1"></i> Complete Sale & Print
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <AdminLayout>
+        <div class="d-print-none">
+            <!-- Page heading -->
+            <div class="mb-3.5 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <h1 class="text-[1.25rem] font-bold tracking-tight text-slate-900">Point of Sale</h1>
+                    <p class="mt-0.5 text-sm text-slate-500">Ring up a sale, print the invoice &mdash; stock updates itself.</p>
+                </div>
+                <div class="flex items-center gap-2 text-xs font-medium text-slate-500">
+                    <span class="rounded-md border-[1px] border-slate-200 bg-white px-2.5 py-1.5">
+                        <i class="far fa-calendar mr-1.5 text-slate-400"></i>{{ today }}
+                    </span>
+                    <span class="rounded-md border-[1px] border-slate-200 bg-white px-2.5 py-1.5">
+                        <i class="fas fa-box mr-1.5 text-slate-400"></i>{{ filteredProducts.length }} shown
+                    </span>
                 </div>
             </div>
-        </section>
 
-        <!-- Invoice Modal/Section (only visible in print or when modal active) -->
-        <div v-if="showInvoiceModal" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header d-print-none">
-                        <h5 class="modal-title">Sale Complete - Invoice #{{ printInvoiceData?.invoice_no }}</h5>
-                        <button type="button" class="close" @click="showInvoiceModal = false">
-                            <span>&times;</span>
+            <div class="flex flex-col gap-4 xl:h-[calc(100vh-11rem)] xl:flex-row">
+                <!-- ---------------------------------------------------- -->
+                <!-- Catalogue                                            -->
+                <!-- ---------------------------------------------------- -->
+                <section class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border-[1px] border-slate-200 bg-white">
+                    <div class="space-y-3 border-b border-slate-100 p-3.5">
+                        <div class="relative">
+                            <i class="fas fa-search pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i>
+                            <input
+                                v-model="searchQuery"
+                                type="text"
+                                placeholder="Search by product name or SKU"
+                                class="w-full rounded-xl border-[1px] border-slate-200 bg-slate-50 py-2.5 pl-10 pr-2.5 text-sm text-slate-700 placeholder-slate-400 transition focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                            >
+                        </div>
+
+                        <div class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                            <button
+                                type="button"
+                                class="shrink-0 rounded-full border-[1px] px-2.5 py-1.5 text-xs font-semibold transition"
+                                :class="selectedCategoryId === 'all'
+                                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'"
+                                @click="selectedCategoryId = 'all'"
+                            >
+                                All <span class="ml-1 opacity-70">{{ products.length }}</span>
+                            </button>
+                            <button
+                                v-for="category in categories"
+                                :key="category.id"
+                                type="button"
+                                class="shrink-0 rounded-full border-[1px] px-2.5 py-1.5 text-xs font-semibold transition"
+                                :class="selectedCategoryId === category.id
+                                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'"
+                                @click="selectedCategoryId = category.id"
+                            >
+                                {{ category.name }} <span class="ml-1 opacity-70">{{ category.count }}</span>
+                            </button>
+                            <button
+                                v-if="uncategorisedCount"
+                                type="button"
+                                class="shrink-0 rounded-full border-[1px] px-2.5 py-1.5 text-xs font-semibold transition"
+                                :class="selectedCategoryId === 'uncategorised'
+                                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'"
+                                @click="selectedCategoryId = 'uncategorised'"
+                            >
+                                Uncategorised <span class="ml-1 opacity-70">{{ uncategorisedCount }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="min-h-0 flex-1 overflow-y-auto p-3.5">
+                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
+                            <button
+                                v-for="product in filteredProducts"
+                                :key="product.id"
+                                type="button"
+                                :disabled="product.stock <= 0"
+                                class="group flex flex-col overflow-hidden rounded-xl border-[1px] border-slate-200 bg-white text-left transition hover:border-indigo-300 hover:shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:shadow-none"
+                                @click="addToCart(product)"
+                            >
+                                <div class="relative aspect-square w-full bg-slate-50">
+                                    <img
+                                        v-if="product.image"
+                                        :src="product.image"
+                                        :alt="product.name"
+                                        class="h-full w-full object-contain p-2"
+                                    >
+                                    <div v-else class="flex h-full w-full items-center justify-center text-slate-300">
+                                        <i class="fas fa-image text-[1.25rem]"></i>
+                                    </div>
+
+                                    <span
+                                        class="absolute left-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-bold leading-none"
+                                        :class="product.stock > 10
+                                            ? 'bg-white/90 text-slate-500 ring-1 ring-slate-200'
+                                            : product.stock > 0
+                                                ? 'bg-amber-100 text-amber-700'
+                                                : 'bg-rose-100 text-rose-700'"
+                                    >
+                                        {{ product.stock > 0 ? product.stock : 'Out' }}
+                                    </span>
+                                    <span
+                                        v-if="product.compare_at_price > product.price"
+                                        class="absolute right-1.5 top-1.5 rounded-md bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
+                                    >
+                                        -{{ Math.round((product.compare_at_price - product.price) / product.compare_at_price * 100) }}%
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-1 flex-col gap-1 border-t border-slate-100 p-2">
+                                    <p class="line-clamp-2 text-[11px] font-semibold leading-snug text-slate-700" :title="product.name">
+                                        {{ product.name }}
+                                    </p>
+                                    <div class="mt-auto flex items-baseline justify-between gap-1">
+                                        <span class="text-xs font-bold text-slate-900">৳{{ product.price }}</span>
+                                        <del v-if="product.compare_at_price > product.price" class="text-[10px] text-slate-400">
+                                            ৳{{ product.compare_at_price }}
+                                        </del>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div v-if="!filteredProducts.length" class="py-16 text-center">
+                            <i class="fas fa-box-open mb-2.5 block text-3xl text-slate-300"></i>
+                            <p class="text-sm font-medium text-slate-500">No products match this search or category.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ---------------------------------------------------- -->
+                <!-- Cart & checkout                                      -->
+                <!-- ---------------------------------------------------- -->
+                <aside class="flex min-h-0 w-full flex-col overflow-hidden rounded-2xl border-[1px] border-slate-200 bg-white xl:w-[26rem] xl:shrink-0">
+                    <!-- Customer -->
+                    <div class="flex items-center gap-2 border-b border-slate-100 p-2.5">
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                            <i class="fas fa-user text-xs"></i>
+                        </div>
+                        <select
+                            v-model="selectedCustomerId"
+                            class="min-w-0 flex-1 rounded-md border-[1px] border-slate-200 bg-white py-2 pl-2.5 pr-8 text-sm font-medium text-slate-700 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                        >
+                            <option value="">Walk-in Customer</option>
+                            <option v-for="customer in customers" :key="customer.id" :value="customer.id">
+                                {{ customer.name }} ({{ customer.phone }})
+                            </option>
+                        </select>
+                        <button
+                            type="button"
+                            title="Add a new customer"
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white transition hover:bg-indigo-700"
+                            @click="showCustomerModal = true"
+                        >
+                            <i class="fas fa-plus text-xs"></i>
                         </button>
                     </div>
-                    <div class="modal-body p-4" id="invoice-print-area">
-                        <div class="row border-bottom pb-3 mb-4">
-                            <div class="col-7">
-                                <img v-if="shop.logo" :src="shop.logo" alt="" class="invoice-logo mb-2">
-                                <h2 class="font-weight-bold mb-1">{{ shop.site_name || 'Invoice' }}</h2>
-                                <p class="mb-0 small" v-if="shop.address">{{ shop.address }}</p>
-                                <p class="mb-0 small" v-if="shop.phone">Phone: {{ shop.phone }}</p>
-                            </div>
-                            <div class="col-5 text-right">
-                                <h4 class="text-uppercase font-weight-bold mb-2">Invoice</h4>
-                                <p class="mb-1"><strong>#{{ printInvoiceData?.invoice_no }}</strong></p>
-                                <p class="mb-0 small">{{ new Date().toLocaleDateString() }}</p>
-                            </div>
+
+                    <!-- Cart lines -->
+                    <div class="min-h-0 flex-1 overflow-y-auto">
+                        <div v-if="notice" class="border-b border-amber-100 bg-amber-50 px-3.5 py-2 text-xs font-medium text-amber-800">
+                            <i class="fas fa-triangle-exclamation mr-1.5"></i>{{ notice }}
                         </div>
-                        <div class="row mb-4">
-                            <div class="col-6">
-                                <strong>Invoice To:</strong><br>
-                                {{ printInvoiceData?.customer_name || 'Walk-in Customer' }}<br>
-                                Phone: {{ printInvoiceData?.customer_phone || 'N/A' }}
-                            </div>
-                            <div class="col-6 text-right">
-                                <strong>Payment Method:</strong><br>
-                                <span class="text-uppercase">{{ printInvoiceData?.payment_method }}</span>
-                            </div>
+                        <div v-if="checkoutError" class="border-b border-rose-100 bg-rose-50 px-3.5 py-2 text-xs font-medium text-rose-700">
+                            <i class="fas fa-circle-exclamation mr-1.5"></i>{{ checkoutError }}
                         </div>
-                        <table class="table table-bordered table-sm">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>Item</th>
-                                    <th class="text-center">Qty</th>
-                                    <th class="text-right">Price</th>
-                                    <th class="text-right">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="item in printInvoiceData?.items" :key="item.id">
-                                    <td>{{ item.name }}</td>
-                                    <td class="text-center">{{ item.quantity }}</td>
-                                    <td class="text-right">৳{{ item.price }}</td>
-                                    <td class="text-right">৳{{ (item.quantity * item.price).toFixed(2) }}</td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="3" class="text-right">Subtotal:</th>
-                                    <th class="text-right">৳{{ printInvoiceData?.subtotal }}</th>
-                                </tr>
-                                <tr v-if="printInvoiceData?.discount > 0">
-                                    <th colspan="3" class="text-right">Discount:</th>
-                                    <th class="text-right text-danger">-৳{{ printInvoiceData?.discount }}</th>
-                                </tr>
-                                <tr v-if="printInvoiceData?.tax > 0">
-                                    <th colspan="3" class="text-right">Tax:</th>
-                                    <th class="text-right">৳{{ printInvoiceData?.tax }}</th>
-                                </tr>
-                                <tr v-if="printInvoiceData?.shipping_cost > 0">
-                                    <th colspan="3" class="text-right">Shipping:</th>
-                                    <th class="text-right">৳{{ printInvoiceData?.shipping_cost }}</th>
-                                </tr>
-                                <tr>
-                                    <th colspan="3" class="text-right h5">Grand Total:</th>
-                                    <th class="text-right h5">৳{{ printInvoiceData?.total }}</th>
-                                </tr>
-                                <tr>
-                                    <th colspan="3" class="text-right">Paid Amount:</th>
-                                    <th class="text-right text-success">৳{{ printInvoiceData?.paid_amount }}</th>
-                                </tr>
-                                <tr v-if="printInvoiceData?.due_amount > 0">
-                                    <th colspan="3" class="text-right">Due Amount:</th>
-                                    <th class="text-right text-danger">৳{{ printInvoiceData?.due_amount }}</th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                        <div class="text-center mt-5">
-                            <p class="font-italic">Thank You for Your Order!</p>
+
+                        <ul v-if="cart.length" class="divide-y divide-slate-100">
+                            <li v-for="(item, index) in cart" :key="item.id" class="flex items-center gap-2 px-2.5 py-2.5">
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-semibold text-slate-800" :title="item.name">{{ item.name }}</p>
+                                    <p class="text-[11px] text-slate-400">৳{{ item.price }} each</p>
+                                </div>
+
+                                <div class="flex shrink-0 items-center rounded-md border-[1px] border-slate-200">
+                                    <button
+                                        type="button"
+                                        aria-label="Decrease quantity"
+                                        class="flex h-7 w-7 items-center justify-center rounded-l-md text-slate-500 transition hover:bg-slate-50 disabled:opacity-30"
+                                        :disabled="item.quantity <= 1"
+                                        @click="decrement(item)"
+                                    >
+                                        <i class="fas fa-minus text-[10px]"></i>
+                                    </button>
+                                    <span class="w-7 text-center text-xs font-bold text-slate-800">{{ item.quantity }}</span>
+                                    <button
+                                        type="button"
+                                        aria-label="Increase quantity"
+                                        class="flex h-7 w-7 items-center justify-center rounded-r-md text-slate-500 transition hover:bg-slate-50 disabled:opacity-30"
+                                        :disabled="item.quantity >= item.stock"
+                                        @click="increment(item)"
+                                    >
+                                        <i class="fas fa-plus text-[10px]"></i>
+                                    </button>
+                                </div>
+
+                                <span class="w-20 shrink-0 text-right text-sm font-bold text-slate-900">
+                                    {{ money(item.price * item.quantity) }}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    aria-label="Remove item"
+                                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-300 transition hover:bg-rose-50 hover:text-rose-500"
+                                    @click="removeFromCart(index)"
+                                >
+                                    <i class="fas fa-xmark text-xs"></i>
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div v-else class="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
+                            <div class="mb-2.5 flex h-14 w-14 items-center justify-center rounded-full bg-slate-50">
+                                <i class="fas fa-cart-shopping text-base text-slate-300"></i>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-600">Cart is empty</p>
+                            <p class="mt-1 text-xs text-slate-400">Tap a product to start the sale.</p>
                         </div>
                     </div>
-                    <div class="modal-footer d-print-none">
-                        <button type="button" class="btn btn-secondary" @click="showInvoiceModal = false">Close</button>
-                        <button type="button" class="btn btn-primary" @click="printInvoice"><i class="fas fa-print mr-1"></i> Print Invoice</button>
+
+                    <!-- Adjustments & totals -->
+                    <div class="space-y-3 border-t border-slate-100 bg-slate-50/60 p-2.5">
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="block">
+                                <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Discount ৳</span>
+                                <input v-model.number="discount" type="number" min="0" class="w-full rounded-md border-[1px] border-slate-200 bg-white px-2 py-1.5 text-right text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                            </label>
+                            <label class="block">
+                                <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Tax %</span>
+                                <input v-model.number="taxRate" type="number" min="0" max="100" class="w-full rounded-md border-[1px] border-slate-200 bg-white px-2 py-1.5 text-right text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                            </label>
+                            <label class="block">
+                                <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Shipping ৳</span>
+                                <input v-model.number="shippingCost" type="number" min="0" class="w-full rounded-md border-[1px] border-slate-200 bg-white px-2 py-1.5 text-right text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                            </label>
+                        </div>
+
+                        <div class="space-y-1 text-sm">
+                            <div class="flex justify-between text-slate-500">
+                                <span>Subtotal <span class="text-slate-400">({{ cartCount }} item{{ cartCount === 1 ? '' : 's' }})</span></span>
+                                <span class="font-medium text-slate-700">{{ money(subtotal) }}</span>
+                            </div>
+                            <div v-if="discount > 0" class="flex justify-between text-slate-500">
+                                <span>Discount</span>
+                                <span class="font-medium text-rose-600">-{{ money(discount) }}</span>
+                            </div>
+                            <div v-if="taxAmount > 0" class="flex justify-between text-slate-500">
+                                <span>Tax ({{ taxRate }}%)</span>
+                                <span class="font-medium text-slate-700">{{ money(taxAmount) }}</span>
+                            </div>
+                            <div v-if="shippingCost > 0" class="flex justify-between text-slate-500">
+                                <span>Shipping</span>
+                                <span class="font-medium text-slate-700">{{ money(shippingCost) }}</span>
+                            </div>
+                            <div class="flex items-baseline justify-between border-t border-slate-200 pt-2">
+                                <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Grand Total</span>
+                                <span class="text-[1.25rem] font-bold text-slate-900">{{ money(grandTotal) }}</span>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Payment details -->
+                    <div class="space-y-2 border-t border-slate-100 p-2.5">
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="block">
+                                <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Payment Method</span>
+                                <select v-model="paymentMethod" class="w-full rounded-md border-[1px] border-slate-200 bg-white py-1.5 pl-2 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                                    <option value="cash">Cash</option>
+                                    <option value="card">Card / POS</option>
+                                    <option value="mobile_banking">Mobile Banking</option>
+                                    <option value="bank">Bank Transfer</option>
+                                </select>
+                            </label>
+                            <label class="block">
+                                <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Paid Amount ৳</span>
+                                <input v-model.number="paidAmount" type="number" min="0" class="w-full rounded-md border-[1px] border-slate-200 bg-white px-2 py-1.5 text-right text-sm font-bold text-indigo-600 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="block">
+                                <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Lead From</span>
+                                <select v-model="leadSource" class="w-full rounded-md border-[1px] border-slate-200 bg-white py-1.5 pl-2 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                                    <option value="">Not specified</option>
+                                    <option v-for="source in leadSources" :key="source" :value="source">{{ source }}</option>
+                                </select>
+                            </label>
+                            <label class="block">
+                                <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Note</span>
+                                <input v-model="saleNote" type="text" maxlength="1000" placeholder="Optional" class="w-full rounded-md border-[1px] border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 placeholder-slate-300 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <div class="rounded-md bg-emerald-50 px-2.5 py-2 text-center">
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Change</p>
+                                <p class="text-sm font-bold text-emerald-700">{{ money(changeAmount) }}</p>
+                            </div>
+                            <div class="rounded-md px-2.5 py-2 text-center" :class="dueAmount > 0 ? 'bg-rose-50' : 'bg-slate-50'">
+                                <p class="text-[10px] font-semibold uppercase tracking-wide" :class="dueAmount > 0 ? 'text-rose-600' : 'text-slate-400'">Due</p>
+                                <p class="text-sm font-bold" :class="dueAmount > 0 ? 'text-rose-700' : 'text-slate-500'">{{ money(dueAmount) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-2 border-t border-slate-100 p-2.5">
+                        <button
+                            type="button"
+                            class="rounded-xl border-[1px] border-slate-200 px-3.5 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40"
+                            :disabled="!cart.length"
+                            @click="clearSale"
+                        >
+                            Clear
+                        </button>
+                        <button
+                            type="button"
+                            class="flex flex-1 items-center justify-between gap-2 rounded-xl bg-indigo-600 px-3.5 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="!cart.length || checkoutForm.processing"
+                            @click="processSale"
+                        >
+                            <span>
+                                <i class="fas fa-circle-check mr-1.5"></i>
+                                {{ checkoutForm.processing ? 'Processing…' : 'Complete Sale' }}
+                            </span>
+                            <span>{{ money(grandTotal) }}</span>
+                        </button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <!-- ---------------------------------------------------------- -->
+        <!-- Invoice                                                    -->
+        <!-- ---------------------------------------------------------- -->
+        <div v-if="showInvoiceModal" class="pos-overlay fixed inset-0 z-[1200] overflow-y-auto bg-slate-900/60 p-3.5 backdrop-blur-sm">
+            <div class="pos-sheet mx-auto w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div class="d-print-none flex items-center justify-between border-b border-slate-100 px-6 py-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                            <i class="fas fa-check text-xs"></i>
+                        </span>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800">Sale complete</p>
+                            <p class="text-xs text-slate-500">Invoice #{{ printInvoiceData?.invoice_no }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" @click="showInvoiceModal = false">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div id="invoice-print-area" class="px-8 py-7 text-slate-700">
+                    <header class="flex items-start justify-between gap-6 border-b border-slate-200 pb-3.5">
+                        <div>
+                            <img v-if="shop.logo" :src="shop.logo" alt="" class="invoice-logo mb-2">
+                            <h2 class="text-base font-bold text-slate-900">{{ shop.site_name || 'Invoice' }}</h2>
+                            <p v-if="shop.address" class="mt-0.5 text-xs text-slate-500">{{ shop.address }}</p>
+                            <p v-if="shop.phone" class="text-xs text-slate-500">Phone: {{ shop.phone }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Invoice</p>
+                            <p class="mt-1 text-sm font-bold text-slate-900">#{{ printInvoiceData?.invoice_no }}</p>
+                            <p class="text-xs text-slate-500">{{ today }}</p>
+                        </div>
+                    </header>
+
+                    <section class="flex items-start justify-between gap-6 py-6 text-sm">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Invoice To</p>
+                            <p class="mt-1 font-semibold text-slate-800">{{ printInvoiceData?.customer_name || 'Walk-in Customer' }}</p>
+                            <p class="text-xs text-slate-500">Phone: {{ printInvoiceData?.customer_phone || 'N/A' }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Payment</p>
+                            <p class="mt-1 font-semibold uppercase text-slate-800">{{ printInvoiceData?.payment_method }}</p>
+                            <!-- Attribution is for the shop, not the customer, so it stays off the printed copy. -->
+                            <p v-if="printInvoiceData?.lead_source" class="d-print-none text-xs text-slate-400">
+                                Lead from: {{ printInvoiceData.lead_source }}
+                            </p>
+                        </div>
+                    </section>
+
+                    <table class="w-full border-collapse text-sm">
+                        <thead>
+                            <tr class="border-y border-slate-200 bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500">
+                                <th class="px-2.5 py-2 text-left font-bold">Item</th>
+                                <th class="px-2.5 py-2 text-center font-bold">Qty</th>
+                                <th class="px-2.5 py-2 text-right font-bold">Price</th>
+                                <th class="px-2.5 py-2 text-right font-bold">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in printInvoiceData?.items" :key="item.id" class="border-b border-slate-100">
+                                <td class="px-2.5 py-2">{{ item.name }}</td>
+                                <td class="px-2.5 py-2 text-center">{{ item.quantity }}</td>
+                                <td class="px-2.5 py-2 text-right">৳{{ item.price }}</td>
+                                <td class="px-2.5 py-2 text-right font-medium">{{ money(item.quantity * item.price) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="mt-6 ml-auto w-full max-w-xs space-y-1.5 text-sm">
+                        <div class="flex justify-between text-slate-500">
+                            <span>Subtotal</span><span class="text-slate-700">{{ money(printInvoiceData?.subtotal) }}</span>
+                        </div>
+                        <div v-if="printInvoiceData?.discount > 0" class="flex justify-between text-slate-500">
+                            <span>Discount</span><span class="text-rose-600">-{{ money(printInvoiceData?.discount) }}</span>
+                        </div>
+                        <div v-if="printInvoiceData?.tax > 0" class="flex justify-between text-slate-500">
+                            <span>Tax</span><span class="text-slate-700">{{ money(printInvoiceData?.tax) }}</span>
+                        </div>
+                        <div v-if="printInvoiceData?.shipping_cost > 0" class="flex justify-between text-slate-500">
+                            <span>Shipping</span><span class="text-slate-700">{{ money(printInvoiceData?.shipping_cost) }}</span>
+                        </div>
+                        <div class="flex items-baseline justify-between border-t border-slate-200 pt-2 text-base font-bold text-slate-900">
+                            <span>Grand Total</span><span>{{ money(printInvoiceData?.total) }}</span>
+                        </div>
+                        <div class="flex justify-between text-slate-500">
+                            <span>Paid</span><span class="font-semibold text-emerald-600">{{ money(printInvoiceData?.paid_amount) }}</span>
+                        </div>
+                        <div v-if="printInvoiceData?.due_amount > 0" class="flex justify-between text-slate-500">
+                            <span>Due</span><span class="font-semibold text-rose-600">{{ money(printInvoiceData?.due_amount) }}</span>
+                        </div>
+                    </div>
+
+                    <p v-if="printInvoiceData?.notes" class="mt-6 border-t border-slate-100 pt-2.5 text-xs text-slate-600">
+                        <strong class="text-slate-700">Note:</strong> {{ printInvoiceData.notes }}
+                    </p>
+
+                    <p class="mt-8 text-center text-xs italic text-slate-400">Thank you for your order</p>
+                </div>
+
+                <div class="d-print-none flex justify-end gap-2 border-t border-slate-100 bg-slate-50 px-6 py-2.5">
+                    <button type="button" class="rounded-md border-[1px] border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" @click="showInvoiceModal = false">
+                        Close
+                    </button>
+                    <button type="button" class="rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700" @click="printInvoice">
+                        <i class="fas fa-print mr-1.5"></i> Print Invoice
+                    </button>
                 </div>
             </div>
         </div>
-        <!-- Quick Add Customer Modal -->
-        <div v-if="showCustomerModal" class="modal fade show" tabindex="-1" role="dialog" style="display: block; background: rgba(0,0,0,0.5);">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
-                    <div class="modal-header bg-primary text-white" style="border-radius: 12px 12px 0 0;">
-                        <h5 class="modal-title font-weight-bold"><i class="fas fa-user-plus mr-2"></i>Quick Add Customer</h5>
-                        <button type="button" class="close text-white" @click="showCustomerModal = false">
-                            <span>&times;</span>
+
+        <!-- ---------------------------------------------------------- -->
+        <!-- Quick add customer                                         -->
+        <!-- ---------------------------------------------------------- -->
+        <div v-if="showCustomerModal" class="d-print-none fixed inset-0 z-[1200] overflow-y-auto bg-slate-900/60 p-3.5 backdrop-blur-sm">
+            <div class="mx-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-100 px-6 py-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                            <i class="fas fa-user-plus text-xs"></i>
+                        </span>
+                        <p class="text-sm font-bold text-slate-800">Quick Add Customer</p>
+                    </div>
+                    <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" @click="showCustomerModal = false">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form @submit.prevent="submitQuickCustomer">
+                    <div class="space-y-3 px-6 py-3.5">
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-semibold text-slate-600">Name <span class="text-rose-500">*</span></span>
+                            <input v-model="quickCustomerForm.name" type="text" required placeholder="Customer name" class="w-full rounded-md border-[1px] border-slate-200 px-2.5 py-2 text-sm text-slate-700 placeholder-slate-300 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                            <span v-if="quickCustomerForm.errors.name" class="mt-1 block text-xs text-rose-600">{{ quickCustomerForm.errors.name }}</span>
+                        </label>
+
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-semibold text-slate-600">Phone <span class="text-rose-500">*</span></span>
+                            <input v-model="quickCustomerForm.phone" type="text" required placeholder="01XXXXXXXXX" class="w-full rounded-md border-[1px] border-slate-200 px-2.5 py-2 text-sm text-slate-700 placeholder-slate-300 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                            <span v-if="quickCustomerForm.errors.phone" class="mt-1 block text-xs text-rose-600">{{ quickCustomerForm.errors.phone }}</span>
+                        </label>
+
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-semibold text-slate-600">Email <span class="font-normal text-slate-400">(optional)</span></span>
+                            <input v-model="quickCustomerForm.email" type="email" placeholder="name@example.com" class="w-full rounded-md border-[1px] border-slate-200 px-2.5 py-2 text-sm text-slate-700 placeholder-slate-300 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                        </label>
+
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-semibold text-slate-600">Address <span class="font-normal text-slate-400">(optional)</span></span>
+                            <textarea v-model="quickCustomerForm.address" rows="2" placeholder="Customer address" class="w-full rounded-md border-[1px] border-slate-200 px-2.5 py-2 text-sm text-slate-700 placeholder-slate-300 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
+                        </label>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="block">
+                                <span class="mb-1 block text-xs font-semibold text-slate-600">Division</span>
+                                <select v-model="quickCustomerForm.division_id" class="w-full rounded-md border-[1px] border-slate-200 py-2 pl-2.5 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100" @change="onQuickCustomerDivisionChange">
+                                    <option value="">Select</option>
+                                    <option v-for="division in divisions" :key="division.id" :value="division.id">{{ division.name }}</option>
+                                </select>
+                            </label>
+                            <label class="block">
+                                <span class="mb-1 block text-xs font-semibold text-slate-600">District</span>
+                                <select v-model="quickCustomerForm.district_id" :disabled="!quickCustomerForm.division_id" class="w-full rounded-md border-[1px] border-slate-200 py-2 pl-2.5 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400">
+                                    <option value="">Select</option>
+                                    <option v-for="district in quickCustomerDistrictOptions" :key="district.id" :value="district.id">{{ district.name }}</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 border-t border-slate-100 bg-slate-50 px-6 py-2.5">
+                        <button type="button" class="rounded-md border-[1px] border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" @click="showCustomerModal = false">
+                            Cancel
+                        </button>
+                        <button type="submit" :disabled="quickCustomerForm.processing" class="rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50">
+                            <i class="fas fa-save mr-1.5"></i> Save Customer
                         </button>
                     </div>
-                    <form @submit.prevent="submitQuickCustomer">
-                        <div class="modal-body bg-light">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Name <span class="text-danger">*</span></label>
-                                <input type="text" v-model="quickCustomerForm.name" class="form-control" placeholder="Enter customer name" required>
-                                <span class="text-danger text-sm" v-if="quickCustomerForm.errors.name">{{ quickCustomerForm.errors.name }}</span>
-                            </div>
-                            <div class="form-group">
-                                <label class="font-weight-bold">Phone <span class="text-danger">*</span></label>
-                                <input type="text" v-model="quickCustomerForm.phone" class="form-control" placeholder="Enter phone number" required>
-                                <span class="text-danger text-sm" v-if="quickCustomerForm.errors.phone">{{ quickCustomerForm.errors.phone }}</span>
-                            </div>
-                            <div class="form-group">
-                                <label class="text-xs">Email (Optional)</label>
-                                <input type="email" v-model="quickCustomerForm.email" class="form-control" placeholder="Email address">
-                            </div>
-                            <div class="form-group">
-                                <label class="text-xs">Address (Optional)</label>
-                                <textarea v-model="quickCustomerForm.address" class="form-control" rows="2" placeholder="Customer address..."></textarea>
-                            </div>
-                            <div class="row">
-                                <div class="col-6 form-group">
-                                    <label class="text-xs">Division (Optional)</label>
-                                    <select v-model="quickCustomerForm.division_id" @change="onQuickCustomerDivisionChange" class="form-control">
-                                        <option value="">Select Division</option>
-                                        <option v-for="division in divisions" :key="division.id" :value="division.id">{{ division.name }}</option>
-                                    </select>
-                                </div>
-                                <div class="col-6 form-group mb-0">
-                                    <label class="text-xs">District (Optional)</label>
-                                    <select v-model="quickCustomerForm.district_id" :disabled="!quickCustomerForm.division_id" class="form-control">
-                                        <option value="">Select District</option>
-                                        <option v-for="district in quickCustomerDistrictOptions" :key="district.id" :value="district.id">{{ district.name }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer bg-white border-0" style="border-radius: 0 0 12px 12px;">
-                            <button type="button" class="btn btn-secondary shadow-sm" @click="showCustomerModal = false">Cancel</button>
-                            <button type="submit" class="btn btn-success px-4 shadow-sm" :disabled="quickCustomerForm.processing">
-                                <i class="fas fa-save mr-1"></i> Save Customer
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                </form>
             </div>
         </div>
     </AdminLayout>
 </template>
 
 <style scoped>
-.line_clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.shadow-inset {
-    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
-}
-
-.product-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
-}
 .invoice-logo {
     max-height: 55px;
     max-width: 180px;
     object-fit: contain;
 }
 
-/* Print rules live unscoped in AdminLayout: a scoped `body *` cannot reach the sidebar. */
+/*
+ * AdminLayout's print sheet flattens Bootstrap's .modal wrappers; this dialog is
+ * plain Tailwind, so it has to unpin itself. Scoped is fine here — these are
+ * this component's own elements, unlike the sidebar rules that had to be global.
+ */
+@media print {
+    .pos-overlay {
+        position: static;
+        overflow: visible;
+        background: none;
+        padding: 0;
+        backdrop-filter: none;
+    }
+
+    .pos-sheet {
+        max-width: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+}
 </style>

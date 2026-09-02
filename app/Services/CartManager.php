@@ -16,6 +16,13 @@ use Illuminate\Support\Facades\DB;
 class CartManager
 {
     /**
+     * Most of any one product a shopper may hold in their bag at a time.
+     * Lives here because the bag page, the checkout page and the add-to-bag
+     * endpoint all have to agree on the same ceiling.
+     */
+    public const MAX_PER_ITEM = 20;
+
+    /**
      * The visitor's bag, created if they don't have one yet. Only call this
      * when the visitor is actually putting something in it.
      */

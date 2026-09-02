@@ -8,6 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
+    /**
+     * The channels a sale can be attributed to, in the order they appear in the
+     * POS dropdown. Kept here so the form, the validation rule and any report
+     * that groups by channel all read from one list.
+     */
+    public const LEAD_SOURCES = [
+        'Facebook',
+        'Instagram',
+        'WhatsApp',
+        'Messenger',
+        'Direct Call',
+        'Walk-in',
+        'Referral',
+        'Other',
+    ];
+
     protected $fillable = [
         'order_number',
         'user_id',
@@ -23,6 +39,7 @@ class Order extends Model
         'payment_method',
         'payment_status',
         'order_source',
+        'lead_source',
         'shipping_address',
         'customer_phone',
         'customer_name',
