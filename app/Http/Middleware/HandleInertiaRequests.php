@@ -126,10 +126,11 @@ class HandleInertiaRequests extends Middleware
                     'url' => $child->url,
                 ]);
 
-                // The flag hands the whole dropdown over to the catalogue, so any
-                // child rows still attached to this item are deliberately ignored.
+                // The flag pulls the catalogue into the dropdown. Any child rows
+                // still attached to this item (e.g. an "All Chocolate" landing
+                // link) are kept and listed ahead of the generated categories.
                 if ($item->show_categories) {
-                    $children = $categoryLinks ??= $this->categoryLinks();
+                    $children = $children->concat($categoryLinks ??= $this->categoryLinks());
                 }
 
                 return [

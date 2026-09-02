@@ -480,13 +480,15 @@ class DatabaseSeeder extends Seeder {
                 ],
             ],
             [
-                // The dropdown is driven straight from the product catalogue:
-                // every active category that has active products is listed.
+                // The dropdown lists the "All Chocolate" landing link followed by
+                // every active category that has active products (show_categories).
                 'name' => 'Chocolates',
                 'url' => '/shop',
                 'order' => 3,
                 'show_categories' => true,
-                'children' => [],
+                'children' => [
+                    ['name' => 'All Chocolate', 'url' => '/shop', 'order' => 1],
+                ],
             ],
             [
                 'name' => 'Offers',
