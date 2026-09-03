@@ -227,7 +227,7 @@ onUnmounted(() => {
                             <h3 class="truncate font-heading text-[18px] capitalize leading-[24px] text-cocov-text md:text-[20px] md:leading-[28px]" :title="product.name">
                                 <Link :href="route('products.show', product.slug)" class="transition hover:text-cocov-gold">{{ product.name }}</Link>
                             </h3>
-                            <div class="mt-auto flex items-center justify-between gap-2 pt-2">
+                            <div class="mt-auto flex items-center justify-between gap-2 pt-2 transition group-hover:opacity-0">
                                 <div class="flex items-baseline gap-2 text-[12px]">
                                     <span v-if="product.compare_at_price > product.price" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
                                     <span v-if="product.compare_at_price > product.price" class="text-cocov-muted">|</span>
@@ -236,7 +236,7 @@ onUnmounted(() => {
                                 <!-- default compact cart button -->
                                 <button
                                     type="button"
-                                    class="flex h-9 w-9 shrink-0 items-center justify-center bg-cocov-gold text-white transition group-hover:opacity-0"
+                                    class="flex h-9 w-9 shrink-0 items-center justify-center bg-cocov-gold text-white"
                                     aria-label="Add to cart"
                                     @click="addToCart(product.id)"
                                 ><ShoppingBagIcon class="h-4 w-4" /></button>
@@ -280,13 +280,13 @@ onUnmounted(() => {
                                 <h3 class="truncate font-heading text-[18px] capitalize leading-[24px] text-cocov-text md:text-[20px] md:leading-[28px]" :title="product.name">
                                     <Link :href="route('products.show', product.slug)" class="transition hover:text-cocov-gold">{{ product.name }}</Link>
                                 </h3>
-                                <div class="mt-auto flex items-center justify-between gap-2 pt-2">
+                                <div class="mt-auto flex items-center justify-between gap-2 pt-2 transition group-hover:opacity-0">
                                     <div class="flex items-baseline gap-2 text-[12px]">
                                         <span v-if="product.compare_at_price > product.price" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
                                         <span v-if="product.compare_at_price > product.price" class="text-cocov-muted">|</span>
                                         <span class="text-[15px] font-semibold text-cocov-gold md:text-[16px]">{{ formatMoney(product.price) }}</span>
                                     </div>
-                                    <button type="button" class="flex h-9 w-9 shrink-0 items-center justify-center bg-cocov-gold text-white transition group-hover:opacity-0" aria-label="Add to cart" @click="addToCart(product.id)"><ShoppingBagIcon class="h-4 w-4" /></button>
+                                    <button type="button" class="flex h-9 w-9 shrink-0 items-center justify-center bg-cocov-gold text-white" aria-label="Add to cart" @click="addToCart(product.id)"><ShoppingBagIcon class="h-4 w-4" /></button>
                                 </div>
                                 <button type="button" class="absolute inset-x-0 bottom-0 flex h-9 translate-y-full items-center justify-center gap-2 bg-cocov-gold text-[13px] capitalize text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100" @click="addToCart(product.id)"><ShoppingBagIcon class="h-4 w-4" /> Add to cart</button>
                             </div>
@@ -324,7 +324,7 @@ onUnmounted(() => {
                                 <Link :href="route('products.show', product.slug)" class="transition hover:text-cocov-gold">{{ product.name }}</Link>
                             </h3>
                             <p v-if="product.bundle_items_count" class="mt-1 text-[13px] text-cocov-muted">{{ product.bundle_items_count }} items included</p>
-                            <div class="mt-auto flex items-center justify-between gap-2 pt-2">
+                            <div class="mt-auto flex items-center justify-between gap-2 pt-2 transition group-hover:opacity-0">
                                 <div class="flex items-baseline gap-2 text-[12px]">
                                     <span v-if="product.compare_at_price > product.price" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
                                     <span v-if="product.compare_at_price > product.price" class="text-cocov-muted">|</span>
@@ -332,7 +332,7 @@ onUnmounted(() => {
                                 </div>
                                 <button
                                     type="button"
-                                    class="flex h-9 w-9 shrink-0 items-center justify-center bg-cocov-gold text-white transition group-hover:opacity-0"
+                                    class="flex h-9 w-9 shrink-0 items-center justify-center bg-cocov-gold text-white"
                                     aria-label="Add to cart"
                                     @click="addToCart(product.id)"
                                 ><ShoppingBagIcon class="h-4 w-4" /></button>
