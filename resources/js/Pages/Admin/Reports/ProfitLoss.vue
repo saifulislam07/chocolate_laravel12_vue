@@ -67,6 +67,7 @@ const updateReport = () => {
                                 <small class="text-uppercase tracking-wider">Period: {{ stats.start_date }} to {{ stats.end_date }}</small>
                             </div>
                             <div class="card-body p-0">
+                                <div class="table-responsive">
                                 <table class="table table-borderless mb-0 h5">
                                     <tbody>
                                         <!-- Revenue -->
@@ -98,19 +99,20 @@ const updateReport = () => {
                                         </tr>
                                     </tbody>
                                 </table>
+                                </div>
 
                                 <!-- Additional Details Area -->
                                 <div class="p-5 text-center bg-white">
                                     <div class="row">
-                                        <div class="col-4 border-right">
+                                        <div class="col-12 col-md-4 border-right">
                                             <p class="text-muted small mb-1 text-uppercase">Sales Growth</p>
                                             <h4 class="font-weight-bold text-primary">-- %</h4>
                                         </div>
-                                        <div class="col-4 border-right">
+                                        <div class="col-12 col-md-4 border-right">
                                             <p class="text-muted small mb-1 text-uppercase">Profit Margin</p>
                                             <h4 class="font-weight-bold text-info">{{ stats.sales > 0 ? ((stats.net_profit / stats.sales) * 100).toFixed(1) : 0 }}%</h4>
                                         </div>
-                                        <div class="col-4">
+                                        <div class="col-12 col-md-4">
                                             <p class="text-muted small mb-1 text-uppercase">Status</p>
                                             <h4 class="font-weight-bold" :class="stats.net_profit >= 0 ? 'text-success' : 'text-danger'">
                                                 {{ stats.net_profit >= 0 ? 'PROFITABLE' : 'LOSS' }}

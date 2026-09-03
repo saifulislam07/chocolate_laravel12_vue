@@ -112,10 +112,10 @@ const isActive = (url) => {
         <div class="relative mx-auto grid h-[70px] max-w-full grid-cols-[1fr_auto_1fr] items-center px-5 md:h-[110px] md:px-8 lg:px-[126px]">
             <!-- Left nav -->
             <div class="flex items-center gap-8">
-                <button class="text-cocov-text md:hidden" aria-label="Menu" @click="isMobileMenuOpen = true">
+                <button class="text-cocov-text xl:hidden" aria-label="Menu" @click="isMobileMenuOpen = true">
                     <Bars3Icon class="h-7 w-7" />
                 </button>
-                <nav class="hidden items-center gap-10 font-heading text-[17px] font-normal uppercase leading-none md:flex">
+                <nav class="hidden items-center gap-10 font-heading text-[17px] font-normal uppercase leading-none xl:flex">
                     <div v-for="m in leftMenu" :key="m.id" class="group relative">
                         <component
                             :is="menuHref(m.url).startsWith('http') ? 'a' : Link"
@@ -151,7 +151,7 @@ const isActive = (url) => {
 
             <!-- Right nav + icons -->
             <div class="flex items-center justify-end gap-8">
-                <nav class="hidden items-center gap-10 font-heading text-[17px] font-normal uppercase leading-none lg:flex">
+                <nav class="hidden items-center gap-10 font-heading text-[17px] font-normal uppercase leading-none xl:flex">
                     <div v-for="m in rightMenu" :key="m.id" class="group relative">
                         <component
                             :is="menuHref(m.url).startsWith('http') ? 'a' : Link"
@@ -276,7 +276,7 @@ const isActive = (url) => {
     <div v-if="isSearchOpen" class="fixed inset-0 z-40 bg-cocov-brown-dark/40" @click="closeSearch"></div>
 
     <!-- Mobile menu -->
-    <div v-if="isMobileMenuOpen" class="fixed inset-0 z-[100] bg-white md:hidden">
+    <div v-if="isMobileMenuOpen" class="fixed inset-0 z-[100] bg-white xl:hidden">
         <div class="flex items-center justify-between border-b border-cocov-line px-5 py-4">
             <img :src="settings.logo || '/images/cococraft-v2/logo.png'" :alt="settings.site_name || 'CocoCraft'" class="h-12 w-auto" />
             <button aria-label="Close" @click="isMobileMenuOpen = false"><XMarkIcon class="h-7 w-7 text-cocov-text" /></button>

@@ -243,11 +243,11 @@ function handleImageChange(e) {
                                             <span class="absolute bottom-2 right-2 text-[10px] font-bold opacity-50">{{ form.button_text }}</span>
                                         </div>
                                         <div class="row mt-3">
-                                            <div class="col-6">
+                                            <div class="col-12 col-md-6">
                                                 <label class="text-[10px] font-bold uppercase opacity-70">Background</label>
                                                 <input type="color" v-model="form.bg_color" class="form-control form-control-sm h-8 cursor-pointer">
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-12 col-md-6">
                                                 <label class="text-[10px] font-bold uppercase opacity-70">Text Color</label>
                                                 <input type="color" v-model="form.text_color" class="form-control form-control-sm h-8 cursor-pointer">
                                             </div>

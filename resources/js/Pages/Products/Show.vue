@@ -77,7 +77,7 @@ function decrement() {
             </nav>
 
             <main class="mx-auto max-w-full px-5 md:px-8 lg:px-[126px] py-12">
-                <div class="grid gap-16 lg:grid-cols-2">
+                <div class="grid gap-16 xl:grid-cols-2">
                     <!-- Image Gallery -->
                     <section class="space-y-4">
                         <div class="aspect-square w-full overflow-hidden bg-white border border-gray-100 flex items-center justify-center p-8">
@@ -153,7 +153,7 @@ function decrement() {
                             </div>
                             <button
                                 type="button"
-                                class="h-14 w-full border border-cocov-gold text-xs font-bold uppercase tracking-[0.15em] text-cocov-gold transition hover:bg-cocov-gold hover:text-white disabled:border-gray-300 disabled:text-gray-300 sm:h-12 sm:flex-1 sm:text-[11px] sm:tracking-[0.2em]"
+                                class="h-14 w-full whitespace-nowrap border border-cocov-gold px-6 text-xs font-bold uppercase tracking-[0.15em] text-cocov-gold transition hover:bg-cocov-gold hover:text-white disabled:border-gray-300 disabled:text-gray-300 sm:h-12 sm:flex-1 sm:text-[11px] sm:tracking-[0.2em]"
                                 :disabled="product.stock <= 0"
                                 @click="addToCart"
                             >
@@ -161,7 +161,7 @@ function decrement() {
                             </button>
                             <button
                                 type="button"
-                                class="h-14 w-full border border-cocov-gold bg-cocov-gold text-xs font-bold uppercase tracking-[0.15em] text-white transition hover:bg-[#e0851a] disabled:border-gray-300 disabled:bg-gray-300 sm:h-12 sm:flex-1 sm:text-[11px] sm:tracking-[0.2em]"
+                                class="h-14 w-full whitespace-nowrap border border-cocov-gold bg-cocov-gold px-6 text-xs font-bold uppercase tracking-[0.15em] text-white transition hover:bg-[#e0851a] disabled:border-gray-300 disabled:bg-gray-300 sm:h-12 sm:flex-1 sm:text-[11px] sm:tracking-[0.2em]"
                                 :disabled="product.stock <= 0 || buyingNow"
                                 @click="buyNow"
                             >
@@ -169,7 +169,7 @@ function decrement() {
                             </button>
                             <button
                                 type="button"
-                                class="flex h-14 w-full items-center justify-center gap-2 border border-gray-200 px-6 text-xs font-bold uppercase tracking-[0.15em] transition hover:border-red-200 hover:text-red-500 sm:h-12 sm:w-auto sm:text-[11px] sm:tracking-[0.2em]"
+                                class="flex h-14 w-full items-center justify-center gap-2 whitespace-nowrap border border-gray-200 px-6 text-xs font-bold uppercase tracking-[0.15em] transition hover:border-red-200 hover:text-red-500 sm:h-12 sm:w-auto sm:text-[11px] sm:tracking-[0.2em]"
                                 :class="{ 'border-red-200 text-red-500': product.is_wishlisted }"
                                 @click="toggleWishlist()"
                             >

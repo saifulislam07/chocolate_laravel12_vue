@@ -7,7 +7,7 @@ const toastMessage = ref('');
 const toastType = ref('success');
 let toastTimer = null;
 
-const isSidebarOpen = ref(true);
+const isSidebarOpen = ref(window.innerWidth >= 768);
 const isNavigating = ref(false);
 let navTimer = null;
 let offNavStart = null;
@@ -59,6 +59,7 @@ function can(permission) {
 
 onMounted(() => {
     document.body.classList.add(...bodyClasses);
+    document.body.classList.toggle('sidebar-collapse', !isSidebarOpen.value);
 
     pageStyleEl = document.createElement('style');
     pageStyleEl.setAttribute('data-admin-page-box', '');
@@ -72,6 +73,12 @@ onMounted(() => {
         navTimer = setTimeout(() => {
             isNavigating.value = true;
         }, 120);
+
+        // On phones the sidebar is an overlay, not a rail — leaving it open
+        // after a tap would just hide the page it navigated to.
+        if (window.innerWidth < 768 && isSidebarOpen.value) {
+            toggleSidebar();
+        }
     });
     offNavFinish = router.on('finish', () => {
         clearTimeout(navTimer);
@@ -185,6 +192,13 @@ watch(() => flash.value.error, (message) => {
                     </li>
                 </ul>
             </nav>
+
+            <!-- Mobile sidebar backdrop: sidebar is a fixed overlay below md, so tapping outside it should close it. -->
+            <div
+                v-if="isSidebarOpen"
+                class="sidebar-mobile-backdrop d-md-none"
+                @click="toggleSidebar"
+            ></div>
 
             <!-- Sidebar -->
             <aside class="main-sidebar sidebar-light-indigo elevation-0 border-right">
@@ -626,9 +640,26 @@ body {
         margin-left: 0;
     }
 
-    .wrapper:not(.sidebar-collapse) .main-sidebar {
+    /* The toggle class lands on <body> (see toggleSidebar), never on .wrapper
+       itself — ":not(.sidebar-collapse)" scoped to .wrapper was always true,
+       which permanently overrode the hidden transform above regardless of
+       state. */
+    body:not(.sidebar-collapse) .main-sidebar {
         transform: translateX(0);
+        /* AdminLTE's own CDN stylesheet (loaded after ours) hides this same
+           element below 768px with `margin-left: -250px`, gated on a
+           `sidebar-open` body class this app never sets. Without clearing it
+           here, the sidebar stays shifted off-screen by its own width even
+           once our transform above is back to identity. */
+        margin-left: 0 !important;
     }
+}
+
+.sidebar-mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1037;
+    background: rgba(15, 23, 42, 0.5);
 }
 
 /* Sidebar Premium Overhaul */

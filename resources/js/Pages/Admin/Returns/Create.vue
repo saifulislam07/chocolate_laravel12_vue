@@ -79,7 +79,8 @@ function submit() {
                             Every item on this order has already been fully returned.
                         </div>
 
-                        <table v-else class="table table-hover align-middle">
+                        <div v-else class="table-responsive">
+                        <table class="table table-hover align-middle">
                             <thead class="bg-light text-xs text-uppercase text-muted">
                                 <tr>
                                     <th style="width: 40px;"></th>
@@ -116,6 +117,7 @@ function submit() {
                                 </tr>
                             </tbody>
                         </table>
+                        </div>
 
                         <div class="row mt-4">
                             <div class="col-md-6 form-group">

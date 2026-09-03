@@ -223,12 +223,12 @@ const submit = () => {
                                         <input type="text" v-model="form.sku" class="form-control">
                                     </div>
                                     <div class="row">
-                                        <div class="col-6 form-group">
+                                        <div class="col-12 col-md-6 form-group">
                                             <label>Opening Stock</label>
                                             <input type="number" v-model="form.stock" class="form-control bg-light" readonly>
                                             <small class="text-info"><i class="fas fa-info-circle mr-1"></i> Stock updates via Purchases & Sales</small>
                                         </div>
-                                        <div class="col-6 form-group">
+                                        <div class="col-12 col-md-6 form-group">
                                             <label>Alert Qty</label>
                                             <input type="number" v-model="form.alert_quantity" class="form-control">
                                         </div>

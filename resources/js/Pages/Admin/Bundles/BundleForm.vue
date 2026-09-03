@@ -293,14 +293,14 @@ function submit() {
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-6 form-group">
+                                        <div class="col-12 col-md-6 form-group">
                                             <label>Discount Type</label>
                                             <select v-model="form.discount_type" class="form-control">
                                                 <option value="fixed">Fixed</option>
                                                 <option value="percent">Percent</option>
                                             </select>
                                         </div>
-                                        <div class="col-6 form-group">
+                                        <div class="col-12 col-md-6 form-group">
                                             <label>Discount</label>
                                             <input v-model="form.discount_value" type="number" min="0" step="0.01" class="form-control">
                                         </div>

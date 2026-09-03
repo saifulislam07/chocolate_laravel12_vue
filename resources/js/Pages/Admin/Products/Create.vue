@@ -171,12 +171,12 @@ const submit = () => {
                                         <input type="text" v-model="form.sku" class="form-control" placeholder="Optional">
                                     </div>
                                     <div class="row">
-                                        <div class="col-6 form-group">
+                                        <div class="col-12 col-md-6 form-group">
                                             <label>Opening Stock <span class="text-danger">*</span></label>
                                             <input type="number" v-model="form.stock" class="form-control" :class="{'is-invalid': form.errors.stock}" required>
                                             <div class="invalid-feedback" v-if="form.errors.stock">{{ form.errors.stock }}</div>
                                         </div>
-                                        <div class="col-6 form-group">
+                                        <div class="col-12 col-md-6 form-group">
                                             <label>Alert Qty</label>
                                             <input type="number" v-model="form.alert_quantity" class="form-control">
                                         </div>

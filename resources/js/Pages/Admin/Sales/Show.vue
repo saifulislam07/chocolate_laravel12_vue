@@ -282,7 +282,7 @@ onBeforeUnmount(() => {
                 <div class="invoice p-3 mb-3 shadow-sm border-0" style="border-radius: 15px;">
                     <!-- title row -->
                     <div class="row align-items-start">
-                        <div class="col-8 d-flex align-items-center">
+                        <div class="col-12 col-md-8 d-flex align-items-center">
                             <img v-if="shop.logo" :src="shop.logo" :alt="shop.site_name || ''" class="screen-logo mr-3">
                             <div>
                                 <h4 class="mb-1">
@@ -297,7 +297,7 @@ onBeforeUnmount(() => {
                                 </p>
                             </div>
                         </div>
-                        <div class="col-4 text-right">
+                        <div class="col-12 col-md-4 text-right">
                             <div class="text-muted text-uppercase small invoice-word">Invoice</div>
                             <div class="h6 font-weight-bold mb-0">#{{ sale.order_number }}</div>
                             <small class="text-muted">Date: {{ orderDate }}</small>
@@ -380,7 +380,7 @@ onBeforeUnmount(() => {
 
                     <div class="row mt-4">
                         <!-- notes column -->
-                        <div class="col-6">
+                        <div class="col-12 col-md-6">
                             <p class="lead font-weight-bold text-muted small text-uppercase">Terms &amp; Notes:</p>
                             <div v-if="sale.notes" class="text-muted bg-light p-3 rounded" style="min-height: 100px;">{{ sale.notes }}</div>
                             <div v-else class="text-muted bg-light p-3 rounded" style="min-height: 100px;">
@@ -388,7 +388,7 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
                         <!-- /.col -->
-                        <div class="col-6">
+                        <div class="col-12 col-md-6">
                             <p class="lead font-weight-bold text-muted small text-uppercase text-right">Payment Calculation:</p>
 
                             <div class="table-responsive">

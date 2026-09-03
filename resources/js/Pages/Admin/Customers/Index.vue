@@ -159,14 +159,14 @@ function formatMoney(value) {
                                 <textarea v-model="form.address" rows="2" class="form-control"></textarea>
                             </div>
                             <div class="row">
-                                <div class="col-6 form-group">
+                                <div class="col-12 col-md-6 form-group">
                                     <label class="text-xs font-bold text-muted text-uppercase">Division</label>
                                     <select v-model="form.division_id" @change="onDivisionChange" class="form-control">
                                         <option value="">Select Division</option>
                                         <option v-for="division in divisions" :key="division.id" :value="division.id">{{ division.name }}</option>
                                     </select>
                                 </div>
-                                <div class="col-6 form-group mb-0">
+                                <div class="col-12 col-md-6 form-group mb-0">
                                     <label class="text-xs font-bold text-muted text-uppercase">District</label>
                                     <select v-model="form.district_id" :disabled="!form.division_id" class="form-control">
                                         <option value="">Select District</option>

@@ -130,7 +130,7 @@ function getPaymentBadge(status) {
 
                     <div class="row mt-4">
                         <!-- accepted payments column -->
-                        <div class="col-6">
+                        <div class="col-12 col-md-6">
                             <p class="lead font-weight-bold text-muted small text-uppercase">Terms & Notes:</p>
                             <div v-if="purchase.notes" class="text-muted bg-light p-3 rounded rich-text" style="min-height: 100px;" v-html="purchase.notes"></div>
                             <div v-else class="text-muted bg-light p-3 rounded" style="min-height: 100px;">
@@ -138,7 +138,7 @@ function getPaymentBadge(status) {
                             </div>
                         </div>
                         <!-- /.col -->
-                        <div class="col-6">
+                        <div class="col-12 col-md-6">
                             <p class="lead font-weight-bold text-muted small text-uppercase text-right">Payment Calculation:</p>
 
                             <div class="table-responsive">

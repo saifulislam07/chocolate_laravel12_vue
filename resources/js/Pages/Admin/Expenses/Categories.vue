@@ -80,6 +80,7 @@ const deleteCategory = (id) => {
                         </div>
                     </div>
                     <div class="card-body p-0">
+                        <div class="table-responsive">
                         <table class="table table-hover table-striped table-valign-middle">
                             <thead class="bg-light">
                                 <tr>
@@ -110,6 +111,7 @@ const deleteCategory = (id) => {
                                 </tr>
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
