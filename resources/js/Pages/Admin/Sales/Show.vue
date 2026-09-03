@@ -12,18 +12,35 @@ const props = defineProps({
     courierOptions: { type: Object, default: () => ({ pathao: false, steadfast: false }) },
 });
 
-const money = (value) => '৳' + Number(value || 0).toLocaleString('en-BD', {
+const money = (value) => Number(value || 0).toLocaleString('en-BD', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
 });
 
-const issuedOn = computed(() => new Date(props.sale.created_at).toLocaleDateString('en-GB', {
+const orderDate = computed(() => new Date(props.sale.created_at).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
 }));
 
+// Orders store their own subtotal, but rows written before that column existed
+// can arrive null — fall back to the line items rather than show a blank.
+const subtotal = computed(() => (
+    props.sale.subtotal ?? (props.sale.items || []).reduce(
+        (sum, item) => sum + (Number(item.price) * Number(item.quantity)),
+        0,
+    )
+));
+
 const isPaid = computed(() => props.sale.payment_status === 'paid');
+const amount = (value) => Number(value || 0);
+
+function getPaymentBadge(status) {
+    const s = status?.toLowerCase();
+    if (s === 'paid') return 'badge-success';
+    if (s === 'partial') return 'badge-warning';
+    return 'badge-danger';
+}
 
 const statusForm = useForm({
     status: props.sale.status,
@@ -83,17 +100,11 @@ function submitShip() {
     });
 }
 
-const printInvoice = () => {
-    keepPageRuleLast();
-    window.print();
-};
-
-// The sheet on screen is drawn at true A5 size with its own 10mm padding, so the
-// page box has to contribute nothing of its own — otherwise the printed copy is
-// laid out differently from the one the operator just approved on screen.
-// Kept in a dedicated <style> node so it never lingers for other admin print
-// views (reports, POS receipt) after an SPA navigation.
-const A5_PAGE_RULE = '@page { size: A5; margin: 0; }';
+// The printed sheet is drawn at true A5 with its own 10mm padding, so the page
+// box has to contribute nothing of its own. Kept in a dedicated <style> node so
+// it never lingers for other admin print views (reports, POS receipt) after an
+// SPA navigation.
+const A5_PAGE_RULE = '@page { size: A5 portrait; margin: 0; }';
 let a5StyleEl = null;
 
 // @page carries no specificity, so the last declaration wins — against both
@@ -105,6 +116,11 @@ function keepPageRuleLast() {
     if (a5StyleEl && document.head.lastElementChild !== a5StyleEl) {
         document.head.appendChild(a5StyleEl);
     }
+}
+
+function printInvoice() {
+    keepPageRuleLast();
+    window.print();
 }
 
 onMounted(() => {
@@ -133,175 +149,340 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head :title="`Invoice ${sale.order_number}`" />
+    <Head :title="'Invoice ' + sale.order_number" />
 
     <AdminLayout>
-        <!-- Toolbar -->
-        <div class="sale-bar d-print-none">
-            <div class="sale-bar-left">
-                <Link :href="route('admin.sales.index')" class="sale-btn">
-                    <i class="fas fa-arrow-left"></i> Back
-                </Link>
-                <span class="sale-bar-title">Invoice #{{ sale.order_number }}</span>
-                <span class="sale-chip" :class="sale.order_source === 'pos' ? 'sale-chip-pos' : 'sale-chip-web'">
-                    {{ sale.order_source === 'pos' ? 'POS' : 'WEB' }}
-                </span>
-                <span class="sale-chip" :class="isPaid ? 'sale-chip-ok' : 'sale-chip-due'">{{ sale.payment_status }}</span>
-                <span v-if="sale.lead_source" class="sale-chip sale-chip-lead">
-                    <i class="fas fa-bullhorn"></i> {{ sale.lead_source }}
-                </span>
-            </div>
-            <div class="sale-bar-right">
-                <Link :href="route('admin.returns.create', { order_id: sale.id })" class="sale-btn sale-btn-danger">
-                    <i class="fas fa-undo"></i> Process Return
-                </Link>
-                <button type="button" class="sale-btn sale-btn-primary" @click="printInvoice">
-                    <i class="fas fa-print"></i> Print Invoice
-                </button>
-            </div>
-        </div>
-
-        <!-- Admin controls: everything that is not part of the document itself -->
-        <div class="sale-panel d-print-none">
-            <div class="sale-row">
-                <label class="sale-field">
-                    <span class="sale-label">Order Status</span>
-                    <select v-model="statusForm.status" class="sale-input">
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="partially_returned">Partially Returned</option>
-                        <option value="returned">Returned</option>
-                    </select>
-                </label>
-                <label class="sale-field">
-                    <span class="sale-label">Payment Status</span>
-                    <select v-model="statusForm.payment_status" class="sale-input">
-                        <option value="unpaid">Unpaid</option>
-                        <option value="partial">Partial</option>
-                        <option value="paid">Paid</option>
-                    </select>
-                </label>
-                <button type="button" class="sale-btn sale-btn-primary" :disabled="statusForm.processing" @click="updateStatus">
-                    <i class="fas fa-save"></i> Update Status
-                </button>
-            </div>
-
-            <div class="sale-divider"></div>
-
-            <div v-if="sale.shipments?.length" class="sale-shipments">
-                <div v-for="shipment in sale.shipments" :key="shipment.id" class="sale-shipment">
-                    <span>
-                        <span class="sale-chip sale-chip-web">{{ shipment.courier }}</span>
-                        Tracking: <strong>{{ shipment.tracking_code || 'N/A' }}</strong>
-                    </span>
-                    <span class="sale-chip">{{ shipment.status }}</span>
+        <!--
+            Two renderings of one order, on purpose: the screen view below is the
+            admin's working page, and the A5 sheet at the bottom is the document
+            that goes on paper. Each is hidden from the other medium, so the print
+            layout can be redrawn without touching the page the operator works on.
+        -->
+        <div class="content-header d-print-none">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0 text-dark">Sale Details</h1>
+                    </div>
+                    <div class="col-sm-6 text-right">
+                        <Link :href="route('admin.sales.index')" class="btn btn-default btn-sm mr-2">
+                            <i class="fas fa-arrow-left mr-1"></i> Back to List
+                        </Link>
+                        <button type="button" class="btn btn-primary btn-sm mr-2" @click="printInvoice">
+                            <i class="fas fa-print mr-1"></i> Print
+                        </button>
+                        <Link :href="route('admin.returns.create', { order_id: sale.id })" class="btn btn-danger btn-sm">
+                            <i class="fas fa-undo mr-1"></i> Process Return
+                        </Link>
+                    </div>
                 </div>
             </div>
-
-            <p v-if="!courierOptions.pathao && !courierOptions.steadfast" class="sale-hint">
-                No courier is configured yet. Add Pathao or Steadfast credentials in
-                <Link :href="route('admin.settings.index')">Settings &rarr; Courier</Link>.
-            </p>
-            <div v-else class="sale-row">
-                <label class="sale-field">
-                    <span class="sale-label">Courier</span>
-                    <select v-model="shipForm.courier" class="sale-input">
-                        <option v-if="courierOptions.steadfast" value="steadfast">Steadfast</option>
-                        <option v-if="courierOptions.pathao" value="pathao">Pathao</option>
-                    </select>
-                </label>
-
-                <template v-if="shipForm.courier === 'pathao'">
-                    <label class="sale-field">
-                        <span class="sale-label">City</span>
-                        <select v-model="shipForm.city_id" class="sale-input">
-                            <option value="">Select City</option>
-                            <option v-for="city in pathaoCities" :key="city.city_id" :value="city.city_id">{{ city.city_name }}</option>
-                        </select>
-                    </label>
-                    <label class="sale-field">
-                        <span class="sale-label">Zone</span>
-                        <select v-model="shipForm.zone_id" class="sale-input" :disabled="!shipForm.city_id">
-                            <option value="">Select Zone</option>
-                            <option v-for="zone in pathaoZones" :key="zone.zone_id" :value="zone.zone_id">{{ zone.zone_name }}</option>
-                        </select>
-                    </label>
-                    <label class="sale-field">
-                        <span class="sale-label">Area</span>
-                        <select v-model="shipForm.area_id" class="sale-input" :disabled="!shipForm.zone_id">
-                            <option value="">Select Area</option>
-                            <option v-for="area in pathaoAreas" :key="area.area_id" :value="area.area_id">{{ area.area_name }}</option>
-                        </select>
-                    </label>
-                </template>
-
-                <button type="button" class="sale-btn sale-btn-success" :disabled="shipForm.processing" @click="submitShip">
-                    <i class="fas fa-truck"></i> Book Shipment
-                </button>
-            </div>
-            <p v-if="shipForm.errors.courier" class="sale-error">{{ shipForm.errors.courier }}</p>
         </div>
 
+        <section class="content d-print-none">
+            <div class="container-fluid">
+                <!-- Admin controls: everything that is not part of the document itself -->
+                <div class="card card-outline card-primary shadow-sm border-0" style="border-radius: 15px;">
+                    <div class="card-header border-0">
+                        <h3 class="card-title font-weight-bold">
+                            <i class="fas fa-cogs mr-1"></i> Order Management
+                        </h3>
+                    </div>
+                    <div class="card-body pt-0">
+                        <div class="form-row align-items-end">
+                            <div class="col-md-3 form-group mb-2">
+                                <label class="text-muted text-uppercase small mb-1">Order Status</label>
+                                <select v-model="statusForm.status" class="form-control form-control-sm">
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="cancelled">Cancelled</option>
+                                    <option value="partially_returned">Partially Returned</option>
+                                    <option value="returned">Returned</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 form-group mb-2">
+                                <label class="text-muted text-uppercase small mb-1">Payment Status</label>
+                                <select v-model="statusForm.payment_status" class="form-control form-control-sm">
+                                    <option value="unpaid">Unpaid</option>
+                                    <option value="partial">Partial</option>
+                                    <option value="paid">Paid</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 form-group mb-2">
+                                <button type="button" class="btn btn-primary btn-sm" :disabled="statusForm.processing" @click="updateStatus">
+                                    <i class="fas fa-save mr-1"></i> Update Status
+                                </button>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div v-if="sale.shipments?.length" class="mb-3">
+                            <p class="text-muted text-uppercase font-weight-bold mb-2 small">Shipments</p>
+                            <div v-for="shipment in sale.shipments" :key="shipment.id"
+                                 class="d-flex justify-content-between align-items-center border rounded p-2 mb-2">
+                                <span>
+                                    <span class="badge badge-info text-uppercase mr-1">{{ shipment.courier }}</span>
+                                    Tracking: <strong>{{ shipment.tracking_code || 'N/A' }}</strong>
+                                </span>
+                                <span class="badge badge-secondary">{{ shipment.status }}</span>
+                            </div>
+                        </div>
+
+                        <p v-if="!courierOptions.pathao && !courierOptions.steadfast" class="text-muted small mb-0">
+                            No courier is configured yet. Add Pathao or Steadfast credentials in
+                            <Link :href="route('admin.settings.index')">Settings &rarr; Courier</Link>.
+                        </p>
+                        <div v-else class="form-row align-items-end">
+                            <div class="col-md-3 form-group mb-2">
+                                <label class="text-muted text-uppercase small mb-1">Courier</label>
+                                <select v-model="shipForm.courier" class="form-control form-control-sm">
+                                    <option v-if="courierOptions.steadfast" value="steadfast">Steadfast</option>
+                                    <option v-if="courierOptions.pathao" value="pathao">Pathao</option>
+                                </select>
+                            </div>
+
+                            <template v-if="shipForm.courier === 'pathao'">
+                                <div class="col-md-3 form-group mb-2">
+                                    <label class="text-muted text-uppercase small mb-1">City</label>
+                                    <select v-model="shipForm.city_id" class="form-control form-control-sm">
+                                        <option value="">Select City</option>
+                                        <option v-for="city in pathaoCities" :key="city.city_id" :value="city.city_id">{{ city.city_name }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 form-group mb-2">
+                                    <label class="text-muted text-uppercase small mb-1">Zone</label>
+                                    <select v-model="shipForm.zone_id" class="form-control form-control-sm" :disabled="!shipForm.city_id">
+                                        <option value="">Select Zone</option>
+                                        <option v-for="zone in pathaoZones" :key="zone.zone_id" :value="zone.zone_id">{{ zone.zone_name }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 form-group mb-2">
+                                    <label class="text-muted text-uppercase small mb-1">Area</label>
+                                    <select v-model="shipForm.area_id" class="form-control form-control-sm" :disabled="!shipForm.zone_id">
+                                        <option value="">Select Area</option>
+                                        <option v-for="area in pathaoAreas" :key="area.area_id" :value="area.area_id">{{ area.area_name }}</option>
+                                    </select>
+                                </div>
+                            </template>
+
+                            <div class="col-md-3 form-group mb-2">
+                                <button type="button" class="btn btn-success btn-sm" :disabled="shipForm.processing" @click="submitShip">
+                                    <i class="fas fa-truck mr-1"></i> Book Shipment
+                                </button>
+                            </div>
+                        </div>
+                        <p v-if="shipForm.errors.courier" class="text-danger small mb-0 mt-2">{{ shipForm.errors.courier }}</p>
+                    </div>
+                </div>
+
+                <!-- Screen view of the sale -->
+                <div class="invoice p-3 mb-3 shadow-sm border-0" style="border-radius: 15px;">
+                    <!-- title row -->
+                    <div class="row align-items-start">
+                        <div class="col-8 d-flex align-items-center">
+                            <img v-if="shop.logo" :src="shop.logo" :alt="shop.site_name || ''" class="screen-logo mr-3">
+                            <div>
+                                <h4 class="mb-1">
+                                    <i v-if="!shop.logo" class="fas fa-file-invoice mr-2 text-primary"></i>{{ shop.site_name || 'SWEET CHOCOLATE' }}
+                                </h4>
+                                <p v-if="shop.address || shop.phone || shop.email" class="text-muted small mb-0">
+                                    <span v-if="shop.address">{{ shop.address }}</span>
+                                    <span v-if="shop.address && (shop.phone || shop.email)"> &middot; </span>
+                                    <span v-if="shop.phone">{{ shop.phone }}</span>
+                                    <span v-if="shop.phone && shop.email"> &middot; </span>
+                                    <span v-if="shop.email">{{ shop.email }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-right">
+                            <div class="text-muted text-uppercase small invoice-word">Invoice</div>
+                            <div class="h6 font-weight-bold mb-0">#{{ sale.order_number }}</div>
+                            <small class="text-muted">Date: {{ orderDate }}</small>
+                        </div>
+                    </div>
+
+                    <!-- info row -->
+                    <div class="row invoice-info mt-4">
+                        <div class="col-sm-4 invoice-col border-right">
+                            <p class="text-muted text-uppercase font-weight-bold mb-2 small">Customer Details</p>
+                            <address v-if="sale.order_source === 'pos'">
+                                <strong class="h5 text-primary">{{ sale.customer?.name || 'Walk-in Customer' }}</strong><br>
+                                {{ sale.customer?.address || 'Counter Sale' }}<br>
+                                Phone: {{ sale.customer?.phone || 'N/A' }}<br>
+                                Email: {{ sale.customer?.email || 'N/A' }}
+                            </address>
+                            <address v-else>
+                                <strong class="h5 text-primary">{{ sale.customer_name || sale.user?.name || 'Guest User' }}</strong><br>
+                                <span class="address-lines">{{ sale.shipping_address || 'N/A' }}</span><br>
+                                Phone: {{ sale.customer_phone || 'N/A' }}<br>
+                                Email: {{ sale.customer?.email || sale.user?.email || 'N/A' }}
+                            </address>
+                        </div>
+                        <div class="col-sm-4 invoice-col border-right pl-4">
+                            <p class="text-muted text-uppercase font-weight-bold mb-2 small">Bill Information</p>
+                            <b>Payment:</b> <span class="badge ml-1" :class="getPaymentBadge(sale.payment_status)">{{ sale.payment_status }}</span>
+                            <span class="text-muted text-uppercase small ml-1">{{ sale.payment_method }}</span><br>
+                            <template v-if="sale.lead_source">
+                                <b>Lead Source:</b> {{ sale.lead_source }}<br>
+                            </template>
+                            <b>Order Date:</b> {{ orderDate }}
+                        </div>
+                        <div class="col-sm-4 invoice-col pl-4">
+                             <p class="text-muted text-uppercase font-weight-bold mb-2 small">Payment Summary</p>
+                             <div class="bg-light p-2 rounded">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Total Bill:</span>
+                                    <strong class="text-dark">৳{{ money(sale.total) }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Paid:</span>
+                                    <strong class="text-success">৳{{ money(sale.paid_amount) }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between pt-1 border-top mt-1">
+                                    <span class="font-weight-bold">Due:</span>
+                                    <strong class="text-danger">৳{{ money(sale.due_amount) }}</strong>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Table row -->
+                    <div class="row mt-4">
+                        <div class="col-12 table-responsive">
+                            <table class="table table-striped table-hover border">
+                                <thead class="bg-primary text-white">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Product / SKU</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-right">Unit Price</th>
+                                        <th class="text-right">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(item, index) in sale.items" :key="item.id">
+                                        <td>{{ index + 1 }}</td>
+                                        <td>
+                                            <span class="font-weight-bold text-primary">{{ item.product_name || item.product?.name }}</span><br>
+                                            <small class="text-muted">SKU: {{ item.product?.sku || 'N/A' }}</small>
+                                        </td>
+                                        <td class="text-center align-middle h6">{{ item.quantity }}</td>
+                                        <td class="text-right align-middle">৳{{ money(item.price) }}</td>
+                                        <td class="text-right align-middle font-weight-bold">৳{{ money(item.price * item.quantity) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <!-- notes column -->
+                        <div class="col-6">
+                            <p class="lead font-weight-bold text-muted small text-uppercase">Terms &amp; Notes:</p>
+                            <div v-if="sale.notes" class="text-muted bg-light p-3 rounded" style="min-height: 100px;">{{ sale.notes }}</div>
+                            <div v-else class="text-muted bg-light p-3 rounded" style="min-height: 100px;">
+                                No notes available for this sale.
+                            </div>
+                        </div>
+                        <!-- /.col -->
+                        <div class="col-6">
+                            <p class="lead font-weight-bold text-muted small text-uppercase text-right">Payment Calculation:</p>
+
+                            <div class="table-responsive">
+                                <table class="table border">
+                                    <tr>
+                                        <th style="width:50%">Items Subtotal:</th>
+                                        <td class="text-right font-weight-bold">৳{{ money(subtotal) }}</td>
+                                    </tr>
+                                    <tr v-if="amount(sale.discount) > 0">
+                                        <th class="text-danger">Discount:</th>
+                                        <td class="text-right text-danger">-৳{{ money(sale.discount) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Tax:</th>
+                                        <td class="text-right">৳{{ money(sale.tax) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Shipping:</th>
+                                        <td class="text-right">৳{{ money(sale.shipping_cost) }}</td>
+                                    </tr>
+                                    <tr class="bg-primary text-white">
+                                        <th class="h5">Grand Total:</th>
+                                        <td class="text-right h5 font-weight-bold">৳{{ money(sale.total) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-success">Paid:</th>
+                                        <td class="text-right text-success">৳{{ money(sale.paid_amount) }}</td>
+                                    </tr>
+                                    <tr v-if="amount(sale.due_amount) > 0">
+                                        <th class="text-danger">Due:</th>
+                                        <td class="text-right text-danger">৳{{ money(sale.due_amount) }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!--
-            The wrapper carries the print id: AdminLayout forces width/padding to
-            zero on it, so the sheet inside keeps its own A5 geometry and what is
-            printed is exactly what is on screen.
+            The printed document. Hidden on screen and drawn at true A5, so the
+            paper layout is free of the admin page's proportions. AdminLayout
+            zeroes width/padding on #invoice-print-area, leaving the sheet its own
+            geometry.
         -->
-        <div id="invoice-print-area">
-            <article class="invoice-sheet">
-                <header class="inv-head">
-                    <div class="inv-issuer">
-                        <img v-if="shop.logo" :src="shop.logo" alt="" class="inv-logo">
-                        <div class="inv-shop">{{ shop.site_name || 'Invoice' }}</div>
-                        <div class="inv-muted" v-if="shop.address">{{ shop.address }}</div>
-                        <div class="inv-muted">
+        <div id="invoice-print-area" class="print-only">
+            <article class="sheet">
+                <header class="head">
+                    <div class="issuer">
+                        <img v-if="shop.logo" :src="shop.logo" :alt="shop.site_name || ''" class="logo">
+                        <div class="shop">{{ shop.site_name || 'Invoice' }}</div>
+                        <div class="muted" v-if="shop.address">{{ shop.address }}</div>
+                        <div class="muted">
                             <span v-if="shop.phone">{{ shop.phone }}</span>
                             <span v-if="shop.phone && shop.email"> · </span>
                             <span v-if="shop.email">{{ shop.email }}</span>
                         </div>
                     </div>
-                    <div class="inv-meta">
-                        <div class="inv-title">Invoice</div>
-                        <div class="inv-number">#{{ sale.order_number }}</div>
-                        <div class="inv-muted">{{ issuedOn }}</div>
-                        <div class="inv-stamp" :class="isPaid ? 'inv-stamp-ok' : 'inv-stamp-due'">{{ sale.payment_status }}</div>
+                    <div class="meta">
+                        <div class="word">Invoice</div>
+                        <div class="number">#{{ sale.order_number }}</div>
+                        <div class="muted">Order Date: {{ orderDate }}</div>
+                        <div class="stamp" :class="isPaid ? 'stamp-ok' : 'stamp-due'">{{ sale.payment_status }}</div>
                     </div>
                 </header>
 
-                <section class="inv-parties">
-                    <div class="inv-party">
-                        <div class="inv-label">Billed To</div>
+                <section class="parties">
+                    <div class="party">
+                        <div class="label">Billed To</div>
                         <template v-if="sale.order_source === 'pos'">
-                            <div class="inv-strong">{{ sale.customer?.name || 'Walk-in Customer' }}</div>
+                            <div class="strong">{{ sale.customer?.name || 'Walk-in Customer' }}</div>
                             <div v-if="sale.customer?.address">{{ sale.customer.address }}</div>
                             <div v-if="sale.customer?.phone">{{ sale.customer.phone }}</div>
                             <div v-if="sale.customer?.email">{{ sale.customer.email }}</div>
                         </template>
                         <template v-else>
-                            <div class="inv-strong">{{ sale.customer_name || sale.user?.name || 'Guest User' }}</div>
-                            <div v-if="sale.shipping_address" class="inv-address">{{ sale.shipping_address }}</div>
-                            <div v-if="sale.customer_phone || sale.customer?.email || sale.user?.email">
-                                <span v-if="sale.customer_phone">{{ sale.customer_phone }}</span>
-                                <span v-if="sale.customer_phone && (sale.customer?.email || sale.user?.email)"> · </span>
-                                <span v-if="sale.customer?.email || sale.user?.email">{{ sale.customer?.email || sale.user?.email }}</span>
-                            </div>
+                            <div class="strong">{{ sale.customer_name || sale.user?.name || 'Guest User' }}</div>
+                            <div v-if="sale.shipping_address" class="address-lines">{{ sale.shipping_address }}</div>
+                            <div v-if="sale.customer_phone">{{ sale.customer_phone }}</div>
+                            <div v-if="sale.customer?.email || sale.user?.email">{{ sale.customer?.email || sale.user?.email }}</div>
                         </template>
                     </div>
-                    <div class="inv-party inv-party-right">
-                        <div class="inv-label">Payment</div>
-                        <div class="inv-strong inv-upper">{{ sale.payment_method }}</div>
-                        <div class="inv-muted inv-upper">{{ sale.order_source === 'pos' ? 'Counter Sale' : 'Online Order' }}</div>
-                        <div class="inv-muted inv-upper">{{ sale.status }}</div>
+                    <div class="party party-right">
+                        <div class="label">Payment</div>
+                        <div class="strong upper">{{ sale.payment_method }}</div>
+                        <div class="muted upper" v-if="sale.lead_source">{{ sale.lead_source }}</div>
                     </div>
                 </section>
 
-                <table class="inv-table">
+                <table class="items">
                     <thead>
                         <tr>
-                            <th class="inv-idx">#</th>
+                            <th class="idx">#</th>
                             <th>Item</th>
                             <th class="num">Qty</th>
                             <th class="num">Price</th>
@@ -310,418 +491,290 @@ onBeforeUnmount(() => {
                     </thead>
                     <tbody>
                         <tr v-for="(item, index) in sale.items" :key="item.id">
-                            <td class="inv-idx">{{ index + 1 }}</td>
-                            <td>{{ item.product_name }}</td>
+                            <td class="idx">{{ index + 1 }}</td>
+                            <td>
+                                <div>{{ item.product_name || item.product?.name }}</div>
+                                <div class="sku" v-if="item.product?.sku">{{ item.product.sku }}</div>
+                            </td>
                             <td class="num">{{ item.quantity }}</td>
-                            <td class="num">{{ money(item.price) }}</td>
-                            <td class="num">{{ money(item.price * item.quantity) }}</td>
+                            <td class="num">৳{{ money(item.price) }}</td>
+                            <td class="num">৳{{ money(item.price * item.quantity) }}</td>
                         </tr>
                     </tbody>
                 </table>
 
-                <div class="inv-totals">
-                    <div class="inv-row"><span>Subtotal</span><span>{{ money(sale.subtotal) }}</span></div>
-                    <div class="inv-row" v-if="parseFloat(sale.discount) > 0"><span>Discount</span><span class="inv-due">-{{ money(sale.discount) }}</span></div>
-                    <div class="inv-row" v-if="parseFloat(sale.tax) > 0"><span>Tax</span><span>{{ money(sale.tax) }}</span></div>
-                    <div class="inv-row" v-if="parseFloat(sale.shipping_cost) > 0"><span>Shipping</span><span>{{ money(sale.shipping_cost) }}</span></div>
-                    <div class="inv-row inv-grand"><span>Total</span><span>{{ money(sale.total) }}</span></div>
-                    <div class="inv-row" v-if="parseFloat(sale.paid_amount) > 0"><span>Paid</span><span class="inv-ok">{{ money(sale.paid_amount) }}</span></div>
-                    <div class="inv-row" v-if="parseFloat(sale.due_amount) > 0"><span>Due</span><span class="inv-due">{{ money(sale.due_amount) }}</span></div>
+                <div class="totals">
+                    <div class="trow"><span>Subtotal</span><span>৳{{ money(subtotal) }}</span></div>
+                    <div class="trow" v-if="amount(sale.discount) > 0"><span>Discount</span><span class="due">-৳{{ money(sale.discount) }}</span></div>
+                    <div class="trow" v-if="amount(sale.tax) > 0"><span>Tax</span><span>৳{{ money(sale.tax) }}</span></div>
+                    <div class="trow" v-if="amount(sale.shipping_cost) > 0"><span>Shipping</span><span>৳{{ money(sale.shipping_cost) }}</span></div>
+                    <div class="trow grand"><span>Total</span><span>৳{{ money(sale.total) }}</span></div>
+                    <div class="trow"><span>Paid</span><span class="ok">৳{{ money(sale.paid_amount) }}</span></div>
+                    <div class="trow" v-if="amount(sale.due_amount) > 0"><span>Due</span><span class="due">৳{{ money(sale.due_amount) }}</span></div>
                 </div>
 
-                <p class="inv-note" v-if="sale.notes"><strong>Note:</strong> {{ sale.notes }}</p>
+                <p class="note" v-if="sale.notes"><span class="label">Note</span>{{ sale.notes }}</p>
 
-                <footer class="inv-foot">
-                    <div class="inv-signs">
-                        <div class="inv-sign">Customer Signature</div>
-                        <div class="inv-sign">Authorised Signature</div>
+                <footer class="foot">
+                    <div class="signs">
+                        <div class="sign">Customer Signature</div>
+                        <div class="sign">Authorised Signature</div>
                     </div>
-                    <p class="inv-thanks">Thank you for your order</p>
+                    <p class="thanks">Thank you for your order</p>
                 </footer>
             </article>
         </div>
     </AdminLayout>
 </template>
 
-<!--
-    Print rules that hide the admin chrome live unscoped in AdminLayout: a scoped
-    `body *` cannot reach the sidebar. Everything below is the document's own look,
-    and it is deliberately written once for both screen and paper — the sheet is
-    already drawn at A5, so printing changes nothing but the paper affordances.
--->
 <style scoped>
 /* ---------------------------------------------------------------- *
- * Toolbar and admin controls (screen only)
+ * Screen view
  * ---------------------------------------------------------------- */
 
-.sale-bar,
-.sale-panel {
-    max-width: 148mm;
-    margin: 0 auto 12px;
+.screen-logo {
+    max-height: 60px;
+    max-width: 170px;
+    object-fit: contain;
 }
 
-.sale-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
+.invoice-word { letter-spacing: 0.18em; }
 
-.sale-bar-left,
-.sale-bar-right {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-}
+.address-lines { white-space: pre-line; }
 
-.sale-bar-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #0f172a;
-    margin-right: 2px;
-}
+/* The sheet exists only on paper; keeping it out of the flow means the screen
+   page is untouched by everything below. */
+.print-only { display: none; }
 
-.sale-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    border-radius: 999px;
-    padding: 2px 8px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    background: #f1f5f9;
-    color: #475569;
-}
-
-.sale-chip-pos { background: #ecfdf5; color: #047857; }
-.sale-chip-web { background: #eef2ff; color: #4338ca; }
-.sale-chip-ok { background: #ecfdf5; color: #047857; }
-.sale-chip-due { background: #fef2f2; color: #b91c1c; }
-.sale-chip-lead { background: #fff7ed; color: #c2410c; }
-
-.sale-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #fff;
-    padding: 7px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #475569;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.sale-btn:hover { background: #f8fafc; color: #0f172a; text-decoration: none; }
-.sale-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-
-.sale-btn-primary { background: #4f46e5; border-color: #4f46e5; color: #fff; }
-.sale-btn-primary:hover { background: #4338ca; border-color: #4338ca; color: #fff; }
-
-.sale-btn-success { background: #059669; border-color: #059669; color: #fff; }
-.sale-btn-success:hover { background: #047857; border-color: #047857; color: #fff; }
-
-.sale-btn-danger { color: #b91c1c; border-color: #fecaca; }
-.sale-btn-danger:hover { background: #fef2f2; color: #991b1b; }
-
-.sale-panel {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: #fff;
-    padding: 12px;
-}
-
-.sale-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 10px;
-}
-
-.sale-field { display: block; margin: 0; }
-
-.sale-label {
-    display: block;
-    margin-bottom: 3px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #94a3b8;
-}
-
-.sale-input {
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #fff;
-    padding: 6px 8px;
-    font-size: 12px;
-    color: #334155;
-    min-width: 140px;
-}
-
-.sale-input:disabled { background: #f8fafc; color: #94a3b8; }
-
-.sale-divider {
-    height: 1px;
-    background: #f1f5f9;
-    margin: 12px 0;
-}
-
-.sale-shipments { margin-bottom: 10px; }
-
-.sale-shipment {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 6px 10px;
-    margin-bottom: 6px;
-    font-size: 12px;
-    color: #475569;
-}
-
-.sale-hint,
-.sale-error {
-    margin: 0;
-    font-size: 12px;
-}
-
-.sale-hint { color: #64748b; }
-.sale-error { margin-top: 8px; color: #b91c1c; }
 
 /* ---------------------------------------------------------------- *
- * The document — identical on screen and on paper
+ * The printed document — A5, minimal, one sheet
+ *
+ * Only three weights of ink are used: near-black for the figures that
+ * matter, grey for labels, and a single hairline for structure. No fills,
+ * no boxes — so nothing depends on the print dialog's "background
+ * graphics" setting, and the sheet stays readable on a cheap printer.
  * ---------------------------------------------------------------- */
 
-.invoice-sheet {
-    box-sizing: border-box;
-    width: 148mm;
-    max-width: 100%;
-    min-height: 210mm;
-    margin: 0 auto 1.5rem;
-    padding: 10mm;
-    background: #fff;
-    border: 1px solid #e6e6e6;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-    color: #1c1c1c;
-    font-size: 12px;
-    line-height: 1.45;
-    display: flex;
-    flex-direction: column;
-    /* Keep the rules and tints the operator approved on screen; without this the
-       browser drops backgrounds and the printed sheet is a different document. */
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-}
-
-.inv-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    padding-bottom: 9px;
-    border-bottom: 2px solid #1c1c1c;
-}
-
-.inv-logo {
-    display: block;
-    max-height: 30px;
-    max-width: 130px;
-    object-fit: contain;
-    margin-bottom: 4px;
-}
-
-.inv-shop {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-}
-
-.inv-muted {
-    color: #8a8a8a;
-    font-size: 11px;
-}
-
-.inv-meta {
-    text-align: right;
-    flex-shrink: 0;
-}
-
-.inv-title {
-    text-transform: uppercase;
-    letter-spacing: 0.22em;
-    font-size: 11px;
-    color: #8a8a8a;
-}
-
-.inv-number {
-    font-weight: 700;
-    font-size: 13px;
-}
-
-.inv-stamp {
-    display: inline-block;
-    margin-top: 4px;
-    border: 1px solid currentColor;
-    border-radius: 3px;
-    padding: 1px 7px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.inv-stamp-ok { color: #1a7f4b; }
-.inv-stamp-due { color: #c0392b; }
-
-.inv-parties {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    margin: 10px 0 2px;
-}
-
-.inv-party { max-width: 60%; }
-
-.inv-party-right {
-    text-align: right;
-    flex-shrink: 0;
-}
-
-.inv-address { white-space: pre-line; }
-
-.inv-label {
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 10px;
-    color: #9a9a9a;
-    margin-bottom: 2px;
-}
-
-.inv-strong { font-weight: 700; }
-
-.inv-upper {
-    text-transform: uppercase;
-    font-size: 11px;
-    letter-spacing: 0.04em;
-}
-
-.inv-ok { color: #1a7f4b; }
-.inv-due { color: #c0392b; }
-
-.inv-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-.inv-table th {
-    text-align: left;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #6b6b6b;
-    font-weight: 700;
-    background: #f6f6f6;
-    border-bottom: 1px solid #1c1c1c;
-    padding: 6px 5px;
-}
-
-.inv-table td {
-    padding: 6px 5px;
-    border-bottom: 1px solid #ededed;
-    vertical-align: top;
-}
-
-.inv-table .num {
-    text-align: right;
-    white-space: nowrap;
-}
-
-.inv-table .inv-idx {
-    width: 22px;
-    text-align: center;
-    color: #9a9a9a;
-}
-
-.inv-totals {
-    width: 58%;
-    margin-left: auto;
-    margin-top: 12px;
-}
-
-.inv-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 3px 5px;
-}
-
-.inv-grand {
-    border-top: 1px solid #1c1c1c;
-    border-bottom: 2px solid #1c1c1c;
-    margin-top: 4px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    font-weight: 700;
-    font-size: 14px;
-}
-
-.inv-note {
-    margin-top: 12px;
-    font-size: 11px;
-    color: #555;
-}
-
-/* Pinned to the bottom of the sheet, not floating right after the content. */
-.inv-foot { margin-top: auto; }
-
-.inv-signs {
-    display: flex;
-    justify-content: space-between;
-    gap: 24px;
-    padding-top: 26px;
-}
-
-.inv-sign {
-    border-top: 1px solid #b9b9b9;
-    padding-top: 4px;
-    min-width: 44mm;
-    text-align: center;
-    font-size: 10px;
-    color: #8a8a8a;
-}
-
-.inv-thanks {
-    margin: 10px 0 0;
-    text-align: center;
-    font-size: 11px;
-    color: #9a9a9a;
-}
-
 @media print {
-    /*
-     * Only the paper affordances go — geometry, type and spacing are untouched,
-     * so the print is the same document the operator saw. 208mm rather than the
-     * full 210mm because a box exactly as tall as the page can round into a
-     * blank second sheet.
-     */
-    .invoice-sheet {
-        min-height: 208mm;
-        margin: 0;
-        border: 0;
-        box-shadow: none;
-        max-width: none;
+    .print-only { display: block; }
+
+    .sheet {
+        box-sizing: border-box;
+        /* Centred and capped at A5 so the document keeps its proportions even
+           when the browser or the printer overrides the page box with A4. */
+        width: 148mm;
+        max-width: 100%;
+        margin: 0 auto;
+        /* 206mm rather than the full 210mm because a box exactly as tall as the
+           page can round into a blank second sheet. */
+        min-height: 206mm;
+        padding: 12mm 11mm;
+        background: #fff;
+        color: #111;
+        font-size: 10.5px;
+        line-height: 1.5;
+        display: flex;
+        flex-direction: column;
+        /* Keep the hairlines; without this some browsers drop them and the
+           sheet loses the little structure it has. */
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .logo {
+        display: block;
+        max-height: 30px;
+        max-width: 130px;
+        object-fit: contain;
+        margin-bottom: 6px;
+    }
+
+    .shop {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+    }
+
+    .muted {
+        color: #8c8c8c;
+        font-size: 9.5px;
+    }
+
+    .meta {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .word {
+        text-transform: uppercase;
+        letter-spacing: 0.28em;
+        font-size: 8.5px;
+        color: #9a9a9a;
+    }
+
+    .number {
+        font-weight: 700;
+        font-size: 12px;
+        margin: 1px 0 1px;
+    }
+
+    /* A word, not a badge — a bordered stamp is one box too many here. */
+    .stamp {
+        margin-top: 3px;
+        font-size: 8.5px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .stamp-ok { color: #1a7f4b; }
+    .stamp-due { color: #c0392b; }
+
+    .parties {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 9mm;
+    }
+
+    .party { max-width: 62%; }
+
+    .party-right {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .label {
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 8px;
+        color: #a3a3a3;
+        margin-bottom: 3px;
+    }
+
+    .strong { font-weight: 700; }
+
+    .upper {
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .ok { color: #1a7f4b; }
+    .due { color: #c0392b; }
+
+    .items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 9mm;
+    }
+
+    /* A rule instead of a filled band: the head reads as a caption, and the
+       eye goes to the amounts. */
+    .items th {
+        text-align: left;
+        font-size: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #a3a3a3;
+        font-weight: 600;
+        border-bottom: 1px solid #111;
+        padding: 0 4px 5px;
+    }
+
+    .items td {
+        padding: 6px 4px;
+        border-bottom: 1px solid #ececec;
+        vertical-align: top;
+    }
+
+    .items tr { page-break-inside: avoid; }
+
+    .items .num {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .items .idx {
+        width: 20px;
+        text-align: left;
+        color: #b0b0b0;
+    }
+
+    .sku {
+        color: #a3a3a3;
+        font-size: 8.5px;
+        letter-spacing: 0.02em;
+    }
+
+    .totals {
+        width: 52%;
+        margin-left: auto;
+        margin-top: 6mm;
+        page-break-inside: avoid;
+    }
+
+    .trow {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 2.5px 4px;
+        color: #555;
+    }
+
+    /* The one figure the reader is looking for. */
+    .grand {
+        border-top: 1px solid #111;
+        margin-top: 3px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        font-weight: 700;
+        font-size: 12px;
+        color: #111;
+    }
+
+    .note {
+        margin-top: 8mm;
+        font-size: 9.5px;
+        color: #6b6b6b;
+        max-width: 88mm;
+    }
+
+    .note .label { display: block; }
+
+    /* Pinned to the bottom of the sheet, not floating right after the content. */
+    .foot { margin-top: auto; }
+
+    .signs {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        padding-top: 14mm;
+    }
+
+    .sign {
+        border-top: 1px solid #cfcfcf;
+        padding-top: 4px;
+        min-width: 42mm;
+        text-align: center;
+        font-size: 8.5px;
+        letter-spacing: 0.04em;
+        color: #9a9a9a;
+    }
+
+    .thanks {
+        margin: 8mm 0 0;
+        text-align: center;
+        font-size: 9px;
+        letter-spacing: 0.06em;
+        color: #b0b0b0;
     }
 }
 </style>
