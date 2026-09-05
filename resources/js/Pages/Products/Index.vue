@@ -1,7 +1,7 @@
 <script setup>
 import { Head, Link, router } from "@inertiajs/vue3";
 import { stripHtml } from '@/composables/useRichText';
-import { computed, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import {
     ChevronRightIcon,
@@ -15,10 +15,17 @@ import { openCartDrawer } from "@/composables/useCartDrawer";
 function debounce(fn, delay) {
     let timeoutId;
 
-    return (...args) => {
+    const debounced = (...args) => {
         if (timeoutId) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => fn(...args), delay);
     };
+
+    debounced.cancel = () => {
+        clearTimeout(timeoutId);
+        timeoutId = undefined;
+    };
+
+    return debounced;
 }
 
 const props = defineProps({
@@ -32,15 +39,14 @@ const props = defineProps({
     pageMeta: { type: Object, default: () => ({}) },
 });
 
-const filterForm = ref({
-    q: props.filters.q || "",
-    category: props.filters.category || "",
-    min_price: props.filters.min_price || "",
-    max_price: props.filters.max_price || "",
-    sort: props.filters.sort || "latest",
-    sale: Boolean(props.filters.sale),
-    in_stock: Boolean(props.filters.in_stock),
-});
+const filterForm = ref(normalizeFilters(props.filters));
+
+// The filter set the listing is already showing, and the yardstick for every
+// decision below. Every Inertia response hands this page a brand new `filters`
+// prop object -- including responses with nothing to do with filtering, such as
+// adding to the bag -- so identity tells us nothing about whether anything
+// actually changed. This does.
+const appliedFilters = ref(filterSignature());
 
 const displayedProducts = ref([...props.products.data]);
 const showMobileFilters = ref(false);
@@ -87,15 +93,18 @@ watch(
 watch(
     () => props.filters,
     (filters) => {
-        filterForm.value = {
-            q: filters.q || "",
-            category: filters.category || "",
-            min_price: filters.min_price || "",
-            max_price: filters.max_price || "",
-            sort: filters.sort || "latest",
-            sale: Boolean(filters.sale),
-            in_stock: Boolean(filters.in_stock),
-        };
+        // Every response carries this prop, including the reply to a search the
+        // shopper has already typed past: by the time "cho" comes back they may
+        // be on "chocolate", and copying the reply into the form would rewind
+        // the search box mid-word and swallow the rest of the query. So only
+        // follow the server when it reports a filter set we did not ask for --
+        // a back/forward navigation, or a value it normalised itself.
+        if (filterSignature(filters) === appliedFilters.value) {
+            return;
+        }
+
+        filterForm.value = normalizeFilters(filters);
+        appliedFilters.value = filterSignature();
     }
 );
 
@@ -104,6 +113,13 @@ function formatMoney(value) {
 }
 
 function applyFilters() {
+    if (!hasUnappliedFilters()) {
+        return;
+    }
+
+    debouncedApply.cancel();
+    appliedFilters.value = filterSignature();
+
     router.get(route(props.routeName), cleanFilters(), {
         preserveState: true,
         preserveScroll: true,
@@ -111,9 +127,33 @@ function applyFilters() {
     });
 }
 
-function cleanFilters() {
+function normalizeFilters(filters) {
+    return {
+        q: filters.q || "",
+        category: filters.category || "",
+        min_price: filters.min_price || "",
+        max_price: filters.max_price || "",
+        sort: filters.sort || "latest",
+        sale: Boolean(filters.sale),
+        in_stock: Boolean(filters.in_stock),
+    };
+}
+
+// Compared by value, not by shape: a price typed into a number input comes back
+// from the server as a string, and that alone must not read as a new filter.
+function filterSignature(filters = filterForm.value) {
+    const applied = cleanFilters(normalizeFilters(filters));
+
+    return JSON.stringify(Object.keys(applied).sort().map((key) => [key, String(applied[key])]));
+}
+
+function hasUnappliedFilters() {
+    return filterSignature() !== appliedFilters.value;
+}
+
+function cleanFilters(filters = filterForm.value) {
     return Object.fromEntries(
-        Object.entries(filterForm.value).filter(([, value]) => value !== "" && value !== false && value !== null)
+        Object.entries(filters).filter(([, value]) => value !== "" && value !== false && value !== null)
     );
 }
 
@@ -171,6 +211,12 @@ function toggleWishlist(productId) {
 
 const debouncedApply = debounce(() => applyFilters(), 450);
 
+// Both watchers read their sources into a fresh array, so Vue re-runs them on
+// any change to filterForm -- including the wholesale reassignment above, where
+// the values are identical. applyFilters() no-ops in that case; without it the
+// listing re-requests itself after every response, and each of those visits
+// interrupts whatever the shopper was actually doing (an add-to-bag post loses
+// its onSuccess, so the bag drawer never opens).
 watch(
     () => [filterForm.value.q, filterForm.value.min_price, filterForm.value.max_price],
     () => debouncedApply()
@@ -180,6 +226,10 @@ watch(
     () => [filterForm.value.sort, filterForm.value.sale, filterForm.value.in_stock],
     () => applyFilters()
 );
+
+// A queued filter request must not outlive this page: once the shopper has
+// moved on to a product or to checkout, firing it would drag them back here.
+onUnmounted(() => debouncedApply.cancel());
 </script>
 
 <template>
