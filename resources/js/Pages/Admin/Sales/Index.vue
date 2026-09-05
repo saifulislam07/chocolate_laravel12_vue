@@ -10,11 +10,13 @@ const props = defineProps({
 
 const columns = [
     { key: 'order_number', label: 'Order/Inv', sortable: true },
-    { key: 'order_source', label: 'Source', sortable: true },
+    { key: 'source_label', label: 'Source', sortable: true },
     { key: 'customer', label: 'Customer', sortable: true },
     { key: 'created_at', label: 'Date', sortable: true },
     { key: 'total', label: 'Total', sortable: true },
     { key: 'payment_status', label: 'Payment', sortable: true },
+    { key: 'status', label: 'Order Status', sortable: true },
+    { key: 'shipping_status', label: 'Shipping', sortable: true },
     { key: 'actions', label: 'Actions', sortable: false, width: '120px' }
 ];
 
@@ -28,6 +30,25 @@ const getPaymentBadge = (status) => {
     if (status === 'partial') return 'badge-warning';
     return 'badge-danger';
 };
+
+const getOrderStatusBadge = (status) => {
+    if (status === 'delivered') return 'badge-success';
+    if (status === 'shipped' || status === 'processing') return 'badge-info';
+    if (status === 'cancelled') return 'badge-danger';
+    if (status === 'returned' || status === 'partially_returned') return 'badge-secondary';
+    return 'badge-warning';
+};
+
+// Couriers name their own states, so anything unrecognised is still in motion
+// rather than a special case worth its own colour.
+const getShippingBadge = (status) => {
+    if (status === 'not_shipped') return 'badge-light border';
+    if (status === 'delivered') return 'badge-success';
+    if (status === 'cancelled' || status === 'returned' || status === 'failed') return 'badge-danger';
+    return 'badge-info';
+};
+
+const humanise = (value) => String(value || '').replace(/_/g, ' ');
 
 const totalWebSalesValue = computed(() => {
     return props.sales.filter(s => s.order_source === 'web').reduce((acc, curr) => acc + parseFloat(curr.total), 0).toFixed(2);
@@ -100,12 +121,15 @@ function deleteSale(id) {
                         <code class="text-xs font-bold text-indigo">{{ item.order_number }}</code>
                     </template>
 
-                    <!-- Source Cell -->
-                    <template #cell-order_source="{ item }">
+                    <!-- Source Cell: what the operator recorded, falling back to the channel -->
+                    <template #cell-source_label="{ item }">
                         <span class="badge" :class="getSourceBadge(item.order_source)">
                             <i class="fas" :class="item.order_source === 'pos' ? 'fa-cash-register' : 'fa-globe'"></i>
-                            {{ item.order_source === 'pos' ? 'POS' : 'WEB' }}
+                            {{ item.source_label }}
                         </span>
+                        <div v-if="item.lead_source" class="text-xs text-muted text-uppercase mt-1">
+                            {{ item.order_source === 'pos' ? 'POS' : 'WEB' }}
+                        </div>
                     </template>
 
                     <!-- Customer Cell -->
@@ -131,6 +155,19 @@ function deleteSale(id) {
                     <!-- Payment Cell -->
                     <template #cell-payment_status="{ item }">
                         <span class="badge" :class="getPaymentBadge(item.payment_status)">{{ item.payment_status }}</span>
+                    </template>
+
+                    <!-- Order Status Cell -->
+                    <template #cell-status="{ item }">
+                        <span class="badge text-capitalize" :class="getOrderStatusBadge(item.status)">{{ humanise(item.status) }}</span>
+                    </template>
+
+                    <!-- Shipping Cell -->
+                    <template #cell-shipping_status="{ item }">
+                        <span class="badge text-capitalize" :class="getShippingBadge(item.shipping_status)">{{ humanise(item.shipping_status) }}</span>
+                        <div v-if="item.shipments?.length" class="text-xs text-muted text-uppercase mt-1">
+                            {{ item.shipments[item.shipments.length - 1].courier }}
+                        </div>
                     </template>
 
                     <!-- Actions Cell -->

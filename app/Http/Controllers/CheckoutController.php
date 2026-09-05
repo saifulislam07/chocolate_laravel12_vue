@@ -77,7 +77,7 @@ class CheckoutController extends Controller
                 'total' => $total,
             ],
             'shippingConfig' => $this->shipping->frontendConfig(),
-            'paymentGateways' => $this->paymentGatewayOptions(),
+            'paymentMethods' => $this->paymentMethods(),
             'divisions' => Division::with('districts:id,division_id,name')->get(['id', 'name']),
         ]);
     }
@@ -95,7 +95,10 @@ class CheckoutController extends Controller
                 Rule::exists('districts', 'id')->where('division_id', $request->input('division_id')),
             ],
             'postal_code' => ['nullable', 'string', 'max:30'],
-            'payment_method' => ['required', 'in:cod,card,bkash,nagad'],
+            // Validated against the same list the form was built from, so a
+            // gateway switched off in settings cannot be forced through by a
+            // request that never went near the form.
+            'payment_method' => ['required', Rule::in(array_column($this->paymentMethods(), 'value'))],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -312,17 +315,38 @@ class CheckoutController extends Controller
         return in_array($order->id, $request->session()->get(self::PLACED_ORDERS_KEY, []), true);
     }
 
-    private function paymentGatewayOptions(): array
+    /**
+     * The ways a shopper may pay right now. Cash is always on the table; a
+     * gateway joins the list only once it is switched on in admin settings, so
+     * turning one off there takes it off the checkout form. Card was a demo
+     * option nothing in settings could ever enable, and is gone with it.
+     *
+     * @return array<int, array{value: string, label: string, note: string|null}>
+     */
+    private function paymentMethods(): array
     {
         $settings = WebSetting::first();
 
-        return [
-            'bkash' => [
-                'enabled' => (bool) $settings?->bkash_enabled,
-            ],
-            'nagad' => [
-                'enabled' => (bool) $settings?->nagad_enabled,
-            ],
+        $methods = [
+            ['value' => 'cod', 'label' => 'Cash on Delivery', 'note' => null],
         ];
+
+        if ($settings?->bkash_enabled) {
+            $methods[] = [
+                'value' => 'bkash',
+                'label' => 'bKash Merchant',
+                'note' => 'After placing the order, you will be redirected to bKash merchant checkout to complete payment.',
+            ];
+        }
+
+        if ($settings?->nagad_enabled) {
+            $methods[] = [
+                'value' => 'nagad',
+                'label' => 'Nagad Merchant',
+                'note' => 'Nagad merchant details are configured. Complete redirect needs the final signed Nagad production API details from your merchant account.',
+            ];
+        }
+
+        return $methods;
     }
 }

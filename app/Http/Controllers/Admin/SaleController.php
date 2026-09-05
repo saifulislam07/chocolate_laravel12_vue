@@ -17,14 +17,20 @@ class SaleController extends Controller
 {
     public function index()
     {
+        // shipments feeds the shipping_status accessor; appending both here
+        // keeps the list sortable on plain strings rather than nested relations.
+        $sales = Order::with(['customer', 'user', 'shipments'])->latest()->get();
+        $sales->each->append(['source_label', 'shipping_status']);
+
         return Inertia::render('Admin/Sales/Index', [
-            'sales' => Order::with(['customer', 'user'])->latest()->get()
+            'sales' => $sales,
         ]);
     }
 
     public function show($id)
     {
         $sale = Order::with(['customer', 'user', 'items.product', 'shipments'])->findOrFail($id);
+        $sale->append('total_in_words');
         $settings = WebSetting::first();
 
         return Inertia::render('Admin/Sales/Show', [

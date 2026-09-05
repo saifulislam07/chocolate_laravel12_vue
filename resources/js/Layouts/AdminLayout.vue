@@ -539,6 +539,23 @@ body {
         padding: 0 !important;
     }
 
+    /* An invoice printed from inside a dialog has to survive that dialog's
+       scrim. A translucent overlay still painting above the sheet, or a
+       backdrop blur, comes out of Chrome as a flat grey slab over the whole
+       receipt. Rather than every dialog remembering to unpin itself, anything
+       wrapping a print area gives up its own paint and geometry here. */
+    body :has(#invoice-print-area) {
+        position: static !important;
+        overflow: visible !important;
+        max-width: none !important;
+        padding: 0 !important;
+        background: #fff !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+
     /* The POS invoice sits inside a Bootstrap modal; flatten it so the whole
        receipt flows onto the page instead of being clipped by the fixed overlay. */
     .modal,
@@ -570,10 +587,11 @@ body {
         visibility: visible !important;
     }
 
-    /* Keep tables from splitting a row across two sheets. */
+    /* Keep a row off the fold. Deliberately not the table itself: asking a
+       whole table to stay together sends a long list of items to a fresh sheet
+       in one piece, leaving the page it came from empty below the address. */
     #invoice-print-area tr,
-    #invoice-print-area address,
-    #invoice-print-area table {
+    #invoice-print-area address {
         page-break-inside: avoid;
     }
 

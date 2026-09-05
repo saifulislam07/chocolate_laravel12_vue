@@ -503,15 +503,19 @@ onBeforeUnmount(() => {
                     </tbody>
                 </table>
 
-                <div class="totals">
-                    <div class="trow"><span>Subtotal</span><span>৳{{ money(subtotal) }}</span></div>
-                    <div class="trow" v-if="amount(sale.discount) > 0"><span>Discount</span><span class="due">-৳{{ money(sale.discount) }}</span></div>
-                    <div class="trow" v-if="amount(sale.tax) > 0"><span>Tax</span><span>৳{{ money(sale.tax) }}</span></div>
-                    <div class="trow" v-if="amount(sale.shipping_cost) > 0"><span>Shipping</span><span>৳{{ money(sale.shipping_cost) }}</span></div>
-                    <div class="trow grand"><span>Total</span><span>৳{{ money(sale.total) }}</span></div>
-                    <div class="trow"><span>Paid</span><span class="ok">৳{{ money(sale.paid_amount) }}</span></div>
-                    <div class="trow" v-if="amount(sale.due_amount) > 0"><span>Due</span><span class="due">৳{{ money(sale.due_amount) }}</span></div>
-                </div>
+                <section class="summary">
+                    <p class="in-words"><span class="label">In Words</span>{{ sale.total_in_words }}</p>
+
+                    <div class="totals">
+                        <div class="trow"><span>Subtotal</span><span>৳{{ money(subtotal) }}</span></div>
+                        <div class="trow" v-if="amount(sale.discount) > 0"><span>Discount</span><span class="due">-৳{{ money(sale.discount) }}</span></div>
+                        <div class="trow" v-if="amount(sale.tax) > 0"><span>Tax</span><span>৳{{ money(sale.tax) }}</span></div>
+                        <div class="trow" v-if="amount(sale.shipping_cost) > 0"><span>Shipping</span><span>৳{{ money(sale.shipping_cost) }}</span></div>
+                        <div class="trow grand"><span>Total</span><span>৳{{ money(sale.total) }}</span></div>
+                        <div class="trow"><span>Paid</span><span class="ok">৳{{ money(sale.paid_amount) }}</span></div>
+                        <div class="trow" v-if="amount(sale.due_amount) > 0"><span>Due</span><span class="due">৳{{ money(sale.due_amount) }}</span></div>
+                    </div>
+                </section>
 
                 <p class="note" v-if="sale.notes"><span class="label">Note</span>{{ sale.notes }}</p>
 
@@ -569,13 +573,19 @@ onBeforeUnmount(() => {
         /* 206mm rather than the full 210mm because a box exactly as tall as the
            page can round into a blank second sheet. */
         min-height: 206mm;
+        /* The margin belongs to the sheet, not to @page: the print dialog's own
+           margin setting overrides a page box, and on "None" the document would
+           print hard against the top edge. Padding answers to nobody, and a
+           block box repeats its horizontal padding on every sheet it runs onto. */
         padding: 12mm 11mm;
         background: #fff;
         color: #111;
         font-size: 10.5px;
         line-height: 1.5;
-        display: flex;
-        flex-direction: column;
+        /* Block, not flex: Chrome will not fragment a flex item across sheets,
+           so a flex sheet moved the whole items table to page two and left the
+           first one holding nothing but the address. */
+        display: block;
         /* Keep the hairlines; without this some browsers drop them and the
            sheet loses the little structure it has. */
         -webkit-print-color-adjust: exact;
@@ -642,7 +652,7 @@ onBeforeUnmount(() => {
         display: flex;
         justify-content: space-between;
         gap: 16px;
-        margin-top: 9mm;
+        margin-top: 6mm;
     }
 
     .party { max-width: 62%; }
@@ -673,7 +683,9 @@ onBeforeUnmount(() => {
     .items {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 9mm;
+        /* Tighter than the sheet's 1.5: with one line per name and one per SKU,
+           every notch here is paid twice on every row. */
+        line-height: 1.3;
     }
 
     /* A rule instead of a filled band: the head reads as a caption, and the
@@ -686,11 +698,14 @@ onBeforeUnmount(() => {
         color: #a3a3a3;
         font-weight: 600;
         border-bottom: 1px solid #111;
-        padding: 0 4px 5px;
+        /* The gap above the table lives here rather than on .items, because a
+           thead repeats on every sheet and a margin does not: this is what
+           keeps page two off the top edge. */
+        padding: 6mm 4px 5px;
     }
 
     .items td {
-        padding: 6px 4px;
+        padding: 2.5px 4px;
         border-bottom: 1px solid #ececec;
         vertical-align: top;
     }
@@ -710,15 +725,35 @@ onBeforeUnmount(() => {
 
     .sku {
         color: #a3a3a3;
-        font-size: 8.5px;
+        font-size: 8px;
+        line-height: 1.2;
         letter-spacing: 0.02em;
     }
 
-    .totals {
-        width: 52%;
-        margin-left: auto;
+    /* The figures have always sat in the right half; the words go in the left
+       half that was empty beside them, so spelling the total out costs the
+       items table no room at all. */
+    .summary {
+        display: flex;
+        align-items: flex-start;
+        gap: 8mm;
         margin-top: 6mm;
         page-break-inside: avoid;
+    }
+
+    .in-words {
+        flex: 1;
+        margin: 0;
+        font-size: 9.5px;
+        line-height: 1.35;
+        color: #444;
+    }
+
+    .in-words .label { display: block; }
+
+    .totals {
+        width: 52%;
+        flex-shrink: 0;
     }
 
     .trow {
@@ -749,14 +784,16 @@ onBeforeUnmount(() => {
 
     .note .label { display: block; }
 
-    /* Pinned to the bottom of the sheet, not floating right after the content. */
-    .foot { margin-top: auto; }
+    .foot {
+        margin-top: 8mm;
+        page-break-inside: avoid;
+    }
 
     .signs {
         display: flex;
         justify-content: space-between;
         gap: 24px;
-        padding-top: 14mm;
+        padding-top: 10mm;
     }
 
     .sign {
@@ -770,7 +807,7 @@ onBeforeUnmount(() => {
     }
 
     .thanks {
-        margin: 8mm 0 0;
+        margin: 6mm 0 0;
         text-align: center;
         font-size: 9px;
         letter-spacing: 0.06em;

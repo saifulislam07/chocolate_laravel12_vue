@@ -6,7 +6,7 @@ import { MinusIcon, PlusIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 const props = defineProps({
     items: { type: Array, default: () => [] },
     summary: { type: Object, required: true },
-    paymentGateways: { type: Object, default: () => ({}) },
+    paymentMethods: { type: Array, default: () => [] },
     divisions: { type: Array, default: () => [] },
     shippingConfig: {
         type: Object,
@@ -22,9 +22,15 @@ const form = useForm({
     division_id: "",
     district_id: "",
     postal_code: "",
-    payment_method: "cod",
+    payment_method: props.paymentMethods[0]?.value || "cod",
     notes: "",
 });
+
+// Whatever the chosen gateway wants the shopper to know before they commit;
+// cash has nothing to add, so the note simply disappears.
+const selectedPaymentNote = computed(
+    () => props.paymentMethods.find((method) => method.value === form.payment_method)?.note || "",
+);
 
 const districtOptions = computed(() => {
     const division = props.divisions.find((d) => String(d.id) === String(form.division_id));
@@ -165,17 +171,14 @@ function placeOrder() {
                     <input v-model="form.email" type="email" placeholder="Email (optional)" class="rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none" />
                     <input v-model="form.postal_code" type="text" placeholder="Postal Code (optional)" class="rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none" />
 
-                    <select v-model="form.payment_method" class="rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none">
-                        <option value="cod">Cash on Delivery</option>
-                        <option value="card">Card (Demo)</option>
-                        <option v-if="paymentGateways.bkash?.enabled" value="bkash">bKash Merchant</option>
-                        <option v-if="paymentGateways.nagad?.enabled" value="nagad">Nagad Merchant</option>
-                    </select>
-                    <div v-if="form.payment_method === 'bkash'" class="sm:col-span-2 rounded-lg border border-pink-100 bg-pink-50 px-4 py-3 text-sm text-pink-900">
-                        After placing the order, you will be redirected to bKash merchant checkout to complete payment.
+                    <div>
+                        <select v-model="form.payment_method" class="w-full rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none">
+                            <option v-for="method in paymentMethods" :key="method.value" :value="method.value">{{ method.label }}</option>
+                        </select>
+                        <p v-if="form.errors.payment_method" class="mt-1 text-xs text-red-600">{{ form.errors.payment_method }}</p>
                     </div>
-                    <div v-if="form.payment_method === 'nagad'" class="sm:col-span-2 rounded-lg border border-orange-100 bg-orange-50 px-4 py-3 text-sm text-orange-900">
-                        Nagad merchant details are configured. Complete redirect needs the final signed Nagad production API details from your merchant account.
+                    <div v-if="selectedPaymentNote" class="sm:col-span-2 rounded-lg border border-cocov-line bg-[#fcf8f3] px-4 py-3 text-sm text-cocov-text/80">
+                        {{ selectedPaymentNote }}
                     </div>
                     <textarea v-model="form.notes" rows="3" placeholder="Order notes (optional)" class="sm:col-span-2 rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none"></textarea>
                     <button type="submit" :disabled="form.processing" class="sm:col-span-2 rounded-[3px] bg-cocov-gold py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-[#e0851a] disabled:opacity-60">
