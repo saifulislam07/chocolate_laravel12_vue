@@ -1,11 +1,23 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 defineProps({
     canResetPassword: Boolean,
     status: String,
 });
+
+// Same arrangement as the customer screen: settings first, shipped wording
+// as the fallback, so an empty settings row still reads properly.
+const settings = computed(() => usePage().props.webSettings || {});
+const siteName = computed(() => settings.value.site_name || 'Coco Craft');
+const coverImage = computed(() => settings.value.admin_login_image || '/images/godiva/auth_bg.png');
+const coverTitle = computed(() => settings.value.admin_login_cover_title || 'Admin dashboard access');
+const coverText = computed(() => settings.value.admin_login_cover_text
+    || 'Manage products, orders, stock, menus, reports, and storefront settings from one focused workspace.');
+const formTitle = computed(() => settings.value.admin_login_form_title || 'Welcome back');
+const formText = computed(() => settings.value.admin_login_form_text || 'Use an authorized admin account to continue.');
 
 const form = useForm({
     email: '',
@@ -26,17 +38,17 @@ function submit() {
     <main class="min-h-screen bg-[#101010] text-white">
         <div class="grid min-h-screen lg:grid-cols-[0.95fr_1.05fr]">
             <section class="relative hidden overflow-hidden lg:block">
-                <img src="/images/godiva/auth_bg.png" alt="Chocolate workspace" class="absolute inset-0 h-full w-full object-cover opacity-45" />
+                <img :src="coverImage" alt="" class="absolute inset-0 h-full w-full object-cover opacity-45" />
                 <div class="absolute inset-0 bg-gradient-to-br from-black via-black/70 to-[#3b2418]/70"></div>
                 <div class="relative z-10 flex h-full flex-col justify-between p-12">
                     <Link href="/" class="inline-flex items-center gap-3">
-                        <img src="/images/cococraft-logo-light.svg" alt="Coco Craft" class="h-12 w-12 object-contain" />
-                        <span class="font-serif text-2xl font-bold">Coco Craft</span>
+                        <img :src="settings.logo || '/images/cococraft-logo-light.svg'" :alt="siteName" class="h-12 w-12 object-contain" />
+                        <span class="font-serif text-2xl font-bold">{{ siteName }}</span>
                     </Link>
                     <div class="max-w-lg">
                         <p class="text-[11px] font-bold uppercase tracking-[0.35em] text-godiva-gold">Control Room</p>
-                        <h1 class="mt-5 font-serif text-6xl leading-none">Admin dashboard access</h1>
-                        <p class="mt-6 text-sm leading-8 text-white/65">Manage products, orders, stock, menus, reports, and storefront settings from one focused workspace.</p>
+                        <h1 class="mt-5 font-serif text-6xl leading-none">{{ coverTitle }}</h1>
+                        <p v-if="coverText" class="mt-6 text-sm leading-8 text-white/65">{{ coverText }}</p>
                     </div>
                 </div>
             </section>
@@ -44,14 +56,14 @@ function submit() {
             <section class="flex items-center justify-center px-6 py-12">
                 <div class="w-full max-w-md">
                     <Link href="/" class="mb-10 inline-flex items-center gap-3 lg:hidden">
-                        <img src="/images/cococraft-logo-light.svg" alt="Coco Craft" class="h-11 w-11 object-contain" />
-                        <span class="font-serif text-2xl font-bold">Coco Craft</span>
+                        <img :src="settings.logo || '/images/cococraft-logo-light.svg'" :alt="siteName" class="h-11 w-11 object-contain" />
+                        <span class="font-serif text-2xl font-bold">{{ siteName }}</span>
                     </Link>
 
                     <div class="border border-white/10 bg-white/[0.04] p-8 shadow-2xl backdrop-blur">
                         <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-godiva-gold">Admin Login</p>
-                        <h2 class="mt-4 font-serif text-4xl">Welcome back</h2>
-                        <p class="mt-3 text-sm leading-7 text-white/55">Use an authorized admin account to continue.</p>
+                        <h2 class="mt-4 font-serif text-4xl">{{ formTitle }}</h2>
+                        <p v-if="formText" class="mt-3 text-sm leading-7 text-white/55">{{ formText }}</p>
 
                         <div v-if="status" class="mt-6 border border-green-400/20 bg-green-400/10 px-4 py-3 text-sm text-green-200">
                             {{ status }}

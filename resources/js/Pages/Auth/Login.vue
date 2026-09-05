@@ -5,7 +5,8 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 defineProps({
     canResetPassword: {
@@ -15,6 +16,11 @@ defineProps({
         type: String,
     },
 });
+
+const settings = computed(() => usePage().props.webSettings || {});
+const heading = computed(() => settings.value.login_form_title || 'Welcome Back');
+const intro = computed(() => settings.value.login_form_text
+    || `Enter your credentials to access your ${settings.value.site_name || 'Coco Craft'} account and continue your journey of taste.`);
 
 const form = useForm({
     email: '',
@@ -35,10 +41,8 @@ const submit = () => {
 
         <div class="mb-12">
             <p class="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-cocov-gold">Customer Login</p>
-            <h1 class="font-heading text-4xl text-cocov-text mb-4">Welcome Back</h1>
-            <p class="text-sm text-cocov-text/60 leading-relaxed">
-                Enter your credentials to access your Coco Craft account and continue your journey of taste.
-            </p>
+            <h1 class="font-heading text-4xl text-cocov-text mb-4">{{ heading }}</h1>
+            <p v-if="intro" class="text-sm text-cocov-text/60 leading-relaxed">{{ intro }}</p>
         </div>
 
         <div v-if="status" class="mb-6 border border-green-100 bg-green-50 px-4 py-3 text-sm font-medium text-green-600">
@@ -110,11 +114,6 @@ const submit = () => {
             <p class="mt-8 text-center text-[10px] uppercase tracking-[0.2em] text-cocov-text/40">
                 Don't have an account? 
                 <Link :href="route('register')" class="text-cocov-gold hover:text-[#e0851a] font-bold ml-1 transition-colors">Join the family</Link>
-            </p>
-
-            <p class="mt-5 text-center text-[10px] uppercase tracking-[0.2em] text-cocov-text/35">
-                Admin?
-                <Link :href="route('admin.login')" class="text-cocov-text hover:text-cocov-gold font-bold ml-1 transition-colors">Use admin login</Link>
             </p>
         </form>
     </GuestLayout>

@@ -13,6 +13,7 @@ const activeTab = ref('general');
 const tabs = [
     { id: 'general', label: 'General', icon: 'fas fa-building' },
     { id: 'branding', label: 'Branding', icon: 'fas fa-palette' },
+    { id: 'login', label: 'Login Pages', icon: 'fas fa-right-to-bracket' },
     { id: 'pixel', label: 'Pixel', icon: 'fas fa-bullseye' },
     { id: 'meta_ads', label: 'Meta Ads', icon: 'fab fa-facebook' },
     { id: 'payments', label: 'Payments', icon: 'fas fa-credit-card' },
@@ -129,9 +130,21 @@ const form = useForm({
     smtp_username: props.settings?.smtp_username || '',
     smtp_password: props.settings?.smtp_password || '',
     smtp_encryption: props.settings?.smtp_encryption || 'tls',
+    // Left blank on purpose: an empty box means the login screen keeps the
+    // wording it ships with, so the placeholders below show what that is.
+    login_cover_title: props.settings?.login_cover_title || '',
+    login_cover_text: props.settings?.login_cover_text || '',
+    login_form_title: props.settings?.login_form_title || '',
+    login_form_text: props.settings?.login_form_text || '',
+    admin_login_cover_title: props.settings?.admin_login_cover_title || '',
+    admin_login_cover_text: props.settings?.admin_login_cover_text || '',
+    admin_login_form_title: props.settings?.admin_login_form_title || '',
+    admin_login_form_text: props.settings?.admin_login_form_text || '',
     logo: null,
     footer_logo: null,
     favicon: null,
+    login_image: null,
+    admin_login_image: null,
 });
 
 function submit() {
@@ -147,6 +160,8 @@ function submit() {
 }
 
 const fieldTabPrefixes = [
+    // Longest first: admin_login_* must not be swallowed by the login_* rule.
+    ['admin_login', 'login'], ['login_', 'login'],
     ['logo', 'branding'], ['footer_logo', 'branding'], ['favicon', 'branding'],
     ['meta_pixel', 'pixel'],
     ['meta_ads', 'meta_ads'],
@@ -292,6 +307,79 @@ function tabForField(field) {
                                                     <img :src="settings?.favicon || 'https://via.placeholder.com/32?text=F'" class="img-fluid favicon-preview">
                                                 </div>
                                                 <input type="file" @input="form.favicon = $event.target.files[0]" class="form-control-file mt-3">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div v-show="activeTab === 'login'">
+                                        <h3 class="settings-title">Login Pages</h3>
+                                        <p class="text-muted small mb-4">
+                                            The artwork and wording a visitor meets on the way in. Leave a box empty to keep the text the page ships with &mdash; that default is the greyed-out wording inside the box.
+                                        </p>
+
+                                        <div class="row">
+                                            <div class="col-lg-6 mb-4">
+                                                <h6 class="text-uppercase text-xs font-weight-bold text-muted mb-3"><i class="fas fa-user mr-1"></i> Customer Login</h6>
+
+                                                <label class="d-block text-xs font-weight-bold text-muted mb-2">COVER IMAGE</label>
+                                                <div class="asset-preview bg-light">
+                                                    <img :src="settings?.login_image || '/images/godiva/auth_bg.png'" class="img-fluid">
+                                                </div>
+                                                <input type="file" accept="image/*" @input="form.login_image = $event.target.files[0]" class="form-control-file mt-2 mb-1">
+                                                <small class="text-muted d-block mb-3">Tall image, shown down the left of the page.</small>
+                                                <div class="text-danger small mb-2" v-if="form.errors.login_image">{{ form.errors.login_image }}</div>
+                                                <div class="form-group">
+                                                    <label class="text-xs font-weight-bold text-muted">HEADLINE ON THE IMAGE</label>
+                                                    <input type="text" v-model="form.login_cover_title" class="form-control" placeholder="Mastering the Art of Indulgence">
+                                                    <div class="text-danger small" v-if="form.errors.login_cover_title">{{ form.errors.login_cover_title }}</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="text-xs font-weight-bold text-muted">LINE UNDER THE HEADLINE</label>
+                                                    <input type="text" v-model="form.login_cover_text" class="form-control" placeholder="A Bite of Love">
+                                                    <div class="text-danger small" v-if="form.errors.login_cover_text">{{ form.errors.login_cover_text }}</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="text-xs font-weight-bold text-muted">HEADING ABOVE THE FORM</label>
+                                                    <input type="text" v-model="form.login_form_title" class="form-control" placeholder="Welcome Back">
+                                                    <div class="text-danger small" v-if="form.errors.login_form_title">{{ form.errors.login_form_title }}</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="text-xs font-weight-bold text-muted">TEXT UNDER THE HEADING</label>
+                                                    <textarea v-model="form.login_form_text" class="form-control" rows="3" placeholder="Enter your credentials to access your account and continue your journey of taste."></textarea>
+                                                    <div class="text-danger small" v-if="form.errors.login_form_text">{{ form.errors.login_form_text }}</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-6 mb-4">
+                                                <h6 class="text-uppercase text-xs font-weight-bold text-muted mb-3"><i class="fas fa-shield-halved mr-1"></i> Admin Login</h6>
+
+                                                <label class="d-block text-xs font-weight-bold text-muted mb-2">COVER IMAGE</label>
+                                                <div class="asset-preview bg-dark">
+                                                    <img :src="settings?.admin_login_image || '/images/godiva/auth_bg.png'" class="img-fluid">
+                                                </div>
+                                                <input type="file" accept="image/*" @input="form.admin_login_image = $event.target.files[0]" class="form-control-file mt-2 mb-1">
+                                                <small class="text-muted d-block mb-3">Shown darkened behind the panel on the left.</small>
+                                                <div class="text-danger small mb-2" v-if="form.errors.admin_login_image">{{ form.errors.admin_login_image }}</div>
+                                                <div class="form-group">
+                                                    <label class="text-xs font-weight-bold text-muted">HEADLINE ON THE IMAGE</label>
+                                                    <input type="text" v-model="form.admin_login_cover_title" class="form-control" placeholder="Admin dashboard access">
+                                                    <div class="text-danger small" v-if="form.errors.admin_login_cover_title">{{ form.errors.admin_login_cover_title }}</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="text-xs font-weight-bold text-muted">TEXT UNDER THE HEADLINE</label>
+                                                    <textarea v-model="form.admin_login_cover_text" class="form-control" rows="2" placeholder="Manage products, orders, stock, menus, reports, and storefront settings from one focused workspace."></textarea>
+                                                    <div class="text-danger small" v-if="form.errors.admin_login_cover_text">{{ form.errors.admin_login_cover_text }}</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="text-xs font-weight-bold text-muted">HEADING ABOVE THE FORM</label>
+                                                    <input type="text" v-model="form.admin_login_form_title" class="form-control" placeholder="Welcome back">
+                                                    <div class="text-danger small" v-if="form.errors.admin_login_form_title">{{ form.errors.admin_login_form_title }}</div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="text-xs font-weight-bold text-muted">TEXT UNDER THE HEADING</label>
+                                                    <textarea v-model="form.admin_login_form_text" class="form-control" rows="3" placeholder="Use an authorized admin account to continue."></textarea>
+                                                    <div class="text-danger small" v-if="form.errors.admin_login_form_text">{{ form.errors.admin_login_form_text }}</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

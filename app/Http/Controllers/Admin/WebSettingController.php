@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\WebSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class WebSettingController extends Controller
 {
+    /** Settings that hold an uploaded picture rather than a value typed in. */
+    private const IMAGE_FIELDS = ['logo', 'footer_logo', 'favicon', 'login_image', 'admin_login_image'];
+
     public function index()
     {
         return Inertia::render('Admin/Settings/Index', [
@@ -26,6 +30,18 @@ class WebSettingController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            // What a visitor sees on the way in. All optional: an empty value
+            // leaves the login screen showing the wording it ships with.
+            'login_image' => 'nullable|image|max:4096',
+            'login_cover_title' => 'nullable|string|max:120',
+            'login_cover_text' => 'nullable|string|max:160',
+            'login_form_title' => 'nullable|string|max:120',
+            'login_form_text' => 'nullable|string|max:400',
+            'admin_login_image' => 'nullable|image|max:4096',
+            'admin_login_cover_title' => 'nullable|string|max:120',
+            'admin_login_cover_text' => 'nullable|string|max:400',
+            'admin_login_form_title' => 'nullable|string|max:120',
+            'admin_login_form_text' => 'nullable|string|max:400',
             'maintenance_mode' => 'boolean',
             'maintenance_title' => 'nullable|string|max:255',
             'maintenance_message' => 'nullable|string',
@@ -91,31 +107,15 @@ class WebSettingController extends Controller
         $validated['pathao_enabled'] = $request->boolean('pathao_enabled');
         $validated['steadfast_enabled'] = $request->boolean('steadfast_enabled');
 
-        if ($request->hasFile('logo')) {
-            if ($settings->logo) {
-                $oldPath = str_replace('/uploads/', '', $settings->logo);
-                \Illuminate\Support\Facades\Storage::disk('uploads')->delete($oldPath);
+        foreach (self::IMAGE_FIELDS as $field) {
+            if ($stored = $this->storeImage($request, $settings, $field)) {
+                $validated[$field] = $stored;
+            } else {
+                // No new file: leave whatever is on record. The field arrives as
+                // null on every save, and writing that through would wipe the
+                // image each time any other setting is touched.
+                unset($validated[$field]);
             }
-            $path = $request->file('logo')->store('settings', 'uploads');
-            $validated['logo'] = '/uploads/' . $path;
-        }
-
-        if ($request->hasFile('footer_logo')) {
-            if ($settings->footer_logo) {
-                $oldPath = str_replace('/uploads/', '', $settings->footer_logo);
-                \Illuminate\Support\Facades\Storage::disk('uploads')->delete($oldPath);
-            }
-            $path = $request->file('footer_logo')->store('settings', 'uploads');
-            $validated['footer_logo'] = '/uploads/' . $path;
-        }
-        
-        if ($request->hasFile('favicon')) {
-            if ($settings->favicon) {
-                $oldPath = str_replace('/uploads/', '', $settings->favicon);
-                \Illuminate\Support\Facades\Storage::disk('uploads')->delete($oldPath);
-            }
-            $path = $request->file('favicon')->store('settings', 'uploads');
-            $validated['favicon'] = '/uploads/' . $path;
         }
 
         if ($settings->id) {
@@ -125,5 +125,24 @@ class WebSettingController extends Controller
         }
 
         return redirect()->back()->with('success', 'Settings updated successfully.');
+    }
+
+    /**
+     * Save a newly uploaded picture and return its public path, or null when
+     * this save carried no file for the field. The one it replaces is deleted:
+     * settings images are one-per-slot, and the old file has nothing left
+     * pointing at it.
+     */
+    private function storeImage(Request $request, WebSetting $settings, string $field): ?string
+    {
+        if (! $request->hasFile($field)) {
+            return null;
+        }
+
+        if ($settings->{$field}) {
+            Storage::disk('uploads')->delete(str_replace('/uploads/', '', $settings->{$field}));
+        }
+
+        return '/uploads/' . $request->file($field)->store('settings', 'uploads');
     }
 }
