@@ -23,6 +23,7 @@ const form = useForm({
     alert_quantity: props.product.alert_quantity,
     sku: props.product.sku || '',
     description: props.product.description || '',
+    highlights: props.product.highlights?.length ? [...props.product.highlights] : [''],
     images: [],
     is_active: !!props.product.is_active,
     is_featured: !!props.product.is_featured,
@@ -48,6 +49,21 @@ const handleFileChange = (e) => {
         };
         reader.readAsDataURL(file);
     });
+};
+
+const addHighlight = () => {
+    if (form.highlights.length < 6) {
+        form.highlights.push('');
+    }
+};
+
+// One row always stays on screen, so the last highlight cannot be removed.
+const removeHighlight = (index) => {
+    if (form.highlights.length < 2) {
+        return;
+    }
+
+    form.highlights.splice(index, 1);
 };
 
 const imageToDelete = ref(null);
@@ -147,6 +163,40 @@ const submit = () => {
                                     <div class="form-group">
                                         <label>Description</label>
                                         <RichTextEditor v-model="form.description" :height="220" :invalid="!!form.errors.description" placeholder="Enter detailed description..." />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="mb-1">Product Highlights <small class="text-muted">(Small bullet points under the buy buttons)</small></label>
+                                        <p class="text-muted small mb-2">Up to 6 short phrases. Leave them empty to fall back to the default: Belgian Heritage &amp; Premium Ingredients.</p>
+
+                                        <div v-for="(highlight, index) in form.highlights" :key="index" class="d-flex align-items-start mb-2">
+                                            <span class="highlight-index text-muted mr-2">{{ index + 1 }}.</span>
+                                            <div class="flex-grow-1">
+                                                <input
+                                                    type="text"
+                                                    v-model="form.highlights[index]"
+                                                    class="form-control"
+                                                    :class="{ 'is-invalid': form.errors[`highlights.${index}`] }"
+                                                    maxlength="60"
+                                                    placeholder="e.g. Belgian Heritage"
+                                                >
+                                                <div class="invalid-feedback" v-if="form.errors[`highlights.${index}`]">{{ form.errors[`highlights.${index}`] }}</div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                class="btn btn-outline-secondary highlight-remove ml-2"
+                                                :class="{ invisible: form.highlights.length < 2 }"
+                                                :disabled="form.highlights.length < 2"
+                                                :title="form.highlights.length < 2 ? 'At least one highlight row is kept' : 'Remove this highlight'"
+                                                @click="removeHighlight(index)"
+                                            >
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" @click="addHighlight" :disabled="form.highlights.length >= 6">
+                                            <i class="fas fa-plus mr-1"></i> Add Highlight
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -312,6 +362,31 @@ const submit = () => {
 </template>
 
 <style scoped>
+.highlight-index {
+    width: 1.25rem;
+    line-height: calc(2.25rem + 2px);
+    text-align: right;
+}
+
+/* AdminLayout forces a global `.btn { padding: .6rem 1.5rem; border-radius: 10px }`
+   with !important, which makes this icon button taller than the input beside it. */
+.highlight-remove {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(2.25rem + 2px);
+    height: calc(2.25rem + 2px);
+    padding: 0 !important;
+    border-radius: 0.25rem !important;
+}
+
+.highlight-remove:hover:not(:disabled) {
+    color: #dc3545;
+    border-color: #dc3545;
+    background-color: transparent;
+}
+
 /* AdminLayout sets a global `.btn { padding: .6rem 1.5rem; border-radius: 10px }` with
    !important, which blows up these tiny tile controls, so they get their own sizing. */
 .tile-delete {

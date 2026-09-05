@@ -45,6 +45,8 @@ class ProductController extends Controller
             'alert_quantity' => 'nullable|integer',
             'sku' => 'nullable|string|max:100',
             'description' => 'nullable|string',
+            'highlights' => 'nullable|array|max:6',
+            'highlights.*' => 'nullable|string|max:60',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
@@ -64,6 +66,7 @@ class ProductController extends Controller
             'is_active' => $request->boolean('is_active', true),
             'is_featured' => $request->boolean('is_featured', false),
             'is_new' => $request->boolean('is_new', true),
+            'highlights' => $this->cleanHighlights($request->input('highlights')),
         ]);
 
         if ($request->hasFile('images')) {
@@ -79,6 +82,22 @@ class ProductController extends Controller
         }
 
         return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
+    }
+
+    /**
+     * Highlights come from a repeatable input list, so drop the blanks the
+     * admin left behind and store null when nothing is filled in.
+     */
+    private function cleanHighlights($value): ?array
+    {
+        $items = collect(is_array($value) ? $value : [])
+            ->map(fn ($item) => trim((string) $item))
+            ->filter()
+            ->take(6)
+            ->values()
+            ->all();
+
+        return $items ?: null;
     }
 
     public function edit(Product $product)
@@ -106,6 +125,8 @@ class ProductController extends Controller
             'alert_quantity' => 'nullable|integer',
             'sku' => 'nullable|string|max:100',
             'description' => 'nullable|string',
+            'highlights' => 'nullable|array|max:6',
+            'highlights.*' => 'nullable|string|max:60',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
@@ -124,6 +145,7 @@ class ProductController extends Controller
             'is_active' => $request->boolean('is_active'),
             'is_featured' => $request->boolean('is_featured'),
             'is_new' => $request->boolean('is_new'),
+            'highlights' => $this->cleanHighlights($request->input('highlights')),
         ]);
 
         if ($request->hasFile('images')) {

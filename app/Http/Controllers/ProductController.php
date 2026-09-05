@@ -205,6 +205,7 @@ class ProductController extends Controller
                 'compare_at_price' => $product->compare_at_price ? (float) $product->compare_at_price : null,
                 'stock' => $product->stock,
                 'category' => $product->category?->name,
+                'highlights' => $product->highlights ?: Product::DEFAULT_HIGHLIGHTS,
                 'is_bundle' => (bool) $product->is_bundle,
                 'bundle_note' => $product->bundle_note,
                 'bundle_items' => $product->bundleItems->map(fn (Product $item): array => [

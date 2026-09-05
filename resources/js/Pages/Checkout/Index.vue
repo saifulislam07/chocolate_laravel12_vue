@@ -132,8 +132,12 @@ function placeOrder() {
         <main class="mx-auto grid max-w-full gap-8 px-6 py-10 lg:grid-cols-3">
             <section class="lg:col-span-2 rounded-[3px] border border-cocov-line bg-white p-6">
                 <h1 class="font-heading text-2xl uppercase text-cocov-text">Shipping &amp; Payment</h1>
-                <p class="mt-1 text-xs uppercase tracking-widest text-cocov-gold">Just your phone &amp; address to place an order &mdash; everything else is optional.</p>
+                <p class="mt-1 text-xs uppercase tracking-widest text-cocov-gold">Just your name, phone &amp; address to place an order &mdash; everything else is optional.</p>
                 <form class="mt-6 grid gap-4 sm:grid-cols-2" @submit.prevent="placeOrder">
+                    <div class="sm:col-span-2">
+                        <input v-model="form.full_name" type="text" required maxlength="120" placeholder="Full Name *" class="w-full rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none" />
+                        <p v-if="form.errors.full_name" class="mt-1 text-xs text-red-600">{{ form.errors.full_name }}</p>
+                    </div>
                     <div class="sm:col-span-2">
                         <input v-model="form.phone" type="tel" required placeholder="Phone Number *" class="w-full rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none" />
                         <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">{{ form.errors.phone }}</p>
@@ -158,7 +162,6 @@ function placeOrder() {
                     </div>
 
                     <p class="sm:col-span-2 mt-2 text-xs font-semibold uppercase tracking-widest text-cocov-gold">Optional details</p>
-                    <input v-model="form.full_name" type="text" placeholder="Full Name (optional)" class="rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none" />
                     <input v-model="form.email" type="email" placeholder="Email (optional)" class="rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none" />
                     <input v-model="form.postal_code" type="text" placeholder="Postal Code (optional)" class="rounded border border-cocov-line px-4 py-3 text-sm focus:border-cocov-gold focus:outline-none" />
 

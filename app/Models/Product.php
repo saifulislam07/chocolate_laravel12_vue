@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
+    /** Shown on the product page when a product has no highlights of its own. */
+    public const DEFAULT_HIGHLIGHTS = [
+        'Belgian Heritage',
+        'Premium Ingredients',
+    ];
+
     protected $fillable = [
         'category_id',
         'brand_id',
@@ -24,6 +30,7 @@ class Product extends Model
         'is_active',
         'is_featured',
         'is_new',
+        'highlights',
         'is_bundle',
         'bundle_note',
         'bundle_discount_type',
@@ -41,6 +48,7 @@ class Product extends Model
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'is_new' => 'boolean',
+            'highlights' => 'array',
             'is_bundle' => 'boolean',
             'bundle_discount_value' => 'decimal:2',
         ];

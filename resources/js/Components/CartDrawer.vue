@@ -180,7 +180,7 @@ onBeforeUnmount(() => {
                             class="mt-6 flex w-full items-center justify-center gap-3 rounded-[3px] bg-cocov-gold py-4 text-[11px] font-bold uppercase tracking-widest text-white transition hover:bg-[#e0851a]"
                             @click="closeCartDrawer"
                         >
-                            Checkout Securely
+                            Checkout
                             <ArrowRightIcon class="h-4 w-4" />
                         </Link>
                         <Link

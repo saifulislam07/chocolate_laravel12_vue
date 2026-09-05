@@ -179,14 +179,10 @@ function decrement() {
                         </div>
 
                         <!-- Brand Promises -->
-                        <div class="mt-12 grid grid-cols-2 gap-6 border-t border-gray-100 pt-10 text-[10px] font-bold uppercase tracking-widest text-cocov-text/60">
-                            <div class="flex items-center gap-3">
-                                <div class="h-1 w-1 rounded-full bg-cocov-gold"></div>
-                                Belgian Heritage
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <div class="h-1 w-1 rounded-full bg-cocov-gold"></div>
-                                Premium Ingredients
+                        <div v-if="product.highlights?.length" class="mt-12 grid grid-cols-2 gap-6 border-t border-gray-100 pt-10 text-[10px] font-bold uppercase tracking-widest text-cocov-text/60">
+                            <div v-for="highlight in product.highlights" :key="highlight" class="flex items-center gap-3">
+                                <div class="h-1 w-1 shrink-0 rounded-full bg-cocov-gold"></div>
+                                {{ highlight }}
                             </div>
                         </div>
                     </section>

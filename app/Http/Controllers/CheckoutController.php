@@ -85,7 +85,7 @@ class CheckoutController extends Controller
     public function store(Request $request, InventoryService $inventory): RedirectResponse
     {
         $payload = $request->validate([
-            'full_name' => ['nullable', 'string', 'max:120'],
+            'full_name' => ['required', 'string', 'max:120'],
             'email' => ['nullable', 'email', 'max:120'],
             'phone' => ['required', 'string', 'max:50'],
             'address' => ['required', 'string', 'max:255'],
@@ -126,7 +126,7 @@ class CheckoutController extends Controller
         $customer = \App\Models\Customer::firstOrCreate(
             ['phone' => $payload['phone']],
             [
-                'name' => $payload['full_name'] ?? 'Guest',
+                'name' => $payload['full_name'],
                 'email' => $payload['email'] ?? null,
                 'address' => $payload['address'],
                 'division_id' => $payload['division_id'],
@@ -154,7 +154,7 @@ class CheckoutController extends Controller
                     trim(($district?->name ?? '') . ' ' . ($payload['postal_code'] ?? '')) ?: null,
                 ])->filter()->implode("\n"),
                 'customer_phone' => $payload['phone'],
-                'customer_name' => $payload['full_name'] ?? null,
+                'customer_name' => $payload['full_name'],
                 'division_id' => $payload['division_id'],
                 'district_id' => $payload['district_id'],
                 'notes' => $payload['notes'] ?? null,
