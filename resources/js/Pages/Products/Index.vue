@@ -9,7 +9,7 @@ import {
     MagnifyingGlassIcon,
     XMarkIcon,
 } from "@heroicons/vue/20/solid";
-import { HeartIcon } from "@heroicons/vue/24/outline";
+import { HeartIcon, ShoppingBagIcon } from "@heroicons/vue/24/outline";
 import { openCartDrawer } from "@/composables/useCartDrawer";
 
 function debounce(fn, delay) {
@@ -378,8 +378,9 @@ onUnmounted(() => debouncedApply.cancel());
                                             class="h-full w-full object-contain transition duration-500 group-hover:scale-105"
                                         />
                                     </Link>
-                                    <div class="absolute inset-x-0 bottom-4 flex translate-y-4 justify-center px-4 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
-                                        <button type="button" class="w-full bg-cocov-gold py-3 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-[#e0851a]" @click="addToCart(product.id)">
+                                    <div class="absolute inset-x-0 bottom-4 flex justify-center px-4 transition md:translate-y-4 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                                        <button type="button" class="flex w-full items-center justify-center gap-2 bg-cocov-gold py-3 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-[#e0851a]" aria-label="Add to cart" @click="addToCart(product.id)">
+                                            <ShoppingBagIcon class="h-4 w-4" />
                                             Add to Bag
                                         </button>
                                     </div>
