@@ -11,6 +11,7 @@ import {
 } from "@heroicons/vue/20/solid";
 import { HeartIcon, ShoppingBagIcon } from "@heroicons/vue/24/outline";
 import { openCartDrawer } from "@/composables/useCartDrawer";
+import { isDiscounted } from "@/composables/usePricing";
 
 function debounce(fn, delay) {
     let timeoutId;
@@ -390,8 +391,8 @@ onUnmounted(() => debouncedApply.cancel());
                                         <Link :href="route('products.show', product.slug)" class="transition hover:text-cocov-gold">{{ product.name }}</Link>
                                     </h3>
                                     <div class="mt-4 flex flex-col items-center justify-center gap-1">
-                                        <span v-if="product.compare_at_price > product.price" class="text-xs tracking-widest text-gray-400 line-through">{{ formatMoney(product.compare_at_price) }}</span>
-                                        <span class="font-heading text-xl" :class="product.compare_at_price > product.price ? 'text-red-600' : 'text-cocov-text'">{{ formatMoney(product.price) }}</span>
+                                        <span v-if="isDiscounted(product)" class="text-xs tracking-widest text-gray-400 line-through">{{ formatMoney(product.compare_at_price) }}</span>
+                                        <span class="font-heading text-xl" :class="isDiscounted(product) ? 'text-red-600' : 'text-cocov-text'">{{ formatMoney(product.price) }}</span>
                                     </div>
                                 </div>
                             </article>

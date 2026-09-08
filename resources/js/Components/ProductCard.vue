@@ -1,6 +1,7 @@
 <script setup>
 import { Link } from "@inertiajs/vue3";
 import { HeartIcon, ShoppingBagIcon } from "@heroicons/vue/24/outline";
+import { isDiscounted } from "@/composables/usePricing";
 
 defineProps({
     product: { type: Object, required: true },
@@ -37,7 +38,7 @@ function formatMoney(amount) {
             </h3>
             <div class="flex items-center justify-center gap-4">
                 <div class="flex items-baseline gap-2">
-                    <span v-if="product.compare_at_price > product.price" class="text-xs text-gray-400 line-through">{{ formatMoney(product.compare_at_price) }}</span>
+                    <span v-if="isDiscounted(product)" class="text-xs text-gray-400 line-through">{{ formatMoney(product.compare_at_price) }}</span>
                     <span class="text-lg font-bold text-godiva-gold-dark">{{ formatMoney(product.price) }}</span>
                 </div>
                 <button

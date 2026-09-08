@@ -18,7 +18,13 @@ class ProductController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Products/Index', [
-            'products' => Product::with(['category', 'brand', 'unit', 'images'])->latest()->get()
+            // Combos live on their own list. They are rows in this same table,
+            // but a combo's price and stock are derived from the products it
+            // holds, so it must not be edited through the plain product form.
+            'products' => Product::with(['category', 'brand', 'unit', 'images'])
+                ->where('is_bundle', false)
+                ->latest()
+                ->get(),
         ]);
     }
 
@@ -102,6 +108,10 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
+        if ($product->is_bundle) {
+            return redirect()->route('admin.bundles.edit', $product);
+        }
+
         $product->load(['images']);
         return Inertia::render('Admin/Products/Edit', [
             'product' => $product,
@@ -113,6 +123,8 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        abort_if($product->is_bundle, 404);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -190,6 +202,8 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        abort_if($product->is_bundle, 404);
+
         foreach ($product->images as $image) {
             $storagePath = str_replace('/uploads/', '', $image->image_path);
             Storage::disk('uploads')->delete($storagePath);

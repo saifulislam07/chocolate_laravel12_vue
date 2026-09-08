@@ -3,6 +3,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import SearchableSelect from '@/Components/SearchableSelect.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, ref } from 'vue';
+import { discountPercent, isDiscounted } from '@/composables/usePricing';
 
 const props = defineProps({
     products: Array,
@@ -393,10 +394,10 @@ const submitQuickCustomer = () => {
                                         {{ product.stock > 0 ? product.stock : 'Out' }}
                                     </span>
                                     <span
-                                        v-if="product.compare_at_price > product.price"
+                                        v-if="isDiscounted(product)"
                                         class="absolute right-1.5 top-1.5 rounded-md bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
                                     >
-                                        -{{ Math.round((product.compare_at_price - product.price) / product.compare_at_price * 100) }}%
+                                        -{{ discountPercent(product) }}%
                                     </span>
                                 </div>
 
@@ -406,7 +407,7 @@ const submitQuickCustomer = () => {
                                     </p>
                                     <div class="mt-auto flex items-baseline justify-between gap-1">
                                         <span class="text-xs font-bold text-slate-900">৳{{ product.price }}</span>
-                                        <del v-if="product.compare_at_price > product.price" class="text-[10px] text-slate-400">
+                                        <del v-if="isDiscounted(product)" class="text-[10px] text-slate-400">
                                             ৳{{ product.compare_at_price }}
                                         </del>
                                     </div>

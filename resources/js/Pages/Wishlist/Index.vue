@@ -3,6 +3,7 @@ import { Head, Link, router } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import { HeartIcon, ShoppingBagIcon, TrashIcon } from "@heroicons/vue/24/outline";
 import { openCartDrawer } from "@/composables/useCartDrawer";
+import { isDiscounted } from "@/composables/usePricing";
 
 defineProps({
     items: { type: Array, default: () => [] },
@@ -72,10 +73,10 @@ function removeFromWishlist(productId) {
                                 </Link>
                             </h3>
                             <div class="mt-4 flex flex-col items-center justify-center gap-1">
-                                <span v-if="item.product.compare_at_price > item.product.price" class="text-xs tracking-widest text-gray-400 line-through">
+                                <span v-if="isDiscounted(item.product)" class="text-xs tracking-widest text-gray-400 line-through">
                                     {{ formatMoney(item.product.compare_at_price) }}
                                 </span>
-                                <span class="font-heading text-xl" :class="item.product.compare_at_price > item.product.price ? 'text-red-600' : 'text-cocov-text'">
+                                <span class="font-heading text-xl" :class="isDiscounted(item.product) ? 'text-red-600' : 'text-cocov-text'">
                                     {{ formatMoney(item.product.price) }}
                                 </span>
                             </div>

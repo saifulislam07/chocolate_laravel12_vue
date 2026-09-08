@@ -10,6 +10,7 @@ import {
 import MainLayout from "@/Layouts/MainLayout.vue";
 import { menuHref } from "@/composables/useMenuHref";
 import { openCartDrawer } from "@/composables/useCartDrawer";
+import { isDiscounted } from "@/composables/usePricing";
 
 const props = defineProps({
     sliders: { type: Array, default: () => [] },
@@ -229,8 +230,8 @@ onUnmounted(() => {
                             </h3>
                             <div class="mt-auto flex items-center justify-between gap-2 pt-2 transition group-hover:opacity-0">
                                 <div class="flex items-baseline gap-2 text-[12px]">
-                                    <span v-if="product.compare_at_price > product.price" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
-                                    <span v-if="product.compare_at_price > product.price" class="text-cocov-muted">|</span>
+                                    <span v-if="isDiscounted(product)" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
+                                    <span v-if="isDiscounted(product)" class="text-cocov-muted">|</span>
                                     <span class="text-[15px] font-semibold text-cocov-gold md:text-[16px]">{{ formatMoney(product.price) }}</span>
                                 </div>
                                 <!-- default compact cart button -->
@@ -282,8 +283,8 @@ onUnmounted(() => {
                                 </h3>
                                 <div class="mt-auto flex items-center justify-between gap-2 pt-2 transition group-hover:opacity-0">
                                     <div class="flex items-baseline gap-2 text-[12px]">
-                                        <span v-if="product.compare_at_price > product.price" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
-                                        <span v-if="product.compare_at_price > product.price" class="text-cocov-muted">|</span>
+                                        <span v-if="isDiscounted(product)" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
+                                        <span v-if="isDiscounted(product)" class="text-cocov-muted">|</span>
                                         <span class="text-[15px] font-semibold text-cocov-gold md:text-[16px]">{{ formatMoney(product.price) }}</span>
                                     </div>
                                     <button type="button" class="flex h-9 w-9 shrink-0 items-center justify-center bg-cocov-gold text-white" aria-label="Add to cart" @click="addToCart(product.id)"><ShoppingBagIcon class="h-4 w-4" /></button>
@@ -326,8 +327,8 @@ onUnmounted(() => {
                             <p v-if="product.bundle_items_count" class="mt-1 text-[13px] text-cocov-muted">{{ product.bundle_items_count }} items included</p>
                             <div class="mt-auto flex items-center justify-between gap-2 pt-2 transition group-hover:opacity-0">
                                 <div class="flex items-baseline gap-2 text-[12px]">
-                                    <span v-if="product.compare_at_price > product.price" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
-                                    <span v-if="product.compare_at_price > product.price" class="text-cocov-muted">|</span>
+                                    <span v-if="isDiscounted(product)" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
+                                    <span v-if="isDiscounted(product)" class="text-cocov-muted">|</span>
                                     <span class="text-[15px] font-semibold text-cocov-gold md:text-[16px]">{{ formatMoney(product.price) }}</span>
                                 </div>
                                 <button

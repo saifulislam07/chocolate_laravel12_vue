@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { isDiscounted } from '@/composables/usePricing';
 import { stripHtml } from '@/composables/useRichText';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
@@ -79,7 +80,7 @@ function deleteBundle(id) {
 
                     <template #cell-price="{ item }">
                         <div class="font-weight-bold text-success">{{ formatMoney(item.price) }}</div>
-                        <div v-if="Number(item.compare_at_price) > Number(item.price)" class="text-xs text-muted">
+                        <div v-if="isDiscounted(item)" class="text-xs text-muted">
                             Was {{ formatMoney(item.compare_at_price) }}
                         </div>
                     </template>

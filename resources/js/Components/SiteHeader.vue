@@ -13,6 +13,7 @@ import {
 } from "@heroicons/vue/24/outline";
 import { menuHref } from "@/composables/useMenuHref";
 import { openCartDrawer } from "@/composables/useCartDrawer";
+import { isDiscounted } from "@/composables/usePricing";
 
 const page = usePage();
 const settings = computed(() => page.props.webSettings || {});
@@ -248,7 +249,7 @@ const isActive = (url) => {
                                     <span class="min-w-0 flex-1">
                                         <span class="block truncate font-heading text-sm uppercase text-cocov-text group-hover:text-cocov-gold">{{ product.name }}</span>
                                         <span class="mt-1 flex items-baseline gap-2 text-sm">
-                                            <span v-if="product.compare_at_price > product.price" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
+                                            <span v-if="isDiscounted(product)" class="text-cocov-muted line-through">{{ formatMoney(product.compare_at_price) }}</span>
                                             <span class="font-semibold text-cocov-gold">{{ formatMoney(product.price) }}</span>
                                         </span>
                                     </span>
