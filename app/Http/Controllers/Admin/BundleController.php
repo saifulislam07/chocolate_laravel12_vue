@@ -171,7 +171,7 @@ class BundleController extends Controller
     private function calculatePricing(array $items, ?string $discountType, mixed $discountValue): array
     {
         $products = Product::whereIn('id', collect($items)->pluck('product_id'))->get()->keyBy('id');
-        $subtotal = collect($items)->sum(fn ($item) => (float) $products[$item['product_id']]->price * (int) $item['quantity']);
+        $subtotal = collect($items)->sum(fn ($item) => $this->basePrice($products[$item['product_id']]) * (int) $item['quantity']);
         $discountValue = (float) ($discountValue ?? 0);
         $discount = $discountType === 'percent' ? ($subtotal * min($discountValue, 100) / 100) : $discountValue;
         $price = max($subtotal - $discount, 0);
@@ -180,6 +180,18 @@ class BundleController extends Controller
             'price' => $price,
             'compare_at_price' => $subtotal > $price ? $subtotal : null,
         ];
+    }
+
+    /**
+     * Bundle maths start from the regular price, so a product that is already
+     * discounted on its own does not get discounted twice inside a bundle.
+     */
+    private function basePrice(Product $product): float
+    {
+        $price = (float) $product->price;
+        $compareAt = (float) ($product->compare_at_price ?? 0);
+
+        return $compareAt > $price ? $compareAt : $price;
     }
 
     private function syncBundleItems(Product $bundle, array $items): void
@@ -213,6 +225,6 @@ class BundleController extends Controller
             ->where('is_active', true)
             ->where('is_bundle', false)
             ->orderBy('name')
-            ->get(['id', 'name', 'price', 'sku']);
+            ->get(['id', 'name', 'price', 'compare_at_price', 'sku']);
     }
 }

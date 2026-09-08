@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
@@ -113,11 +114,16 @@ const printReport = () => {
                     >
                         <!-- Custom Filters Slot -->
                         <template #filters>
-                            <select v-model="filterStatus" class="form-control-sm border-0 bg-light rounded-pill px-3 text-xs font-bold" style="height: 38px; min-width: 150px;">
-                                <option value="all">All Inventory</option>
-                                <option value="low">Low Stock (≤ 5)</option>
-                                <option value="out">Out of Stock</option>
-                            </select>
+                            <SearchableSelect
+                                v-model="filterStatus"
+                                :options="[
+                                    { value: 'all', label: 'All Inventory' },
+                                    { value: 'low', label: 'Low Stock (≤ 5)' },
+                                    { value: 'out', label: 'Out of Stock' },
+                                ]"
+                                control-class="form-control-sm border-0 bg-light rounded-pill px-3 text-xs font-bold"
+                                style="height: 38px; min-width: 150px;"
+                            />
                         </template>
 
                         <!-- Index Cell -->

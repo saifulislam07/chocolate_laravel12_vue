@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -492,10 +493,13 @@ function tabForField(field) {
                                             <div class="row">
                                                 <div class="col-md-4 form-group">
                                                     <label>Mode</label>
-                                                    <select v-model="form.bkash_mode" class="form-control">
-                                                        <option value="sandbox">Sandbox</option>
-                                                        <option value="live">Live</option>
-                                                    </select>
+                                                    <SearchableSelect
+                                                        v-model="form.bkash_mode"
+                                                        :options="[
+                                                            { value: 'sandbox', label: 'Sandbox' },
+                                                            { value: 'live', label: 'Live' },
+                                                        ]"
+                                                    />
                                                 </div>
                                                 <div class="col-md-8 form-group">
                                                     <label>Base URL</label>
@@ -536,10 +540,13 @@ function tabForField(field) {
                                             <div class="row">
                                                 <div class="col-md-4 form-group">
                                                     <label>Mode</label>
-                                                    <select v-model="form.nagad_mode" class="form-control">
-                                                        <option value="sandbox">Sandbox</option>
-                                                        <option value="live">Live</option>
-                                                    </select>
+                                                    <SearchableSelect
+                                                        v-model="form.nagad_mode"
+                                                        :options="[
+                                                            { value: 'sandbox', label: 'Sandbox' },
+                                                            { value: 'live', label: 'Live' },
+                                                        ]"
+                                                    />
                                                 </div>
                                                 <div class="col-md-8 form-group">
                                                     <label>Base URL</label>
@@ -682,10 +689,13 @@ function tabForField(field) {
                                             </div>
                                             <div class="col-md-4 form-group">
                                                 <label>Encryption</label>
-                                                <select v-model="form.smtp_encryption" class="form-control">
-                                                    <option value="tls">TLS</option>
-                                                    <option value="ssl">SSL</option>
-                                                </select>
+                                                <SearchableSelect
+                                                    v-model="form.smtp_encryption"
+                                                    :options="[
+                                                        { value: 'tls', label: 'TLS' },
+                                                        { value: 'ssl', label: 'SSL' },
+                                                    ]"
+                                                />
                                             </div>
                                         </div>
                                     </div>

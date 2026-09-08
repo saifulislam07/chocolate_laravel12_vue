@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
@@ -104,10 +105,17 @@ const submit = () => {
                                     <div class="row">
                                         <div class="col-md-4 form-group">
                                             <label>Supplier <span class="text-danger">*</span></label>
-                                            <select v-model="form.supplier_id" class="form-control" :class="{'is-invalid': form.errors.supplier_id}" required>
-                                                <option value="">Select Supplier</option>
-                                                <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }} ({{ s.phone }})</option>
-                                            </select>
+                                            <SearchableSelect
+                                                v-model="form.supplier_id"
+                                                :options="suppliers"
+                                                value-key="id"
+                                                label-key="name"
+                                                hint-key="phone"
+                                                placeholder="Select Supplier"
+                                                search-placeholder="Search supplier name or phone..."
+                                                :invalid="!!form.errors.supplier_id"
+                                                required
+                                            />
                                         </div>
                                         <div class="col-md-4 form-group">
                                             <label>Reference No <span class="text-danger">*</span></label>

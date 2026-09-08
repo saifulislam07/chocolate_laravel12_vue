@@ -65,6 +65,9 @@ class POSController extends Controller
                 'order_number' => 'POS-' . strtoupper(uniqid()),
                 'customer_id' => $request->customer_id,
                 'status' => 'completed',
+                // A counter sale is handed over as it is rung up, so the money
+                // is received the moment the order exists.
+                'delivered_at' => now(),
                 'subtotal' => $request->subtotal,
                 'discount' => $request->discount ?? 0,
                 'tax' => $request->tax ?? 0,

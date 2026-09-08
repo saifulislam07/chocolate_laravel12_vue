@@ -25,8 +25,12 @@ class DashboardController extends Controller
 
         $today = now()->startOfDay();
 
-        $salesByDay = Order::selectRaw('DATE(created_at) as date, SUM(total) as total')
-            ->where('created_at', '>=', now()->subDays(6)->startOfDay())
+        // Every sales figure below is money received, not money ordered: only
+        // orders whose payment has reached the shop count, dated by delivery,
+        // and the shipping charge is left out because it goes to the courier.
+        $salesByDay = Order::revenueEarning()
+            ->selectRaw('DATE(delivered_at) as date, SUM(' . Order::NET_REVENUE_SQL . ') as total')
+            ->where('delivered_at', '>=', now()->subDays(6)->startOfDay())
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -48,13 +52,16 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'stats' => [
-                'total_sales' => (float) Order::sum('total'),
+                'total_sales' => (float) Order::revenueEarning()->sum(DB::raw(Order::NET_REVENUE_SQL)),
                 'orders_count' => Order::count(),
+                'delivered_orders_count' => Order::revenueEarning()->count(),
                 'customers_count' => Customer::count(),
                 'products_count' => Product::count(),
                 'expenses_total' => (float) Expense::sum('amount'),
                 'low_stock_count' => Product::whereRaw('stock <= alert_quantity')->count(),
-                'today_sales' => (float) Order::where('created_at', '>=', $today)->sum('total'),
+                'today_sales' => (float) Order::revenueEarning()
+                    ->where('delivered_at', '>=', $today)
+                    ->sum(DB::raw(Order::NET_REVENUE_SQL)),
                 'today_orders_count' => Order::where('created_at', '>=', $today)->count(),
                 'today_customers_count' => Customer::where('created_at', '>=', $today)->count(),
             ],

@@ -39,7 +39,10 @@ defineProps({
                         <div class="small-box bg-success shadow-sm">
                             <div class="inner">
                                 <h3>৳{{ summary.net_sales }}</h3>
-                                <p>Net Revenue <span class="d-block text-xs opacity-75">Gross ৳{{ summary.total_sales }} − Returns ৳{{ summary.total_returns }}</span></p>
+                                <p>Net Revenue
+                                    <span class="d-block text-xs opacity-75">Delivered ৳{{ summary.total_sales }} − Returns ৳{{ summary.total_returns }}</span>
+                                    <span class="d-block text-xs opacity-75">Shipping ৳{{ summary.shipping_collected }} goes to the courier</span>
+                                </p>
                             </div>
                             <div class="icon"><i class="fas fa-shopping-cart"></i></div>
                             <Link :href="route('admin.reports.profit-loss')" class="small-box-footer">View Profit/Loss <i class="fas fa-arrow-circle-right"></i></Link>

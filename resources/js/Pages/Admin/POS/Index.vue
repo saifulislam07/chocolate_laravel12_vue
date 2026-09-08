@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, ref } from 'vue';
 
@@ -429,15 +430,19 @@ const submitQuickCustomer = () => {
                         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
                             <i class="fas fa-user text-xs"></i>
                         </div>
-                        <select
-                            v-model="selectedCustomerId"
-                            class="min-w-0 flex-1 rounded-md border-[1px] border-slate-200 bg-white py-2 pl-2.5 pr-8 text-sm font-medium text-slate-700 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                        >
-                            <option value="">Walk-in Customer</option>
-                            <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                                {{ customer.name }} ({{ customer.phone }})
-                            </option>
-                        </select>
+                        <div class="min-w-0 flex-1">
+                            <SearchableSelect
+                                v-model="selectedCustomerId"
+                                :options="customers"
+                                value-key="id"
+                                label-key="name"
+                                hint-key="phone"
+                                placeholder="Walk-in Customer"
+                                search-placeholder="Search name or phone..."
+                                control-class="w-full rounded-md border-[1px] border-slate-200 bg-white py-2 pl-2.5 pr-8 text-sm font-medium text-slate-700 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                                clearable
+                            />
+                        </div>
                         <button
                             type="button"
                             title="Add a new customer"
@@ -556,12 +561,16 @@ const submitQuickCustomer = () => {
                         <div class="grid grid-cols-2 gap-2">
                             <label class="block">
                                 <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Payment Method</span>
-                                <select v-model="paymentMethod" class="w-full rounded-md border-[1px] border-slate-200 bg-white py-1.5 pl-2 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
-                                    <option value="cash">Cash</option>
-                                    <option value="card">Card / POS</option>
-                                    <option value="mobile_banking">Mobile Banking</option>
-                                    <option value="bank">Bank Transfer</option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="paymentMethod"
+                                    :options="[
+                                        { value: 'cash', label: 'Cash' },
+                                        { value: 'card', label: 'Card / POS' },
+                                        { value: 'mobile_banking', label: 'Mobile Banking' },
+                                        { value: 'bank', label: 'Bank Transfer' },
+                                    ]"
+                                    control-class="w-full rounded-md border-[1px] border-slate-200 bg-white py-1.5 pl-2 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                                />
                             </label>
                             <label class="block">
                                 <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Paid Amount ৳</span>
@@ -572,10 +581,14 @@ const submitQuickCustomer = () => {
                         <div class="grid grid-cols-2 gap-2">
                             <label class="block">
                                 <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Lead From</span>
-                                <select v-model="leadSource" class="w-full rounded-md border-[1px] border-slate-200 bg-white py-1.5 pl-2 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100">
-                                    <option value="">Not specified</option>
-                                    <option v-for="source in leadSources" :key="source" :value="source">{{ source }}</option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="leadSource"
+                                    :options="leadSources"
+                                    placeholder="Not specified"
+                                    search-placeholder="Search source..."
+                                    control-class="w-full rounded-md border-[1px] border-slate-200 bg-white py-1.5 pl-2 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                                    clearable
+                                />
                             </label>
                             <label class="block">
                                 <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Note</span>
@@ -778,17 +791,29 @@ const submitQuickCustomer = () => {
                         <div class="grid grid-cols-2 gap-3">
                             <label class="block">
                                 <span class="mb-1 block text-xs font-semibold text-slate-600">Division</span>
-                                <select v-model="quickCustomerForm.division_id" class="w-full rounded-md border-[1px] border-slate-200 py-2 pl-2.5 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100" @change="onQuickCustomerDivisionChange">
-                                    <option value="">Select</option>
-                                    <option v-for="division in divisions" :key="division.id" :value="division.id">{{ division.name }}</option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="quickCustomerForm.division_id"
+                                    :options="divisions"
+                                    value-key="id"
+                                    label-key="name"
+                                    placeholder="Select"
+                                    search-placeholder="Search division..."
+                                    control-class="w-full rounded-md border-[1px] border-slate-200 py-2 pl-2.5 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                                    @change="onQuickCustomerDivisionChange"
+                                />
                             </label>
                             <label class="block">
                                 <span class="mb-1 block text-xs font-semibold text-slate-600">District</span>
-                                <select v-model="quickCustomerForm.district_id" :disabled="!quickCustomerForm.division_id" class="w-full rounded-md border-[1px] border-slate-200 py-2 pl-2.5 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400">
-                                    <option value="">Select</option>
-                                    <option v-for="district in quickCustomerDistrictOptions" :key="district.id" :value="district.id">{{ district.name }}</option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="quickCustomerForm.district_id"
+                                    :options="quickCustomerDistrictOptions"
+                                    value-key="id"
+                                    label-key="name"
+                                    placeholder="Select"
+                                    search-placeholder="Search district..."
+                                    :disabled="!quickCustomerForm.division_id"
+                                    control-class="w-full rounded-md border-[1px] border-slate-200 py-2 pl-2.5 pr-7 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400"
+                                />
                             </label>
                         </div>
                     </div>

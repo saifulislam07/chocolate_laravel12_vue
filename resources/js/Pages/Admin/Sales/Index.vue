@@ -16,7 +16,6 @@ const columns = [
     { key: 'total', label: 'Total', sortable: true },
     { key: 'payment_status', label: 'Payment', sortable: true },
     { key: 'status', label: 'Order Status', sortable: true },
-    { key: 'shipping_status', label: 'Shipping', sortable: true },
     { key: 'actions', label: 'Actions', sortable: false, width: '120px' }
 ];
 
@@ -34,29 +33,35 @@ const getPaymentBadge = (status) => {
 const getOrderStatusBadge = (status) => {
     if (status === 'delivered') return 'badge-success';
     if (status === 'shipped' || status === 'processing') return 'badge-info';
+    if (status === 'advance_payment') return 'badge-advance';
+    if (status === 'follow_up') return 'badge-primary';
+    if (status === 'no_response') return 'badge-dark';
+    if (status === 'on_hold') return 'badge-light border';
     if (status === 'cancelled') return 'badge-danger';
     if (status === 'returned' || status === 'partially_returned') return 'badge-secondary';
     return 'badge-warning';
 };
 
-// Couriers name their own states, so anything unrecognised is still in motion
-// rather than a special case worth its own colour.
-const getShippingBadge = (status) => {
-    if (status === 'not_shipped') return 'badge-light border';
-    if (status === 'delivered') return 'badge-success';
-    if (status === 'cancelled' || status === 'returned' || status === 'failed') return 'badge-danger';
-    return 'badge-info';
-};
-
 const humanise = (value) => String(value || '').replace(/_/g, ' ');
 
-const totalWebSalesValue = computed(() => {
-    return props.sales.filter(s => s.order_source === 'web').reduce((acc, curr) => acc + parseFloat(curr.total), 0).toFixed(2);
-});
+// Mirrors Order::REVENUE_STATUSES. Only money that has reached the shop counts,
+// and the shipping charge never does -- it is collected for the courier.
+const REVENUE_STATUSES = ['delivered', 'completed', 'partially_returned', 'returned'];
 
-const totalPosSalesValue = computed(() => {
-    return props.sales.filter(s => s.order_source === 'pos').reduce((acc, curr) => acc + parseFloat(curr.total), 0).toFixed(2);
-});
+const netRevenue = (sale) => (
+    REVENUE_STATUSES.includes(sale.status)
+        ? parseFloat(sale.total || 0) - parseFloat(sale.shipping_cost || 0)
+        : 0
+);
+
+const revenueFrom = (source) => props.sales
+    .filter((sale) => sale.order_source === source)
+    .reduce((total, sale) => total + netRevenue(sale), 0)
+    .toFixed(2);
+
+const totalWebSalesValue = computed(() => revenueFrom('web'));
+
+const totalPosSalesValue = computed(() => revenueFrom('pos'));
 
 function deleteSale(id) {
     if (confirm('Are you sure you want to delete this sale record?')) {
@@ -90,8 +95,9 @@ function deleteSale(id) {
                                     <i class="fas fa-globe text-info"></i>
                                 </div>
                                 <div>
-                                    <div class="text-xs text-uppercase font-bold text-muted">Web Sales</div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">Web Revenue</div>
                                     <div class="h4 font-bold mb-0 text-info">৳{{ totalWebSalesValue }}</div>
+                                    <div class="text-xs text-muted">Delivered, shipping excluded</div>
                                 </div>
                             </div>
                         </div>
@@ -103,8 +109,9 @@ function deleteSale(id) {
                                     <i class="fas fa-cash-register text-success"></i>
                                 </div>
                                 <div>
-                                    <div class="text-xs text-uppercase font-bold text-muted">POS Sales</div>
+                                    <div class="text-xs text-uppercase font-bold text-muted">POS Revenue</div>
                                     <div class="h4 font-bold mb-0 text-success">৳{{ totalPosSalesValue }}</div>
+                                    <div class="text-xs text-muted">Completed, shipping excluded</div>
                                 </div>
                             </div>
                         </div>
@@ -162,14 +169,6 @@ function deleteSale(id) {
                         <span class="badge text-capitalize" :class="getOrderStatusBadge(item.status)">{{ humanise(item.status) }}</span>
                     </template>
 
-                    <!-- Shipping Cell -->
-                    <template #cell-shipping_status="{ item }">
-                        <span class="badge text-capitalize" :class="getShippingBadge(item.shipping_status)">{{ humanise(item.shipping_status) }}</span>
-                        <div v-if="item.shipments?.length" class="text-xs text-muted text-uppercase mt-1">
-                            {{ item.shipments[item.shipments.length - 1].courier }}
-                        </div>
-                    </template>
-
                     <!-- Actions Cell -->
                     <template #cell-actions="{ item }">
                         <div class="d-flex">
@@ -193,4 +192,7 @@ function deleteSale(id) {
 .border-info-soft { border-color: rgba(37, 99, 235, 0.1) !important; }
 .border-success-soft { border-color: rgba(5, 150, 105, 0.1) !important; }
 .icon-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+/* Bootstrap has no colour left that is not already spoken for by another
+   order status, so advance payment gets its own. */
+.badge-advance { background-color: #7c3aed; color: #fff; }
 </style>

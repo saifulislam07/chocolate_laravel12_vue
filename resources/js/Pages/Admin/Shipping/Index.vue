@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
@@ -342,10 +343,17 @@ const deleteArea = () => {
                                         </button>
                                     </div>
 
-                                    <select v-if="!useNewDivision" v-model="areaForm.division_id" class="form-control mt-1" :class="{ 'is-invalid': areaForm.errors.division_id }">
-                                        <option value="">Select Division</option>
-                                        <option v-for="division in divisions" :key="division.id" :value="division.id">{{ division.name }}</option>
-                                    </select>
+                                    <SearchableSelect
+                                        v-if="!useNewDivision"
+                                        v-model="areaForm.division_id"
+                                        :options="divisions"
+                                        value-key="id"
+                                        label-key="name"
+                                        placeholder="Select Division"
+                                        search-placeholder="Search division..."
+                                        control-class="form-control mt-1"
+                                        :invalid="!!areaForm.errors.division_id"
+                                    />
                                     <input v-else type="text" v-model="areaForm.new_division" class="form-control mt-1" :class="{ 'is-invalid': areaForm.errors.new_division }" placeholder="New division name">
 
                                     <div class="text-danger small mt-1" v-if="areaForm.errors.division_id || areaForm.errors.new_division">

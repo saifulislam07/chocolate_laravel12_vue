@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -15,8 +16,8 @@ const presets = [
     { value: 'this_month', label: 'This Month' },
 ];
 
-function changePreset(event) {
-    router.get(route('admin.reports.meta-campaigns'), { date_preset: event.target.value }, {
+function changePreset(preset) {
+    router.get(route('admin.reports.meta-campaigns'), { date_preset: preset }, {
         preserveScroll: true,
         preserveState: true,
     });
@@ -42,9 +43,13 @@ const number = (value) => Number(value || 0).toLocaleString();
                         <p class="text-muted text-sm mb-0">Check Facebook campaign and boosted post performance from Meta Ads.</p>
                     </div>
                     <div class="d-flex align-items-center">
-                        <select class="form-control mr-2" style="width: 170px;" :value="datePreset" @change="changePreset">
-                            <option v-for="preset in presets" :key="preset.value" :value="preset.value">{{ preset.label }}</option>
-                        </select>
+                        <SearchableSelect
+                            class="mr-2"
+                            style="width: 170px;"
+                            :model-value="datePreset"
+                            :options="presets"
+                            @change="changePreset"
+                        />
                         <button class="btn btn-primary" type="button" @click="router.reload({ only: ['report'] })">
                             <i class="fas fa-sync-alt mr-1"></i> Refresh
                         </button>

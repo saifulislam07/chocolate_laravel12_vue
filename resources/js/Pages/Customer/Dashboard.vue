@@ -84,7 +84,7 @@ function formatMoney(value) {
                                 </div>
                                 <div class="text-right">
                                     <p class="font-heading text-xl">{{ formatMoney(order.total) }}</p>
-                                    <p class="mt-1 text-[10px] font-bold uppercase tracking-widest text-cocov-gold">{{ order.status }}</p>
+                                    <p class="mt-1 text-[10px] font-bold uppercase tracking-widest text-cocov-gold">{{ String(order.status || '').replace(/_/g, ' ') }}</p>
                                 </div>
                             </div>
                         </div>

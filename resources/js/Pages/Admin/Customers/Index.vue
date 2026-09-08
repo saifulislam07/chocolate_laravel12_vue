@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
@@ -161,17 +162,27 @@ function formatMoney(value) {
                             <div class="row">
                                 <div class="col-12 col-md-6 form-group">
                                     <label class="text-xs font-bold text-muted text-uppercase">Division</label>
-                                    <select v-model="form.division_id" @change="onDivisionChange" class="form-control">
-                                        <option value="">Select Division</option>
-                                        <option v-for="division in divisions" :key="division.id" :value="division.id">{{ division.name }}</option>
-                                    </select>
+                                    <SearchableSelect
+                                        v-model="form.division_id"
+                                        :options="divisions"
+                                        value-key="id"
+                                        label-key="name"
+                                        placeholder="Select Division"
+                                        search-placeholder="Search division..."
+                                        @change="onDivisionChange"
+                                    />
                                 </div>
                                 <div class="col-12 col-md-6 form-group mb-0">
                                     <label class="text-xs font-bold text-muted text-uppercase">District</label>
-                                    <select v-model="form.district_id" :disabled="!form.division_id" class="form-control">
-                                        <option value="">Select District</option>
-                                        <option v-for="district in districtOptions" :key="district.id" :value="district.id">{{ district.name }}</option>
-                                    </select>
+                                    <SearchableSelect
+                                        v-model="form.district_id"
+                                        :options="districtOptions"
+                                        value-key="id"
+                                        label-key="name"
+                                        placeholder="Select District"
+                                        search-placeholder="Search district..."
+                                        :disabled="!form.division_id"
+                                    />
                                 </div>
                             </div>
                         </div>

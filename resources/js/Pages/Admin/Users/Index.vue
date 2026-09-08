@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import PremiumTable from '@/Components/PremiumTable.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
@@ -161,10 +162,16 @@ function deleteUser(id) {
                             </div>
                             <div class="form-group mb-1">
                                 <label class="text-xs font-bold text-muted text-uppercase tracking-wider mb-2 d-block">Role</label>
-                                <select v-model="form.role" class="form-control border-2 text-sm" :class="{ 'is-invalid': form.errors.role }">
-                                    <option value="" disabled>Select a role</option>
-                                    <option v-for="role in roles" :key="role.id" :value="role.name">{{ role.name }}</option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="form.role"
+                                    :options="roles"
+                                    value-key="name"
+                                    label-key="name"
+                                    placeholder="Select a role"
+                                    search-placeholder="Search role..."
+                                    control-class="form-control border-2 text-sm"
+                                    :invalid="!!form.errors.role"
+                                />
                                 <div class="invalid-feedback" v-if="form.errors.role">{{ form.errors.role }}</div>
                             </div>
                         </div>

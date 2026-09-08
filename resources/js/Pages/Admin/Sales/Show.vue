@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from 'vue';
 import axios from 'axios';
@@ -47,6 +48,27 @@ const statusForm = useForm({
     payment_status: props.sale.payment_status,
 });
 
+// Must stay in sync with the `status` rule in SaleController::updateStatus().
+const statusOptions = [
+    { value: 'pending', label: 'Pending' },
+    { value: 'no_response', label: 'No Response' },
+    { value: 'follow_up', label: 'Follow Up' },
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'advance_payment', label: 'Advance Payment' },
+    { value: 'processing', label: 'Processing' },
+    { value: 'shipped', label: 'Shipped' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'cancelled', label: 'Cancelled' },
+    { value: 'partially_returned', label: 'Partially Returned' },
+    { value: 'returned', label: 'Returned' },
+];
+
+const paymentStatusOptions = [
+    { value: 'unpaid', label: 'Unpaid' },
+    { value: 'partial', label: 'Partial' },
+    { value: 'paid', label: 'Paid' },
+];
+
 function updateStatus() {
     statusForm.patch(route('admin.sales.update-status', props.sale.id), {
         preserveScroll: true,
@@ -63,6 +85,11 @@ const shipForm = useForm({
 const pathaoCities = ref([]);
 const pathaoZones = ref([]);
 const pathaoAreas = ref([]);
+
+const courierChoices = computed(() => [
+    ...(props.courierOptions.steadfast ? [{ value: 'steadfast', label: 'Steadfast' }] : []),
+    ...(props.courierOptions.pathao ? [{ value: 'pathao', label: 'Pathao' }] : []),
+]);
 
 watch(() => shipForm.courier, (courier) => {
     if (courier === 'pathao' && pathaoCities.value.length === 0) {
@@ -192,23 +219,20 @@ onBeforeUnmount(() => {
                         <div class="form-row align-items-end">
                             <div class="col-md-3 form-group mb-2">
                                 <label class="text-muted text-uppercase small mb-1">Order Status</label>
-                                <select v-model="statusForm.status" class="form-control form-control-sm">
-                                    <option value="pending">Pending</option>
-                                    <option value="processing">Processing</option>
-                                    <option value="shipped">Shipped</option>
-                                    <option value="delivered">Delivered</option>
-                                    <option value="cancelled">Cancelled</option>
-                                    <option value="partially_returned">Partially Returned</option>
-                                    <option value="returned">Returned</option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="statusForm.status"
+                                    :options="statusOptions"
+                                    control-class="form-control form-control-sm"
+                                    search-placeholder="Search status..."
+                                />
                             </div>
                             <div class="col-md-3 form-group mb-2">
                                 <label class="text-muted text-uppercase small mb-1">Payment Status</label>
-                                <select v-model="statusForm.payment_status" class="form-control form-control-sm">
-                                    <option value="unpaid">Unpaid</option>
-                                    <option value="partial">Partial</option>
-                                    <option value="paid">Paid</option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="statusForm.payment_status"
+                                    :options="paymentStatusOptions"
+                                    control-class="form-control form-control-sm"
+                                />
                             </div>
                             <div class="col-md-3 form-group mb-2">
                                 <button type="button" class="btn btn-primary btn-sm" :disabled="statusForm.processing" @click="updateStatus">
@@ -238,33 +262,51 @@ onBeforeUnmount(() => {
                         <div v-else class="form-row align-items-end">
                             <div class="col-md-3 form-group mb-2">
                                 <label class="text-muted text-uppercase small mb-1">Courier</label>
-                                <select v-model="shipForm.courier" class="form-control form-control-sm">
-                                    <option v-if="courierOptions.steadfast" value="steadfast">Steadfast</option>
-                                    <option v-if="courierOptions.pathao" value="pathao">Pathao</option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="shipForm.courier"
+                                    :options="courierChoices"
+                                    control-class="form-control form-control-sm"
+                                />
                             </div>
 
                             <template v-if="shipForm.courier === 'pathao'">
                                 <div class="col-md-3 form-group mb-2">
                                     <label class="text-muted text-uppercase small mb-1">City</label>
-                                    <select v-model="shipForm.city_id" class="form-control form-control-sm">
-                                        <option value="">Select City</option>
-                                        <option v-for="city in pathaoCities" :key="city.city_id" :value="city.city_id">{{ city.city_name }}</option>
-                                    </select>
+                                    <SearchableSelect
+                                        v-model="shipForm.city_id"
+                                        :options="pathaoCities"
+                                        value-key="city_id"
+                                        label-key="city_name"
+                                        placeholder="Select City"
+                                        search-placeholder="Search city..."
+                                        control-class="form-control form-control-sm"
+                                    />
                                 </div>
                                 <div class="col-md-3 form-group mb-2">
                                     <label class="text-muted text-uppercase small mb-1">Zone</label>
-                                    <select v-model="shipForm.zone_id" class="form-control form-control-sm" :disabled="!shipForm.city_id">
-                                        <option value="">Select Zone</option>
-                                        <option v-for="zone in pathaoZones" :key="zone.zone_id" :value="zone.zone_id">{{ zone.zone_name }}</option>
-                                    </select>
+                                    <SearchableSelect
+                                        v-model="shipForm.zone_id"
+                                        :options="pathaoZones"
+                                        value-key="zone_id"
+                                        label-key="zone_name"
+                                        placeholder="Select Zone"
+                                        search-placeholder="Search zone..."
+                                        :disabled="!shipForm.city_id"
+                                        control-class="form-control form-control-sm"
+                                    />
                                 </div>
                                 <div class="col-md-3 form-group mb-2">
                                     <label class="text-muted text-uppercase small mb-1">Area</label>
-                                    <select v-model="shipForm.area_id" class="form-control form-control-sm" :disabled="!shipForm.zone_id">
-                                        <option value="">Select Area</option>
-                                        <option v-for="area in pathaoAreas" :key="area.area_id" :value="area.area_id">{{ area.area_name }}</option>
-                                    </select>
+                                    <SearchableSelect
+                                        v-model="shipForm.area_id"
+                                        :options="pathaoAreas"
+                                        value-key="area_id"
+                                        label-key="area_name"
+                                        placeholder="Select Area"
+                                        search-placeholder="Search area..."
+                                        :disabled="!shipForm.zone_id"
+                                        control-class="form-control form-control-sm"
+                                    />
                                 </div>
                             </template>
 

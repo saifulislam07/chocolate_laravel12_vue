@@ -12,7 +12,7 @@ const columns = [
     { key: 'division_name', label: 'Division', sortable: true },
     { key: 'district_name', label: 'District', sortable: true },
     { key: 'orders_count', label: 'Orders', sortable: true, cellClass: 'text-center' },
-    { key: 'total_sales', label: 'Total Sales', sortable: true, cellClass: 'text-right' },
+    { key: 'total_sales', label: 'Revenue', sortable: true, cellClass: 'text-right' },
 ];
 
 const printReport = () => {
@@ -33,7 +33,7 @@ function formatMoney(value) {
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <h1 class="m-0 text-dark font-bold h3">Area-wise Sales</h1>
-                        <p class="text-muted text-sm mb-0">Sales performance broken down by division and district</p>
+                        <p class="text-muted text-sm mb-0">Delivered revenue, shipping excluded, broken down by division and district</p>
                     </div>
                     <button @click="printReport" class="btn btn-primary shadow-sm rounded-pill px-4">
                         <i class="fas fa-print mr-2"></i> Print Report

@@ -108,7 +108,7 @@ const orderStatusChartOptions = {
                     <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #4B2E1E 0%, #3A2517 100%);">
                         <div class="card-body p-4 text-white">
                             <div class="d-flex justify-content-between align-items-start mb-3">
-                                <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-white/60 mb-1">Today's Sales</p>
+                                <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-white/60 mb-1">Received Today</p>
                                 <i class="fas fa-sun text-godiva-gold"></i>
                             </div>
                             <h3 class="text-2xl font-black tracking-tight mb-0" style="color: #E89A50;">{{ formatCurrency(stats.today_sales) }}</h3>
@@ -155,7 +155,7 @@ const orderStatusChartOptions = {
                                 </div>
                             </div>
                             <div class="d-flex align-items-center text-xs">
-                                <span class="text-slate-400 font-medium tracking-tight">All-time total</span>
+                                <span class="text-slate-400 font-medium tracking-tight">Delivered orders, shipping excluded</span>
                             </div>
                         </div>
                     </div>
@@ -175,7 +175,8 @@ const orderStatusChartOptions = {
                                 </div>
                             </div>
                             <div class="text-xs text-slate-400 font-medium">
-                                Average: <span class="text-dark font-bold">{{ formatCurrency(stats.total_sales / (stats.orders_count || 1)) }}</span> / order
+                                {{ stats.delivered_orders_count }} delivered &middot;
+                                Average: <span class="text-dark font-bold">{{ formatCurrency(stats.total_sales / (stats.delivered_orders_count || 1)) }}</span> / delivered order
                             </div>
                         </div>
                     </div>
@@ -227,7 +228,7 @@ const orderStatusChartOptions = {
                 <div class="col-lg-8 mb-4">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-white border-bottom-light pt-4 px-4 pb-3">
-                            <h3 class="text-base font-bold text-slate-800 mb-0">Sales — Last 7 Days</h3>
+                            <h3 class="text-base font-bold text-slate-800 mb-0">Revenue Received — Last 7 Days</h3>
                         </div>
                         <div class="card-body p-4" style="height: 260px;">
                             <Line :data="salesChartData" :options="salesChartOptions" />

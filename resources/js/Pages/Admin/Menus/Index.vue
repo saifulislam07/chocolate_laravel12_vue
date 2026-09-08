@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -210,10 +211,16 @@ const deleteMenu = (id) => {
                             <div class="row">
                                 <div class="col-md-6 form-group">
                                     <label class="font-weight-bold">Parent Item</label>
-                                    <select class="form-control" :class="{ 'is-invalid': form.errors.parent_id }" v-model="form.parent_id" :disabled="editingHasChildren">
-                                        <option value="">-- Main Menu --</option>
-                                        <option v-for="m in parentOptions" :key="m.id" :value="m.id">{{ m.name }}</option>
-                                    </select>
+                                    <SearchableSelect
+                                        v-model="form.parent_id"
+                                        :options="parentOptions"
+                                        value-key="id"
+                                        label-key="name"
+                                        placeholder="-- Main Menu --"
+                                        search-placeholder="Search menu..."
+                                        :invalid="!!form.errors.parent_id"
+                                        :disabled="editingHasChildren"
+                                    />
                                     <div v-if="form.errors.parent_id" class="invalid-feedback">{{ form.errors.parent_id }}</div>
                                     <small v-if="editingHasChildren" class="text-muted italic">
                                         This item has sub menu items, so it has to stay in the main menu.

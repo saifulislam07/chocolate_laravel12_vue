@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -109,10 +110,15 @@ function submit() {
                                         >
                                     </td>
                                     <td>
-                                        <select v-model="item.condition" :disabled="!item.selected" class="form-control form-control-sm">
-                                            <option value="resellable">Resellable</option>
-                                            <option value="damaged">Damaged</option>
-                                        </select>
+                                        <SearchableSelect
+                                            v-model="item.condition"
+                                            :options="[
+                                                { value: 'resellable', label: 'Resellable' },
+                                                { value: 'damaged', label: 'Damaged' },
+                                            ]"
+                                            :disabled="!item.selected"
+                                            control-class="form-control form-control-sm"
+                                        />
                                     </td>
                                 </tr>
                             </tbody>
@@ -126,14 +132,18 @@ function submit() {
                             </div>
                             <div class="col-md-6 form-group">
                                 <label class="text-xs font-bold text-muted text-uppercase">Refund Method</label>
-                                <select v-model="form.refund_method" class="form-control">
-                                    <option value="wallet" :disabled="!order.has_customer">Store Credit (Wallet)</option>
-                                    <option value="cash">Cash (external)</option>
-                                    <option value="bkash">bKash (external)</option>
-                                    <option value="nagad">Nagad (external)</option>
-                                    <option value="bank">Bank Transfer (external)</option>
-                                    <option value="card">Card Reversal (external)</option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="form.refund_method"
+                                    :options="[
+                                        { value: 'wallet', label: 'Store Credit (Wallet)' },
+                                        { value: 'cash', label: 'Cash (external)' },
+                                        { value: 'bkash', label: 'bKash (external)' },
+                                        { value: 'nagad', label: 'Nagad (external)' },
+                                        { value: 'bank', label: 'Bank Transfer (external)' },
+                                        { value: 'card', label: 'Card Reversal (external)' },
+                                    ]"
+                                    :option-disabled="(option) => option.value === 'wallet' && !order.has_customer"
+                                />
                                 <p class="text-xs text-muted mt-1 mb-0" v-if="form.refund_method === 'wallet'">
                                     Credits the customer's store wallet automatically.
                                 </p>

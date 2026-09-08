@@ -22,7 +22,10 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $totalSales = (float) Order::sum('total');
+        // Sales figures are what the shop actually banked: delivered orders
+        // only, with the courier's shipping charge taken out of each.
+        $totalSales = (float) Order::revenueEarning()->sum(DB::raw(Order::NET_REVENUE_SQL));
+        $shippingCollected = (float) Order::revenueEarning()->sum('shipping_cost');
         $totalReturns = (float) SalesReturn::sum('subtotal_refund');
         $totalRefunds = (float) ReturnRefund::sum('amount');
 
@@ -33,6 +36,7 @@ class ReportController extends Controller
                 'stock_value' => Product::sum(DB::raw('stock * cost_price')),
                 'total_purchases' => Purchase::sum('total_amount'),
                 'total_sales' => $totalSales,
+                'shipping_collected' => $shippingCollected,
                 'total_returns' => $totalReturns,
                 'net_sales' => $totalSales - $totalReturns,
                 'total_refunds' => $totalRefunds,
@@ -73,7 +77,9 @@ class ReportController extends Controller
         $start_date = $request->start_date ?? now()->startOfMonth()->toDateString();
         $end_date = $request->end_date ?? now()->toDateString();
 
-        $sales = Order::whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])->sum('total');
+        $sales = Order::revenueEarning()
+            ->deliveredBetween($start_date . ' 00:00:00', $end_date . ' 23:59:59')
+            ->sum(DB::raw(Order::NET_REVENUE_SQL));
         $purchases = Purchase::whereBetween('purchase_date', [$start_date, $end_date])->sum('total_amount');
         $expenses = Expense::whereBetween('expense_date', [$start_date, $end_date])->sum('amount');
         $refunds = ReturnRefund::whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])->sum('amount');
@@ -115,16 +121,18 @@ class ReportController extends Controller
 
     public function areaSales()
     {
-        $webSales = Order::select('district_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(total) as total_sales'))
+        $webSales = Order::revenueEarning()
+            ->select('district_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(' . Order::NET_REVENUE_SQL . ') as total_sales'))
             ->whereNotNull('district_id')
             ->groupBy('district_id')
             ->get()
             ->keyBy('district_id');
 
         $posSales = Order::query()
+            ->revenueEarning()
             ->join('customers', 'customers.id', '=', 'orders.customer_id')
             ->whereNotNull('customers.district_id')
-            ->select('customers.district_id as district_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(orders.total) as total_sales'))
+            ->select('customers.district_id as district_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(' . Order::NET_REVENUE_SQL . ') as total_sales'))
             ->groupBy('customers.district_id')
             ->get()
             ->keyBy('district_id');

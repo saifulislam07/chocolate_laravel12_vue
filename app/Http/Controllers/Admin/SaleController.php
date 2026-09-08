@@ -9,6 +9,7 @@ use App\Services\Courier\PathaoCourierService;
 use App\Services\Courier\SteadfastCourierService;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use RuntimeException;
@@ -17,10 +18,10 @@ class SaleController extends Controller
 {
     public function index()
     {
-        // shipments feeds the shipping_status accessor; appending both here
-        // keeps the list sortable on plain strings rather than nested relations.
-        $sales = Order::with(['customer', 'user', 'shipments'])->latest()->get();
-        $sales->each->append(['source_label', 'shipping_status']);
+        // source_label is appended here so the list stays sortable on a plain
+        // string rather than a nested relation.
+        $sales = Order::with(['customer', 'user'])->latest()->get();
+        $sales->each->append('source_label');
 
         return Inertia::render('Admin/Sales/Index', [
             'sales' => $sales,
@@ -63,7 +64,7 @@ class SaleController extends Controller
     public function updateStatus(Request $request, $id, InventoryService $inventory)
     {
         $payload = $request->validate([
-            'status' => ['required', 'in:pending,processing,shipped,delivered,cancelled,partially_returned,returned'],
+            'status' => ['required', 'in:pending,no_response,follow_up,on_hold,advance_payment,processing,shipped,delivered,cancelled,partially_returned,returned'],
             'payment_status' => ['required', 'in:unpaid,partial,paid'],
         ]);
 
@@ -84,6 +85,7 @@ class SaleController extends Controller
 
                 $sale->update([
                     'status' => $payload['status'],
+                    'delivered_at' => $this->deliveredAtFor($sale, $payload['status']),
                     'payment_status' => $payload['payment_status'],
                     'paid_amount' => $payload['payment_status'] === 'paid' ? $sale->total : $sale->paid_amount,
                     'due_amount' => $payload['payment_status'] === 'paid' ? 0 : $sale->due_amount,
@@ -96,6 +98,20 @@ class SaleController extends Controller
         }
 
         return redirect()->back()->with('success', 'Order status updated successfully.');
+    }
+
+    /**
+     * Stamped the first time an order reaches a status whose money has been
+     * received, and cleared when it is moved back out of one so the revenue
+     * reports follow the correction.
+     */
+    private function deliveredAtFor(Order $sale, string $status): ?Carbon
+    {
+        if (! in_array($status, Order::REVENUE_STATUSES, true)) {
+            return null;
+        }
+
+        return $sale->delivered_at ?? now();
     }
 
     public function ship(Request $request, $id)

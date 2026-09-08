@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -102,26 +103,45 @@ const submit = () => {
                                     <div class="row">
                                         <div class="col-md-4 form-group">
                                             <label>Category <span class="text-danger">*</span></label>
-                                            <select v-model="form.category_id" class="form-control" :class="{'is-invalid': form.errors.category_id}" required>
-                                                <option value="">Select Category</option>
-                                                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                                            </select>
+                                            <SearchableSelect
+                                                v-model="form.category_id"
+                                                :options="categories"
+                                                value-key="id"
+                                                label-key="name"
+                                                placeholder="Select Category"
+                                                search-placeholder="Search category..."
+                                                :invalid="!!form.errors.category_id"
+                                                required
+                                            />
                                             <div class="invalid-feedback" v-if="form.errors.category_id">{{ form.errors.category_id }}</div>
                                         </div>
                                         <div class="col-md-4 form-group">
                                             <label>Brand</label>
-                                            <select v-model="form.brand_id" class="form-control" :class="{'is-invalid': form.errors.brand_id}">
-                                                <option value="">Select Brand</option>
-                                                <option v-for="brand in brands" :key="brand.id" :value="brand.id">{{ brand.name }}</option>
-                                            </select>
+                                            <SearchableSelect
+                                                v-model="form.brand_id"
+                                                :options="brands"
+                                                value-key="id"
+                                                label-key="name"
+                                                placeholder="Select Brand"
+                                                search-placeholder="Search brand..."
+                                                :invalid="!!form.errors.brand_id"
+                                                clearable
+                                            />
                                             <div class="invalid-feedback" v-if="form.errors.brand_id">{{ form.errors.brand_id }}</div>
                                         </div>
                                         <div class="col-md-4 form-group">
                                             <label>Unit <span class="text-danger">*</span></label>
-                                            <select v-model="form.unit_id" class="form-control" :class="{'is-invalid': form.errors.unit_id}" required>
-                                                <option value="">Select Unit</option>
-                                                <option v-for="unit in units" :key="unit.id" :value="unit.id">{{ unit.name }} ({{ unit.short_name }})</option>
-                                            </select>
+                                            <SearchableSelect
+                                                v-model="form.unit_id"
+                                                :options="units"
+                                                value-key="id"
+                                                label-key="name"
+                                                hint-key="short_name"
+                                                placeholder="Select Unit"
+                                                search-placeholder="Search unit..."
+                                                :invalid="!!form.errors.unit_id"
+                                                required
+                                            />
                                             <div class="invalid-feedback" v-if="form.errors.unit_id">{{ form.errors.unit_id }}</div>
                                         </div>
                                     </div>

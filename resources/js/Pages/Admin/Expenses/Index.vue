@@ -1,5 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import { stripHtml } from '@/composables/useRichText';
 import RichTextEditor from '@/Components/RichTextEditor.vue';
 import PremiumTable from '@/Components/PremiumTable.vue';
@@ -188,10 +189,16 @@ const deleteExpense = (id) => {
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="font-weight-bold">Category <span class="text-danger">*</span></label>
-                                        <select class="form-control" v-model="form.expense_category_id" :class="{ 'is-invalid': form.errors.expense_category_id }" required>
-                                            <option value="">Select Category</option>
-                                            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                                        </select>
+                                        <SearchableSelect
+                                            v-model="form.expense_category_id"
+                                            :options="categories"
+                                            value-key="id"
+                                            label-key="name"
+                                            placeholder="Select Category"
+                                            search-placeholder="Search category..."
+                                            :invalid="!!form.errors.expense_category_id"
+                                            required
+                                        />
                                         <span class="error invalid-feedback" v-if="form.errors.expense_category_id">{{ form.errors.expense_category_id }}</span>
                                     </div>
                                 </div>

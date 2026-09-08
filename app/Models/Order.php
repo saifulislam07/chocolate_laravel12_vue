@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\AmountInWords;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,11 +27,30 @@ class Order extends Model
         'Other',
     ];
 
+    /**
+     * The statuses whose money has actually reached the shop. A web order pays
+     * out once the courier delivers it; a POS sale is settled at the counter,
+     * which is what 'completed' means.
+     *
+     * Returned orders stay on this list because a return here is raised against
+     * a delivered order (see SalesReturnController) -- the money did arrive and
+     * then went back out. Dropping them would subtract the refund twice, since
+     * every report that shows returns already takes them off separately.
+     */
+    public const REVENUE_STATUSES = ['delivered', 'completed', 'partially_returned', 'returned'];
+
+    /**
+     * The shop's share of an order. The shipping charge is collected on the
+     * courier's behalf and handed straight back to it, so it is never income.
+     */
+    public const NET_REVENUE_SQL = '(orders.total - orders.shipping_cost)';
+
     protected $fillable = [
         'order_number',
         'user_id',
         'customer_id',
         'status',
+        'delivered_at',
         'subtotal',
         'discount',
         'tax',
@@ -53,6 +73,7 @@ class Order extends Model
     protected function casts(): array
     {
         return [
+            'delivered_at' => 'datetime',
             'subtotal' => 'decimal:2',
             'discount' => 'decimal:2',
             'tax' => 'decimal:2',
@@ -61,6 +82,26 @@ class Order extends Model
             'paid_amount' => 'decimal:2',
             'due_amount' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Orders whose money the shop has actually received.
+     */
+    public function scopeRevenueEarning(Builder $query): Builder
+    {
+        // Qualified: the area report joins customers, which carries columns of
+        // its own that would otherwise make this ambiguous.
+        return $query->whereIn($query->qualifyColumn('status'), self::REVENUE_STATUSES);
+    }
+
+    /**
+     * Narrows to money received inside a period. Revenue is dated by delivery,
+     * not by when the order was placed -- an order taken in March and delivered
+     * in April is April's money.
+     */
+    public function scopeDeliveredBetween(Builder $query, string $start, string $end): Builder
+    {
+        return $query->whereBetween($query->qualifyColumn('delivered_at'), [$start, $end]);
     }
 
     public function user(): BelongsTo
@@ -101,6 +142,16 @@ class Order extends Model
     public function returns(): HasMany
     {
         return $this->hasMany(SalesReturn::class);
+    }
+
+    /**
+     * What the order is worth to the shop: the total less the shipping charge
+     * the courier keeps. Kept out of $appends -- only the screens that report
+     * on revenue ask for it.
+     */
+    protected function netRevenue(): Attribute
+    {
+        return Attribute::get(fn (): float => (float) $this->total - (float) $this->shipping_cost);
     }
 
     /**

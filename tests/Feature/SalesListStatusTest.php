@@ -11,9 +11,9 @@ use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 /**
- * The sales list has to say where each order stands: its own status, and where
- * the parcel has got to. Shipping lives on the shipments rows, so the list can
- * only show it if the controller loads them.
+ * The sales list has to say where each order stands and which channel it came
+ * through. Where the parcel has got to is no longer one of its columns, so the
+ * shipping status is covered against the model that derives it.
  */
 class SalesListStatusTest extends TestCase
 {
@@ -57,13 +57,7 @@ class SalesListStatusTest extends TestCase
 
     public function test_an_unshipped_order_reads_as_not_shipped(): void
     {
-        $this->makeOrder();
-
-        $this->actingAs($this->salesManager())
-            ->get('/admin/sales')
-            ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('sales.0.shipping_status', 'not_shipped'));
+        $this->assertSame('not_shipped', $this->makeOrder()->shipping_status);
     }
 
     public function test_shipping_status_comes_from_the_shipment(): void
@@ -78,11 +72,7 @@ class SalesListStatusTest extends TestCase
             'status' => 'in_transit',
         ]);
 
-        $this->actingAs($this->salesManager())
-            ->get('/admin/sales')
-            ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('sales.0.shipping_status', 'in_transit'));
+        $this->assertSame('in_transit', $order->fresh()->shipping_status);
     }
 
     /**
@@ -104,11 +94,23 @@ class SalesListStatusTest extends TestCase
             'status' => 'delivered',
         ]);
 
+        $this->assertSame('delivered', $order->fresh()->shipping_status);
+    }
+
+    /**
+     * The column is gone, and with it the shipments the accessor needs -- the
+     * list should not be paying to load them.
+     */
+    public function test_the_list_no_longer_carries_a_shipping_column(): void
+    {
+        $this->makeOrder();
+
         $this->actingAs($this->salesManager())
             ->get('/admin/sales')
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('sales.0.shipping_status', 'delivered'));
+                ->missing('sales.0.shipping_status')
+                ->missing('sales.0.shipments'));
     }
 
     /**

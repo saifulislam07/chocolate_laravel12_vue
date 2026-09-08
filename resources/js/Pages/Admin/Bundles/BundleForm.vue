@@ -1,6 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import RichTextEditor from '@/Components/RichTextEditor.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -44,10 +45,31 @@ const fileInput = ref(null);
 const selectedProducts = computed(() => new Set(form.items.map((item) => Number(item.product_id)).filter(Boolean)));
 const productById = computed(() => new Map(props.products.map((product) => [Number(product.id), product])));
 
-const subtotal = computed(() => form.items.reduce((total, item) => {
-    const product = productById.value.get(Number(item.product_id));
-    return total + (Number(product?.price || 0) * Number(item.quantity || 0));
-}, 0));
+// Bundle pricing starts from each product's regular price, so a product that
+// already carries its own discount is not discounted twice. The bundle discount
+// below is the only one applied, and it applies to the total.
+function basePrice(product) {
+    const price = Number(product?.price || 0);
+    const compareAt = Number(product?.compare_at_price || 0);
+    return compareAt > price ? compareAt : price;
+}
+
+function lineTotal(item) {
+    return basePrice(productById.value.get(Number(item.product_id))) * Number(item.quantity || 0);
+}
+
+const subtotal = computed(() => form.items.reduce((total, item) => total + lineTotal(item), 0));
+
+const productOptions = computed(() => props.products.map((product) => ({
+    value: product.id,
+    label: product.name,
+    hint: [formatMoney(basePrice(product)), product.sku].filter(Boolean).join(' \u00b7 '),
+})));
+
+const discountTypes = [
+    { value: 'fixed', label: 'Fixed' },
+    { value: 'percent', label: 'Percent' },
+];
 
 const discountAmount = computed(() => {
     const value = Number(form.discount_value || 0);
@@ -215,17 +237,15 @@ function submit() {
                                     <div v-for="(item, index) in form.items" :key="index" class="row align-items-end border-bottom pb-3 mb-3">
                                         <div class="col-md-8 form-group mb-md-0">
                                             <label>Product</label>
-                                            <select v-model="item.product_id" class="form-control" required>
-                                                <option value="">Select Product</option>
-                                                <option
-                                                    v-for="product in products"
-                                                    :key="product.id"
-                                                    :value="product.id"
-                                                    :disabled="isProductDisabled(product.id, index)"
-                                                >
-                                                    {{ product.name }} - {{ formatMoney(product.price) }}
-                                                </option>
-                                            </select>
+                                            <SearchableSelect
+                                                v-model="item.product_id"
+                                                :options="productOptions"
+                                                :option-disabled="(option) => isProductDisabled(option.value, index)"
+                                                hint-key="hint"
+                                                placeholder="Select Product"
+                                                search-placeholder="Search product name or SKU..."
+                                                required
+                                            />
                                         </div>
                                         <div class="col-md-2 form-group mb-md-0">
                                             <label>Qty</label>
@@ -235,6 +255,11 @@ function submit() {
                                             <button type="button" class="btn btn-light border btn-block" :disabled="form.items.length === 1" @click="removeItem(index)">
                                                 <i class="fas fa-trash text-danger"></i>
                                             </button>
+                                        </div>
+                                        <div v-if="item.product_id" class="col-12 text-muted text-sm mt-2">
+                                            {{ formatMoney(basePrice(productById.get(Number(item.product_id)))) }}
+                                            &times; {{ Number(item.quantity || 0) }}
+                                            = <strong class="text-dark">{{ formatMoney(lineTotal(item)) }}</strong>
                                         </div>
                                         <div v-if="itemError(index)" class="col-12 text-danger text-sm mt-2">{{ itemError(index) }}</div>
                                     </div>
@@ -295,10 +320,7 @@ function submit() {
                                     <div class="row">
                                         <div class="col-12 col-md-6 form-group">
                                             <label>Discount Type</label>
-                                            <select v-model="form.discount_type" class="form-control">
-                                                <option value="fixed">Fixed</option>
-                                                <option value="percent">Percent</option>
-                                            </select>
+                                            <SearchableSelect v-model="form.discount_type" :options="discountTypes" />
                                         </div>
                                         <div class="col-12 col-md-6 form-group">
                                             <label>Discount</label>
@@ -308,7 +330,7 @@ function submit() {
 
                                     <div class="pricing-summary">
                                         <div class="d-flex justify-content-between py-2">
-                                            <span>Subtotal</span>
+                                            <span>Subtotal <small class="text-muted">(regular price)</small></span>
                                             <strong>{{ formatMoney(subtotal) }}</strong>
                                         </div>
                                         <div class="d-flex justify-content-between py-2">

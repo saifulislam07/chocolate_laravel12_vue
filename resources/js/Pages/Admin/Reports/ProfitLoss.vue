@@ -72,7 +72,10 @@ const updateReport = () => {
                                     <tbody>
                                         <!-- Revenue -->
                                         <tr class="bg-light border-bottom">
-                                            <th class="p-4"><i class="fas fa-plus-circle text-success mr-2"></i>REVENUE / SALES</th>
+                                            <th class="p-4">
+                                                <i class="fas fa-plus-circle text-success mr-2"></i>REVENUE / SALES
+                                                <span class="d-block text-muted small font-weight-normal ml-4">Delivered in this period, shipping charge excluded</span>
+                                            </th>
                                             <th class="p-4 text-right text-success">৳{{ stats.sales.toFixed(2) }}</th>
                                         </tr>
                                         
