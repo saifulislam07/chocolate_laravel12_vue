@@ -213,6 +213,10 @@ const processSale = () => {
 
     checkoutForm.post(route('admin.pos.store'), {
         preserveScroll: true,
+        // Keep this component instance alive across the redirect: onSuccess mutates
+        // local refs (the invoice modal), and a re-mounted component would drop them
+        // on the floor, so the sale would go through with no invoice ever shown.
+        preserveState: true,
         onSuccess: (page) => {
             printInvoiceData.value = page.props.flash?.invoice || null;
 

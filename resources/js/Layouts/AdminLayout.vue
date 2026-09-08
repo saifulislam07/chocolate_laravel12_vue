@@ -524,53 +524,50 @@ body {
         display: none !important;
     }
 
+    /* Hide the whole app, then bring back only the receipt. visibility (not
+       display) so the print area's ancestors keep their boxes and the receipt
+       still lays out and paginates in normal flow. */
+    body * {
+        visibility: hidden !important;
+    }
+
+    #invoice-print-area,
+    #invoice-print-area * {
+        visibility: visible !important;
+    }
+
+    /* Every ancestor of the receipt gives up the geometry that would otherwise
+       clip it, shove it off the sheet, or (Chrome) blank the printout entirely:
+       - a `transform` — AdminLTE's print reboot puts `translate(0,0)` on
+         .content-wrapper, and a transformed box taller than one page prints
+         blank in Chrome;
+       - a scroll/overflow clip or a fixed/absolute offset (the POS dialog);
+       - a max-width or backdrop blur left over from the modal scrim. */
     .wrapper,
     .content-wrapper,
-    .sidebar-collapse .content-wrapper {
-        margin-left: 0 !important;
-        min-height: 0 !important;
-        background: #fff !important;
-    }
-
-    /* The content inset is screen chrome. On paper the page box sets the
-       margins, and another 1.5rem on top of them pushes a sheet that is already
-       drawn at paper width off the edge. */
-    .content-wrapper main {
-        padding: 0 !important;
-    }
-
-    /* An invoice printed from inside a dialog has to survive that dialog's
-       scrim. A translucent overlay still painting above the sheet, or a
-       backdrop blur, comes out of Chrome as a flat grey slab over the whole
-       receipt. Rather than every dialog remembering to unpin itself, anything
-       wrapping a print area gives up its own paint and geometry here. */
-    body :has(#invoice-print-area) {
+    .sidebar-collapse .content-wrapper,
+    .content-wrapper main,
+    body :has(#invoice-print-area),
+    .modal,
+    .modal-dialog,
+    .modal-content {
         position: static !important;
         overflow: visible !important;
+        transform: none !important;
+        filter: none !important;
+        clip-path: none !important;
         max-width: none !important;
+        max-height: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
         padding: 0 !important;
         background: #fff !important;
         -webkit-backdrop-filter: none !important;
         backdrop-filter: none !important;
         box-shadow: none !important;
-        border-radius: 0 !important;
-    }
-
-    /* The POS invoice sits inside a Bootstrap modal; flatten it so the whole
-       receipt flows onto the page instead of being clipped by the fixed overlay. */
-    .modal,
-    .modal-dialog,
-    .modal-content {
-        position: static !important;
-        display: block !important;
-        max-width: 100% !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
         border: 0 !important;
-        box-shadow: none !important;
-        background: transparent !important;
-        overflow: visible !important;
+        border-radius: 0 !important;
     }
 
     #invoice-print-area {
@@ -580,11 +577,6 @@ body {
         padding: 0 !important;
         border: 0 !important;
         box-shadow: none !important;
-        visibility: visible !important;
-    }
-
-    #invoice-print-area * {
-        visibility: visible !important;
     }
 
     /* Keep a row off the fold. Deliberately not the table itself: asking a
