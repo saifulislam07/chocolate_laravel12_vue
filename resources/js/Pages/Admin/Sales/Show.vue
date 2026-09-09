@@ -198,6 +198,16 @@ onBeforeUnmount(() => {
                         <button type="button" class="btn btn-primary btn-sm mr-2" @click="printInvoice">
                             <i class="fas fa-print mr-1"></i> Print
                         </button>
+                        <!--
+                            A plain anchor, not an Inertia <Link>: the response is a
+                            file, and Inertia's XHR would have nowhere to put it. The
+                            server draws the same sheet at A5, so the downloaded
+                            invoice keeps its size whatever paper the operator's
+                            print dialog happens to default to.
+                        -->
+                        <a :href="route('admin.sales.invoice-pdf', sale.id)" class="btn btn-info btn-sm mr-2">
+                            <i class="fas fa-file-pdf mr-1"></i> A5 PDF
+                        </a>
                         <Link :href="route('admin.returns.create', { order_id: sale.id })" class="btn btn-danger btn-sm">
                             <i class="fas fa-undo mr-1"></i> Process Return
                         </Link>

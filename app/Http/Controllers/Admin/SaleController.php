@@ -8,6 +8,7 @@ use App\Models\WebSetting;
 use App\Services\Courier\PathaoCourierService;
 use App\Services\Courier\SteadfastCourierService;
 use App\Services\InventoryService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,70 @@ class SaleController extends Controller
                 'steadfast' => (new SteadfastCourierService($settings ?? new WebSetting()))->enabled(),
             ],
         ]);
+    }
+
+    /**
+     * The same invoice the Show page prints, rendered straight to an A5 PDF.
+     *
+     * Served as a download rather than a print dialog, so the file that reaches
+     * the customer is A5 whatever paper size the operator's browser defaults to.
+     */
+    public function invoicePdf($id)
+    {
+        $sale = Order::with(['customer', 'user', 'items.product'])->findOrFail($id);
+        $sale->append('total_in_words');
+        $settings = WebSetting::first();
+
+        $pdf = Pdf::loadView('pdf.sale-invoice-a5', [
+            'sale' => $sale,
+            'shop' => $settings,
+            'orderDate' => Carbon::parse($sale->created_at)->format('d M Y'),
+            'logo' => $this->inlineImage($settings?->logo),
+            'fonts' => [
+                'regular' => $this->fontPath('NotoSansBengali-Regular.ttf'),
+                'bold' => $this->fontPath('NotoSansBengali-Bold.ttf'),
+            ],
+        ])->setPaper('a5', 'portrait');
+
+        return $pdf->download("Invoice-{$sale->order_number}.pdf");
+    }
+
+    /**
+     * dompdf reads @font-face sources off disk; forward slashes so the same
+     * declaration parses on Windows as on the Linux host.
+     */
+    private function fontPath(string $file): string
+    {
+        return str_replace('\\', '/', resource_path("fonts/{$file}"));
+    }
+
+    /**
+     * Settings store the logo as a public path. Inlining it as a data URI keeps
+     * the PDF renderer off the network, so the invoice looks the same whether or
+     * not the host can reach its own site.
+     */
+    private function inlineImage(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        $file = public_path(ltrim($path, '/'));
+
+        if (! is_file($file)) {
+            return null;
+        }
+
+        $mime = match (strtolower(pathinfo($file, PATHINFO_EXTENSION))) {
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            // SVG is not rasterised by dompdf without extra support; skip it
+            // rather than print a broken image box.
+            default => null,
+        };
+
+        return $mime ? 'data:'.$mime.';base64,'.base64_encode(file_get_contents($file)) : null;
     }
 
     public function destroy($id, InventoryService $inventory)

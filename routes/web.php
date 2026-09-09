@@ -130,6 +130,9 @@ Route::middleware('auth')->group(function () {
 
     // Sales Routes
     Route::resource('/admin/sales', \App\Http\Controllers\Admin\SaleController::class)->names('admin.sales')->middleware('permission:view_sales');
+    Route::get('/admin/sales/{sale}/invoice-pdf', [\App\Http\Controllers\Admin\SaleController::class, 'invoicePdf'])
+        ->name('admin.sales.invoice-pdf')
+        ->middleware('permission:view_sales');
     Route::patch('/admin/sales/{sale}/status', [\App\Http\Controllers\Admin\SaleController::class, 'updateStatus'])
         ->name('admin.sales.update-status')
         ->middleware('permission:edit_sales');
