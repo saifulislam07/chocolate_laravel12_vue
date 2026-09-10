@@ -13,7 +13,7 @@ class Shipment extends Model
      * normalised rather than compared verbatim.
      */
     public const CLOSED_STATUSES = [
-        'failed', 'cancelled', 'canceled', 'returned', 'return',
+        'failed', 'cancelled', 'canceled', 'returned', 'return', 'paid_return',
         'delivery_failed', 'pickup_failed', 'pickup_cancelled', 'delivery_cancelled',
     ];
 
@@ -28,6 +28,7 @@ class Shipment extends Model
      * the screen, which of the two said it does not.
      */
     public const MOVING_STATUSES = [
+        'order_created', 'order_updated', 'exchange',
         'pickup_requested', 'assigned_for_pickup', 'picked', 'at_the_sorting_hub',
         'in_transit', 'received_at_last_mile_hub', 'assigned_for_delivery', 'in_review',
     ];

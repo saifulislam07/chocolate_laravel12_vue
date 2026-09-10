@@ -24,7 +24,7 @@ class WebSetting extends Model
         'nagad_enabled', 'nagad_mode', 'nagad_base_url', 'nagad_merchant_id',
         'nagad_merchant_number', 'nagad_public_key', 'nagad_private_key',
         'pathao_enabled', 'pathao_base_url', 'pathao_client_id', 'pathao_client_secret',
-        'pathao_username', 'pathao_password', 'pathao_store_id',
+        'pathao_username', 'pathao_password', 'pathao_store_id', 'pathao_webhook_secret',
         'steadfast_enabled', 'steadfast_base_url', 'steadfast_api_key', 'steadfast_secret_key',
         'smtp_host', 'smtp_port',
         'smtp_username', 'smtp_password', 'smtp_encryption'

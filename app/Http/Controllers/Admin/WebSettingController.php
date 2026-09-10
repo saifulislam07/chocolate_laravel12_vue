@@ -85,6 +85,7 @@ class WebSettingController extends Controller
             'pathao_username' => 'nullable|string|max:255',
             'pathao_password' => 'nullable|string|max:255',
             'pathao_store_id' => 'nullable|string|max:255',
+            'pathao_webhook_secret' => 'nullable|string|max:255',
             'steadfast_enabled' => 'boolean',
             'steadfast_base_url' => 'nullable|url',
             'steadfast_api_key' => 'nullable|string|max:255',

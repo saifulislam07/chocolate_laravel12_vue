@@ -11,6 +11,25 @@ const props = defineProps({
 
 const activeTab = ref('general');
 
+// Built from wherever the panel is being served, so the value shown is the one
+// Pathao would actually have to call -- a hardcoded domain would be wrong on
+// exactly the machine where it matters.
+const pathaoWebhookUrl = window.location.origin + '/api/webhooks/pathao';
+const webhookUrlCopied = ref(false);
+
+async function copyWebhookUrl() {
+    try {
+        await navigator.clipboard.writeText(pathaoWebhookUrl);
+    } catch {
+        // Clipboard access needs a secure context; on plain http the operator
+        // can still select the field by hand, so this is not worth an alert.
+        return;
+    }
+
+    webhookUrlCopied.value = true;
+    setTimeout(() => { webhookUrlCopied.value = false; }, 2000);
+}
+
 const tabs = [
     { id: 'general', label: 'General', icon: 'fas fa-building' },
     { id: 'branding', label: 'Branding', icon: 'fas fa-palette' },
@@ -122,6 +141,7 @@ const form = useForm({
     pathao_username: props.settings?.pathao_username || '',
     pathao_password: props.settings?.pathao_password || '',
     pathao_store_id: props.settings?.pathao_store_id || '',
+    pathao_webhook_secret: props.settings?.pathao_webhook_secret || '',
     steadfast_enabled: props.settings?.steadfast_enabled || false,
     steadfast_base_url: props.settings?.steadfast_base_url || 'https://portal.packzy.com/api/v1',
     steadfast_api_key: props.settings?.steadfast_api_key || '',
@@ -609,6 +629,33 @@ function tabForField(field) {
                                                 <div class="col-md-4 form-group">
                                                     <label>Store ID</label>
                                                     <input type="text" v-model="form.pathao_store_id" class="form-control">
+                                                </div>
+                                            </div>
+
+                                            <hr>
+                                            <h6 class="font-weight-bold mb-1">Webhook Integration</h6>
+                                            <p class="text-muted text-sm">
+                                                Paste both of these into Pathao&rsquo;s merchant panel under
+                                                <strong>Developer API &rarr; Webhook Integration</strong>. Without them a parcel&rsquo;s
+                                                status only changes when someone presses Sync on the order.
+                                            </p>
+                                            <div class="form-row">
+                                                <div class="col-md-8 form-group">
+                                                    <label>Callback URL</label>
+                                                    <div class="input-group">
+                                                        <input type="text" :value="pathaoWebhookUrl" class="form-control" readonly>
+                                                        <div class="input-group-append">
+                                                            <button type="button" class="btn btn-outline-secondary" @click="copyWebhookUrl">
+                                                                <i class="fas fa-copy mr-1"></i>{{ webhookUrlCopied ? 'Copied' : 'Copy' }}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <small class="text-muted">Pathao must be able to reach this, so it has to be your live domain over HTTPS.</small>
+                                                </div>
+                                                <div class="col-md-4 form-group">
+                                                    <label>Webhook Secret</label>
+                                                    <input type="text" v-model="form.pathao_webhook_secret" class="form-control" placeholder="Any long random string">
+                                                    <small class="text-muted">Must match the secret you save at Pathao exactly.</small>
                                                 </div>
                                             </div>
                                         </div>
