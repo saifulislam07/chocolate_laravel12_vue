@@ -57,11 +57,27 @@ class PathaoWebhookController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
-        $secret = WebSetting::first()?->pathao_webhook_secret;
+        // Trimmed on both sides: a secret pasted into either panel with a
+        // trailing space looks identical on screen and matches nothing.
+        $secret = trim((string) WebSetting::first()?->pathao_webhook_secret);
+        $signature = trim((string) $request->header('X-PATHAO-Signature'));
 
         // No secret configured means nothing can be trusted yet, so nothing is
         // accepted -- an open endpoint would let anyone mark parcels delivered.
-        if (blank($secret) || ! hash_equals($secret, (string) $request->header('X-PATHAO-Signature'))) {
+        if ($secret === '') {
+            Log::warning('Pathao webhook refused: no webhook secret is saved in Settings > Courier.');
+
+            return response()->json(['message' => 'Webhook secret is not configured.'], 401);
+        }
+
+        if (! hash_equals($secret, $signature)) {
+            // The secrets themselves stay out of the log; their shape is enough
+            // to tell a wrong value from a missing header or a stray space.
+            Log::warning('Pathao webhook refused: signature did not match the saved secret.', [
+                'signature_received' => $signature === '' ? '(none)' : '(' . strlen($signature) . ' chars)',
+                'secret_saved' => '(' . strlen($secret) . ' chars)',
+            ]);
+
             return response()->json(['message' => 'Invalid webhook signature.'], 401);
         }
 

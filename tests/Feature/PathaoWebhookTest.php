@@ -98,6 +98,35 @@ class PathaoWebhookTest extends TestCase
         $this->send(['event' => 'order.delivered'])->assertStatus(401);
     }
 
+    public function test_a_secret_saved_with_stray_whitespace_still_matches(): void
+    {
+        // Copying a secret out of a panel routinely brings a space with it. Two
+        // values that differ only by whitespace look identical on screen, so a
+        // mismatch here reads as "Pathao rejected our URL" with no visible cause.
+        $this->configureWebhook('  ' . self::SECRET . ' ');
+
+        $this->send(['event' => 'webhook_integration'])->assertStatus(202);
+    }
+
+    public function test_a_signature_arriving_with_stray_whitespace_still_matches(): void
+    {
+        $this->configureWebhook();
+
+        $this->send(['event' => 'webhook_integration'], self::SECRET . ' ')->assertStatus(202);
+    }
+
+    public function test_an_unset_secret_says_so_rather_than_blaming_the_signature(): void
+    {
+        $this->configureWebhook(null);
+
+        // The two failures need telling apart: one is fixed in our Settings, the
+        // other in Pathao's panel, and a single message sends people to the
+        // wrong screen.
+        $this->send(['event' => 'webhook_integration'])
+            ->assertStatus(401)
+            ->assertJsonPath('message', 'Webhook secret is not configured.');
+    }
+
     public static function eventProvider(): array
     {
         return [

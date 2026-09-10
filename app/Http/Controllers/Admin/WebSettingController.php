@@ -107,6 +107,13 @@ class WebSettingController extends Controller
         $validated['bkash_mode'] = ($validated['bkash_mode'] ?? null) ?: 'sandbox';
         $validated['nagad_mode'] = ($validated['nagad_mode'] ?? null) ?: 'sandbox';
         $validated['pathao_enabled'] = $request->boolean('pathao_enabled');
+
+        // A secret copied out of Pathao's panel often brings a space with it, and
+        // one that only differs by whitespace looks right on screen while matching
+        // nothing -- which reads as "Pathao rejected our URL" with no clue why.
+        if (array_key_exists('pathao_webhook_secret', $validated)) {
+            $validated['pathao_webhook_secret'] = trim((string) $validated['pathao_webhook_secret']) ?: null;
+        }
         $validated['steadfast_enabled'] = $request->boolean('steadfast_enabled');
 
         foreach (self::IMAGE_FIELDS as $field) {
