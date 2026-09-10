@@ -10,6 +10,25 @@ use Illuminate\Support\Facades\Http;
 
 class PathaoCourierService
 {
+    /**
+     * Districts Pathao still spells the older way. Every other district matches
+     * its city once case and punctuation are stripped, so only the strays are
+     * listed here -- keyed by what checkout calls them.
+     */
+    private const CITY_ALIASES = [
+        'barishal' => 'barisal',
+        'brahmanbaria' => 'bbaria',
+        'bogura' => 'bogra',
+        'chattogram' => 'chittagong',
+        'gopalganj' => 'gopalgonj',
+        'jhalokati' => 'jhalokathi',
+        'jhenaidah' => 'jhenidah',
+        'khagrachhari' => 'khagrachari',
+        'munshiganj' => 'munsiganj',
+        'narsingdi' => 'narshingdi',
+        'netrokona' => 'netrakona',
+    ];
+
     public function __construct(private readonly WebSetting $settings)
     {
     }
@@ -27,17 +46,74 @@ class PathaoCourierService
 
     public function listCities(): array
     {
-        return $this->authorizedGet('/aggregator/cities')['data']['data'] ?? [];
+        return $this->reference('cities', '/aladdin/api/v1/city-list');
+    }
+
+    /**
+     * Which Pathao city an order's district points at, if any.
+     *
+     * Checkout records a district; Pathao routes by city, zone and area. Only
+     * the first of those three can be answered from what the order already
+     * knows, so this fills the city and leaves the finer two to the operator.
+     */
+    public function resolveCityId(?string $district): ?int
+    {
+        if (blank($district)) {
+            return null;
+        }
+
+        $wanted = $this->normalise($district);
+        $wanted = self::CITY_ALIASES[$wanted] ?? $wanted;
+
+        foreach ($this->listCities() as $city) {
+            if ($this->normalise((string) ($city['city_name'] ?? '')) === $wanted) {
+                return (int) $city['city_id'];
+            }
+        }
+
+        return null;
+    }
+
+    private function normalise(string $name): string
+    {
+        return strtolower(preg_replace('/[^a-z]/i', '', $name));
     }
 
     public function listZones(int $cityId): array
     {
-        return $this->authorizedGet("/aggregator/cities/{$cityId}/zone-list")['data']['data'] ?? [];
+        return $this->reference("zones_{$cityId}", "/aladdin/api/v1/cities/{$cityId}/zone-list");
     }
 
     public function listAreas(int $zoneId): array
     {
-        return $this->authorizedGet("/aggregator/zones/{$zoneId}/area-list")['data']['data'] ?? [];
+        return $this->reference("areas_{$zoneId}", "/aladdin/api/v1/zones/{$zoneId}/area-list");
+    }
+
+    /**
+     * Cities, zones and areas barely move, and Pathao rate-limits hard enough to
+     * answer 429 after a few dozen calls -- a booking screen that re-asked on
+     * every view would run the shop into that. The base url is folded into the
+     * key so switching between sandbox and production cannot serve one's list
+     * for the other, and an empty answer is never kept: that is what a throttled
+     * or failed call looks like.
+     */
+    private function reference(string $key, string $path): array
+    {
+        $cacheKey = 'pathao_' . $key . '_' . $this->settings->id . '_' . substr(md5($this->baseUrl()), 0, 8);
+
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached) && $cached !== []) {
+            return $cached;
+        }
+
+        $data = $this->authorizedGet($path)['data']['data'] ?? [];
+
+        if ($data !== []) {
+            Cache::put($cacheKey, $data, now()->addDay());
+        }
+
+        return $data;
     }
 
     /**
@@ -63,7 +139,7 @@ class PathaoCourierService
             'item_description' => 'Chocolate order ' . $order->order_number,
         ];
 
-        $response = $this->authorizedPost('/aggregator/orders', $payload);
+        $response = $this->authorizedPost('/aladdin/api/v1/orders', $payload);
         $data = $response['data'] ?? [];
 
         return Shipment::create([
@@ -76,6 +152,18 @@ class PathaoCourierService
         ]);
     }
 
+    /**
+     * What Pathao currently says about a consignment.
+     *
+     * The merchant API carries no cancel and no address-edit route -- both are
+     * done from the Pathao panel -- so this read is the only way the shop finds
+     * out that a mis-addressed parcel was called off there.
+     */
+    public function orderInfo(string $consignmentId): array
+    {
+        return $this->authorizedGet("/aladdin/api/v1/orders/{$consignmentId}/info")['data'] ?? [];
+    }
+
     private function recipientName(Order $order): string
     {
         return $order->customer_name ?: $order->customer?->name ?: $order->user?->name ?: 'Customer';
@@ -83,22 +171,33 @@ class PathaoCourierService
 
     private function recipientPhone(Order $order): string
     {
-        return $order->customer_phone ?: $order->customer?->phone ?: 'N/A';
+        return $order->courierPhone() ?: 'N/A';
     }
 
     private function accessToken(): string
     {
-        return Cache::remember('pathao_access_token_' . $this->settings->id, now()->addMinutes(50), function () {
-            $response = Http::acceptJson()->post($this->baseUrl() . '/aggregator/oauth/issue', [
-                'client_id' => $this->settings->pathao_client_id,
-                'client_secret' => $this->settings->pathao_client_secret,
-                'username' => $this->settings->pathao_username,
-                'password' => $this->settings->pathao_password,
-                'grant_type' => 'password',
-            ])->json();
+        $key = 'pathao_access_token_' . $this->settings->id;
 
-            return $response['access_token'] ?? '';
-        });
+        if ($cached = Cache::get($key)) {
+            return $cached;
+        }
+
+        $response = Http::acceptJson()->post($this->baseUrl() . '/aladdin/api/v1/issue-token', [
+            'client_id' => $this->settings->pathao_client_id,
+            'client_secret' => $this->settings->pathao_client_secret,
+            'username' => $this->settings->pathao_username,
+            'password' => $this->settings->pathao_password,
+            'grant_type' => 'password',
+        ])->json();
+
+        $token = $response['access_token'] ?? '';
+
+        // Never cache a failed handshake, otherwise a credential fix stays invisible for 50 minutes.
+        if ($token !== '') {
+            Cache::put($key, $token, now()->addSeconds((int) ($response['expires_in'] ?? 3000) - 300));
+        }
+
+        return $token;
     }
 
     private function authorizedGet(string $path): array

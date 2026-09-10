@@ -1,7 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import SearchableSelect from '@/Components/SearchableSelect.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from 'vue';
 import axios from 'axios';
 
@@ -11,6 +11,7 @@ const shop = computed(() => usePage().props.webSettings || {});
 const props = defineProps({
     sale: Object,
     courierOptions: { type: Object, default: () => ({ pathao: false, steadfast: false }) },
+    liveShipment: { type: Object, default: null },
 });
 
 const money = (value) => Number(value || 0).toLocaleString('en-BD', {
@@ -91,13 +92,22 @@ const courierChoices = computed(() => [
     ...(props.courierOptions.pathao ? [{ value: 'pathao', label: 'Pathao' }] : []),
 ]);
 
+// Fires immediately as well: with Steadfast off the form already opens on
+// Pathao, and a watcher that only reacts to a change would never load the cities.
 watch(() => shipForm.courier, (courier) => {
-    if (courier === 'pathao' && pathaoCities.value.length === 0) {
-        axios.get(route('admin.courier.pathao.cities')).then((res) => {
-            pathaoCities.value = res.data || [];
+    if (courier === 'pathao' && props.courierOptions.pathao && !props.liveShipment && pathaoCities.value.length === 0) {
+        axios.get(route('admin.courier.pathao.cities', { order: props.sale.id })).then((res) => {
+            pathaoCities.value = res.data?.data || [];
+
+            // Checkout already recorded a district, so the city is a question the
+            // order can answer for itself. Zone and area it cannot -- nobody ever
+            // asked the customer for those.
+            if (!shipForm.city_id && res.data?.suggested_city_id) {
+                shipForm.city_id = res.data.suggested_city_id;
+            }
         });
     }
-});
+}, { immediate: true });
 
 watch(() => shipForm.city_id, (cityId) => {
     shipForm.zone_id = '';
@@ -120,6 +130,25 @@ watch(() => shipForm.zone_id, (zoneId) => {
         });
     }
 });
+
+const syncingId = ref(null);
+
+// Courier statuses only move when someone presses Sync, so how old this one is
+// matters as much as what it says.
+function lastChecked(shipment) {
+    return new Date(shipment.updated_at).toLocaleString('en-GB', {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+    });
+}
+
+// Neither courier calls back, so a status only moves when someone asks for it.
+function syncShipment(shipment) {
+    syncingId.value = shipment.id;
+    router.post(route('admin.sales.shipment-sync', [props.sale.id, shipment.id]), {}, {
+        preserveScroll: true,
+        onFinish: () => { syncingId.value = null; },
+    });
+}
 
 function submitShip() {
     shipForm.post(route('admin.sales.ship', props.sale.id), {
@@ -260,12 +289,35 @@ onBeforeUnmount(() => {
                                 <span>
                                     <span class="badge badge-info text-uppercase mr-1">{{ shipment.courier }}</span>
                                     Tracking: <strong>{{ shipment.tracking_code || 'N/A' }}</strong>
+                                    <span v-if="shipment.failure_reason" class="d-block text-danger small mt-1">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>{{ shipment.failure_reason }}
+                                    </span>
+                                    <span v-else class="d-block text-muted small mt-1">
+                                        <span v-if="shipment.delivery_fee !== null">Delivery fee {{ money(shipment.delivery_fee) }} &middot; </span>
+                                        Checked {{ lastChecked(shipment) }}
+                                    </span>
                                 </span>
-                                <span class="badge badge-secondary">{{ shipment.status }}</span>
+                                <span>
+                                    <span class="badge mr-2" :class="'badge-' + shipment.status_tone">{{ shipment.status_label }}</span>
+                                    <button v-if="shipment.consignment_id" type="button"
+                                            class="btn btn-outline-secondary btn-sm"
+                                            :disabled="syncingId === shipment.id"
+                                            @click="syncShipment(shipment)">
+                                        <i class="fas fa-sync-alt mr-1"></i>
+                                        {{ syncingId === shipment.id ? 'Checking...' : 'Sync' }}
+                                    </button>
+                                </span>
                             </div>
                         </div>
 
-                        <p v-if="!courierOptions.pathao && !courierOptions.steadfast" class="text-muted small mb-0">
+                        <p v-if="liveShipment" class="text-muted small mb-0">
+                            <i class="fas fa-lock mr-1"></i>
+                            Already booked with <strong class="text-uppercase">{{ liveShipment.courier }}</strong>
+                            ({{ liveShipment.consignment_id }}).
+                            Booked to the wrong address? Cancel it in the courier panel, press
+                            <strong>Sync</strong> above, and this form comes back so you can re-book.
+                        </p>
+                        <p v-else-if="!courierOptions.pathao && !courierOptions.steadfast" class="text-muted small mb-0">
                             No courier is configured yet. Add Pathao or Steadfast credentials in
                             <Link :href="route('admin.settings.index')">Settings &rarr; Courier</Link>.
                         </p>

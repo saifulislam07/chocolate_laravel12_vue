@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -96,9 +97,13 @@ class HandleInertiaRequests extends Middleware
                 ->get(['id', 'title', 'slug']),
             'webSettings' => \App\Models\WebSetting::first(),
             'flash' => [
-                'success' => $request->session()->get('success'),
-                'error' => $request->session()->get('error'),
+                'success' => $success = $request->session()->get('success'),
+                'error' => $error = $request->session()->get('error'),
                 'invoice' => $request->session()->get('invoice'),
+                // Saying the same thing twice is still worth saying: pressing a
+                // button that reports "still Pending" twice must toast twice, and
+                // a watcher comparing message text would skip the second.
+                'token' => ($success || $error) ? (string) Str::uuid() : null,
             ],
         ];
     }

@@ -145,6 +145,53 @@ class Order extends Model
     }
 
     /**
+     * The delivery phone as a courier wants it: a bare 11-digit local mobile.
+     *
+     * Customers type +880, 880, spaces and dashes, and some drop the leading
+     * zero -- all of which a courier rejects outright, so they are folded back
+     * to 01XXXXXXXXX here rather than at each courier in turn.
+     */
+    public function courierPhone(): string
+    {
+        $digits = preg_replace('/\D/', '', (string) ($this->customer_phone ?: $this->customer?->phone ?: ''));
+
+        if (str_starts_with($digits, '880')) {
+            $digits = substr($digits, 2);
+        }
+
+        if (strlen($digits) === 10 && str_starts_with($digits, '1')) {
+            $digits = '0' . $digits;
+        }
+
+        return $digits;
+    }
+
+    /**
+     * Whether a courier would accept the delivery phone. Checked before a
+     * booking is attempted: the couriers reject it anyway, and finding out
+     * here costs no API call and leaves no dead shipment row behind.
+     */
+    public function hasDeliverablePhone(): bool
+    {
+        return (bool) preg_match('/^01[3-9]\d{8}$/', $this->courierPhone());
+    }
+
+    /**
+     * The consignment this order is currently riding on, if any.
+     *
+     * Guards the booking screen against a second click raising a duplicate
+     * parcel, while still leaving the deliberate re-book that shippingStatus
+     * below is written around: a failed booking or a returned parcel is not
+     * live, so it does not stand in the way of handing the order over again.
+     */
+    public function liveShipment(): ?Shipment
+    {
+        return $this->shipments
+            ->sortByDesc('id')
+            ->first(fn (Shipment $shipment): bool => $shipment->isLive());
+    }
+
+    /**
      * What the order is worth to the shop: the total less the shipping charge
      * the courier keeps. Kept out of $appends -- only the screens that report
      * on revenue ask for it.

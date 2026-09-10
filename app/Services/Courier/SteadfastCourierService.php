@@ -26,7 +26,7 @@ class SteadfastCourierService
         $payload = [
             'invoice' => $order->order_number,
             'recipient_name' => $order->customer_name ?: $order->customer?->name ?: $order->user?->name ?: 'Customer',
-            'recipient_phone' => $order->customer_phone ?: $order->customer?->phone ?: 'N/A',
+            'recipient_phone' => $order->courierPhone() ?: 'N/A',
             'recipient_address' => $order->shipping_address ?: 'N/A',
             'cod_amount' => $order->payment_status === 'paid' ? 0 : (float) $order->total,
             'note' => $order->notes,

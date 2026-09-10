@@ -139,6 +139,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/sales/{sale}/ship', [\App\Http\Controllers\Admin\SaleController::class, 'ship'])
         ->name('admin.sales.ship')
         ->middleware('permission:edit_sales');
+    Route::post('/admin/sales/{sale}/shipments/{shipment}/sync', [\App\Http\Controllers\Admin\SaleController::class, 'syncShipment'])
+        ->name('admin.sales.shipment-sync')
+        ->middleware('permission:edit_sales');
     Route::get('/admin/courier/pathao/cities', [\App\Http\Controllers\Admin\SaleController::class, 'pathaoCities'])
         ->name('admin.courier.pathao.cities')
         ->middleware('permission:edit_sales');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\Shipment;
 use App\Models\WebSetting;
 use App\Services\Courier\PathaoCourierService;
 use App\Services\Courier\SteadfastCourierService;
@@ -33,6 +34,15 @@ class SaleController extends Controller
     {
         $sale = Order::with(['customer', 'user', 'items.product', 'shipments'])->findOrFail($id);
         $sale->append('total_in_words');
+
+        // A booking the courier refused carries its reason in the raw response;
+        // spell it out so the screen can say what to fix.
+        $sale->shipments->each(function ($shipment) {
+            $shipment->failure_reason = blank($shipment->consignment_id) ? $shipment->failureReason() : null;
+            $shipment->status_label = $shipment->statusLabel();
+            $shipment->status_tone = $shipment->statusTone();
+            $shipment->delivery_fee = $shipment->deliveryFee();
+        });
         $settings = WebSetting::first();
 
         return Inertia::render('Admin/Sales/Show', [
@@ -41,6 +51,7 @@ class SaleController extends Controller
                 'pathao' => (new PathaoCourierService($settings ?? new WebSetting()))->enabled(),
                 'steadfast' => (new SteadfastCourierService($settings ?? new WebSetting()))->enabled(),
             ],
+            'liveShipment' => $sale->liveShipment(),
         ]);
     }
 
@@ -188,8 +199,22 @@ class SaleController extends Controller
             'area_id' => ['required_if:courier,pathao', 'nullable', 'integer'],
         ]);
 
-        $sale = Order::findOrFail($id);
+        $sale = Order::with('shipments')->findOrFail($id);
         $settings = WebSetting::first() ?? new WebSetting();
+
+        // A double click, a back-and-resubmit or a stale tab would otherwise raise
+        // a second parcel against the same order -- two deliveries, two charges.
+        if ($live = $sale->liveShipment()) {
+            return redirect()->back()->with('error', 'This order is already booked with ' . ucfirst($live->courier)
+                . ' (' . $live->consignment_id . '). Cancel that consignment at the courier before booking again.');
+        }
+
+        // Both couriers reject a malformed mobile, and a rejected booking still
+        // costs a call and leaves a dead shipment row -- so it is caught here first.
+        if (! $sale->hasDeliverablePhone()) {
+            return redirect()->back()->with('error', 'The delivery phone (' . ($sale->customer_phone ?: 'none on file')
+                . ') is not a valid Bangladeshi mobile number. Couriers need 11 digits in the form 01XXXXXXXXX.');
+        }
 
         if ($payload['courier'] === 'pathao') {
             $service = new PathaoCourierService($settings);
@@ -198,7 +223,7 @@ class SaleController extends Controller
                 return redirect()->back()->with('error', 'Pathao courier is not configured yet. Add your credentials in Settings > Courier.');
             }
 
-            $service->createOrder($sale, [
+            $shipment = $service->createOrder($sale, [
                 'city_id' => (int) $payload['city_id'],
                 'zone_id' => (int) $payload['zone_id'],
                 'area_id' => (int) $payload['area_id'],
@@ -210,18 +235,100 @@ class SaleController extends Controller
                 return redirect()->back()->with('error', 'Steadfast courier is not configured yet. Add your credentials in Settings > Courier.');
             }
 
-            $service->createOrder($sale);
+            $shipment = $service->createOrder($sale);
         }
 
-        return redirect()->back()->with('success', 'Shipment booked successfully.');
+        // A refusal comes back looking like a success -- no consignment id is the
+        // only thing that says the parcel was never actually accepted.
+        if (blank($shipment->consignment_id)) {
+            return redirect()->back()->with('error', ucfirst($shipment->courier) . ' refused the booking: ' . $shipment->failureReason());
+        }
+
+        return redirect()->back()->with('success', 'Shipment booked with ' . $shipment->consignment_id . '.');
     }
 
-    public function pathaoCities()
+    /**
+     * Re-read a consignment status from the courier.
+     *
+     * Neither courier calls back, and neither merchant API can cancel or
+     * re-address a parcel -- an operator who booked a wrong address cancels it
+     * in the courier panel. This is what lets the shop find that out: once the
+     * pulled status is a closed one, the order stops counting as live and the
+     * booking form comes back so it can be re-sent correctly.
+     */
+    public function syncShipment($saleId, $shipmentId)
+    {
+        $shipment = Shipment::where('order_id', $saleId)->findOrFail($shipmentId);
+        $settings = WebSetting::first() ?? new WebSetting();
+
+        if (blank($shipment->consignment_id)) {
+            return redirect()->back()->with('error', 'That booking never reached the courier, so there is no status to pull.');
+        }
+
+        if ($shipment->courier === 'pathao') {
+            $service = new PathaoCourierService($settings);
+
+            if (! $service->enabled()) {
+                return redirect()->back()->with('error', 'Pathao courier is not configured yet.');
+            }
+
+            $info = $service->orderInfo($shipment->consignment_id);
+            $status = $info['order_status'] ?? null;
+        } else {
+            $service = new SteadfastCourierService($settings);
+
+            if (! $service->enabled()) {
+                return redirect()->back()->with('error', 'Steadfast courier is not configured yet.');
+            }
+
+            $info = $service->getStatus($shipment->consignment_id);
+            $status = $info['delivery_status'] ?? null;
+        }
+
+        if (blank($status)) {
+            return redirect()->back()->with('error', 'The courier returned no status for ' . $shipment->consignment_id . '.');
+        }
+
+        // Merged, not replaced: the booking response carries the delivery fee and
+        // a status pull does not, so overwriting would quietly lose it.
+        $shipment->update([
+            'status' => $status,
+            'raw_response' => array_merge($shipment->raw_response ?? [], $info),
+        ]);
+
+        // Say what the status means for the order, not just what it is: an
+        // operator pressing Sync is usually asking whether they can re-book yet.
+        $message = $shipment->fresh()->isLive()
+            ? ucfirst($shipment->courier) . ' says ' . $shipment->statusLabel() . ' -- the parcel is still live, so re-booking stays locked.'
+            : ucfirst($shipment->courier) . ' says ' . $shipment->statusLabel() . ' -- this order is free to book again.';
+
+        return redirect()->back()->with('success', $message);
+    }
+
+    /**
+     * The city list, plus which of them the named order already points at.
+     *
+     * The suggestion rides along with the list rather than the Show payload so
+     * that resolving it -- which costs a Pathao call -- never sits between the
+     * operator and the order page rendering.
+     */
+    public function pathaoCities(Request $request)
     {
         $settings = WebSetting::first() ?? new WebSetting();
         $service = new PathaoCourierService($settings);
 
-        return response()->json($service->enabled() ? $service->listCities() : []);
+        if (! $service->enabled()) {
+            return response()->json(['data' => [], 'suggested_city_id' => null]);
+        }
+
+        $district = $request->filled('order')
+            ? Order::with('district')->find($request->query('order'))?->district?->name
+            : null;
+
+        return response()->json([
+            'data' => $service->listCities(),
+            'suggested_city_id' => $service->resolveCityId($district),
+        ]);
     }
 
     public function pathaoZones($cityId)

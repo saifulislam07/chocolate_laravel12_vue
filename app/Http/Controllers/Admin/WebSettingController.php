@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\WebSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -121,8 +122,12 @@ class WebSettingController extends Controller
         if ($settings->id) {
             $settings->update($validated);
         } else {
-            WebSetting::create($validated);
+            $settings = WebSetting::create($validated);
         }
+
+        // Courier tokens are cached against the settings row, so a credential
+        // change has to drop the old one or the next booking still signs with it.
+        Cache::forget('pathao_access_token_' . $settings->id);
 
         return redirect()->back()->with('success', 'Settings updated successfully.');
     }

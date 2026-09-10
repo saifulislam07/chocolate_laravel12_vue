@@ -105,23 +105,21 @@ function toggleGroup(group) {
 }
 
 const flash = computed(() => page.props.flash || {});
-watch(() => flash.value.success, (message) => {
-    if (message) {
-        toastMessage.value = message;
-        toastType.value = 'success';
-        showToast.value = true;
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => { showToast.value = false; }, 3500);
+// Keyed on the token rather than the text: two identical messages in a row are
+// two separate pieces of news, and comparing the text would swallow the second.
+watch(() => flash.value.token, () => {
+    const message = flash.value.success || flash.value.error;
+
+    if (!message) {
+        return;
     }
-}, { immediate: true });
-watch(() => flash.value.error, (message) => {
-    if (message) {
-        toastMessage.value = message;
-        toastType.value = 'error';
-        showToast.value = true;
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => { showToast.value = false; }, 5000);
-    }
+
+    const isError = !flash.value.success;
+    toastMessage.value = message;
+    toastType.value = isError ? 'error' : 'success';
+    showToast.value = true;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { showToast.value = false; }, isError ? 5000 : 3500);
 }, { immediate: true });
 </script>
 
