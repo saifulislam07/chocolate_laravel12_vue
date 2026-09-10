@@ -33,7 +33,12 @@ say "Pulling $BRANCH"
 git pull origin "$BRANCH"
 
 say "Installing PHP dependencies"
-composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+# This host disables proc_open, so Composer cannot run post-install scripts
+# (they shell out via Symfony Process). Install with --no-scripts and run the
+# one script that matters -- package discovery -- directly afterward, which
+# works because artisan invoked straight from the shell needs no proc_open.
+composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts
+php artisan package:discover --ansi
 
 say "Building the front end"
 npm ci
